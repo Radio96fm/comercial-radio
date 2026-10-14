@@ -1044,3 +1044,43 @@ a.linha-g:hover b { text-decoration: underline; }
 .email-status { margin-top: 10px; padding: 8px 12px; border-radius: 10px; background: var(--card-2); font-size: .9rem; color: var(--muted); }
 .email-status.erro { background: var(--amarelo-bg); color: var(--amarelo); }
 [data-theme="light"] .email-status.erro { color: #92400e; }
+
+/* ===== Assistente de testemunhal ===== */
+.btn-testemunhal { width: 100%; margin-bottom: 8px; }
+.chat-testemunhal { display: flex; flex-direction: column; gap: 12px; }
+.chat-ajustes .rotulo { display: block; font-weight: 600; margin-bottom: 6px; }
+.chat-ajustes .seg4 button { min-height: 56px; font-size: .8rem; }
+.chat-ajustes .seg4 button b { font-size: 1.3rem; }
+.chat-msgs { display: flex; flex-direction: column; gap: 10px; }
+.bolha { max-width: 92%; padding: 12px 14px; border-radius: 18px; line-height: 1.45; font-size: 1.02rem; white-space: pre-wrap; }
+.bolha.ia { align-self: flex-start; background: var(--card); border: 1px solid var(--line); border-bottom-left-radius: 6px; }
+.bolha.eu { align-self: flex-end; background: var(--destaque-claro, #d4e1ff); color: var(--on-destaque, #0b1636); border-bottom-right-radius: 6px; }
+.bolha .nota { color: var(--muted); font-size: .95rem; }
+.bolha .roteiro + .nota { margin-top: 10px; }
+.bolha.digitando { color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.bolha.digitando i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulo 1s infinite ease-in-out; }
+.bolha.digitando i:nth-child(2) { animation-delay: .15s; }
+.bolha.digitando i:nth-child(3) { animation-delay: .3s; margin-right: 6px; }
+@keyframes pulo { 0%, 80%, 100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+.roteiro { background: var(--card-2); border: 1px solid var(--line-2); border-left: 4px solid var(--destaque, #9db8ff); border-radius: 12px; padding: 12px 14px; }
+.roteiro-topo { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .85rem; margin-bottom: 6px; }
+.roteiro-topo b { color: var(--text); }
+.roteiro p { margin: 0 0 12px; font-size: 1.12rem; line-height: 1.55; white-space: pre-wrap; }
+.roteiro-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.atalhos { display: flex; flex-wrap: wrap; gap: 8px; }
+.chat-envio { padding: 4px 0; }
+.chat-envio textarea { width: 100%; font-size: 1.05rem; }
+.chat-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.chat-botoes .btn { min-height: 54px; font-size: 1.05rem; }
+.chat-botoes .btn:only-child { grid-column: 1 / -1; }
+.btn.mic.ouvindo { background: var(--vermelho-bg); color: var(--vermelho); border: 1px solid var(--vermelho); animation: respira 1.4s infinite; }
+@keyframes respira { 50% { box-shadow: 0 0 0 6px rgba(248, 113, 113, .18); } }
+.abas-material { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.abas-material button { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--card-2); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+.abas-material button.ativo { background: var(--destaque, #9db8ff); color: var(--on-destaque, #0b1636); border-color: transparent; }
+details.material { display: block; }
+details.material summary { list-style: none; cursor: pointer; display: flex; }
+details.material summary::-webkit-details-marker { display: none; }
+details.material.desligado { opacity: .55; }
+.material-corpo { margin-top: 10px; }
+.material-corpo pre { white-space: pre-wrap; font: inherit; font-size: .92rem; max-height: 320px; overflow: auto; background: var(--card-2); padding: 10px 12px; border-radius: 10px; margin: 0 0 10px; }

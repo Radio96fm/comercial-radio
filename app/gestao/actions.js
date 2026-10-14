@@ -4,6 +4,7 @@ import { requireGestor } from '@/lib/auth';
 import { adminCriarUsuario, adminAtualizarUsuario } from '@/lib/supabase/admin';
 import { parseValor } from '@/lib/format';
 import { testarChave } from '@/lib/autentique';
+import { escolherModelo, gerar, PROVEDORES } from '@/lib/ia';
 
 const txt = (fd, k) => {
   const v = String(fd.get(k) ?? '').trim();
@@ -332,4 +333,40 @@ export async function salvarAutentique(_prev, fd) {
   if (error) return { erro: erroAmigavel(error) };
   revalidatePath('/gestao/modelos');
   return { ok: conta ? `Conectado à conta ${conta.name || conta.email}. Os vendedores já podem enviar contratos para assinar.` : 'Segredo do aviso automático salvo.' };
+}
+
+export async function salvarIA(_prev, fd) {
+  const { supabase } = await requireGestor();
+  const provedor = txt(fd, 'provedor');
+  const token = txt(fd, 'token');
+  if (!PROVEDORES[provedor]) return { erro: 'Escolha a IA.' };
+  const { data: situacao } = await supabase.rpc('ia_situacao');
+  if (!token && !(situacao?.chaves || []).includes(provedor)) return { erro: `Cole a chave do ${PROVEDORES[provedor].nome}.` };
+  let modelo = '';
+  if (token) {
+    try {
+      modelo = await escolherModelo(provedor, token);
+      await gerar({ cfg: { provedor, modelo, token }, sistema: 'Responda apenas: OK', mensagens: [{ papel: 'vendedor', texto: 'Teste' }], maxTokens: 20 });
+    } catch (e) {
+      return { erro: `A chave não funcionou: ${e.message}` };
+    }
+  } else if (situacao?.provedor === provedor) {
+    modelo = situacao.modelo || '';
+  }
+  const { error } = await supabase.rpc('salvar_ia', { p_provedor: provedor, p_modelo: modelo, p_token: token || '' });
+  if (error) return { erro: erroAmigavel(error) };
+  revalidatePath('/gestao/assistente');
+  return { ok: `Assistente ligado com ${PROVEDORES[provedor].nome}${modelo ? ` (${modelo})` : ''}. Os vendedores já podem criar testemunhais.` };
+}
+
+export async function alternarMaterial(fd) {
+  const { supabase } = await requireGestor();
+  await supabase.from('assistente_materiais').update({ ativo: fd.get('ativo') === '1' }).eq('id', fd.get('id'));
+  revalidatePath('/gestao/assistente');
+}
+
+export async function excluirMaterial(fd) {
+  const { supabase } = await requireGestor();
+  await supabase.from('assistente_materiais').delete().eq('id', fd.get('id'));
+  revalidatePath('/gestao/assistente');
 }

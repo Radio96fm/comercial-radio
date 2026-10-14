@@ -901,31 +901,43 @@ execute $q$drop policy if exists t_criar on public.testemunhais$q$;
 execute $q$create policy t_criar on public.testemunhais for insert to authenticated with check (public.usuario_ativo() and vendedor_id = auth.uid())$q$;
 execute $q$drop policy if exists t_apagar on public.testemunhais$q$;
 execute $q$create policy t_apagar on public.testemunhais for delete to authenticated using (vendedor_id = auth.uid() or public.is_gestor())$q$;
-execute $q$create or replace function public.salvar_anthropic(p_token text) returns void
+execute $q$create or replace function public.salvar_ia(p_provedor text, p_modelo text, p_token text) returns void
 language plpgsql security definer set search_path = public, privado as $f$
 begin
   if not public.is_gestor() then raise exception 'Apenas o gestor pode configurar o assistente.'; end if;
-  insert into privado.config values ('anthropic_token', p_token) on conflict (chave) do update set valor = excluded.valor;
+  if p_provedor not in ('claude','gemini','openai') then raise exception 'IA inválida.'; end if;
+  insert into privado.config values ('ia_provedor', p_provedor) on conflict (chave) do update set valor = excluded.valor;
+  insert into privado.config values ('ia_modelo', coalesce(p_modelo, '')) on conflict (chave) do update set valor = excluded.valor;
+  if coalesce(p_token, '') <> '' then
+    insert into privado.config values ('ia_token_' || p_provedor, p_token) on conflict (chave) do update set valor = excluded.valor;
+  end if;
 end $f$$q$;
-execute $q$revoke execute on function public.salvar_anthropic(text) from public, anon$q$;
-execute $q$grant execute on function public.salvar_anthropic(text) to authenticated$q$;
-execute $q$create or replace function public.anthropic_situacao() returns boolean
+execute $q$revoke execute on function public.salvar_ia(text, text, text) from public, anon$q$;
+execute $q$grant execute on function public.salvar_ia(text, text, text) to authenticated$q$;
+execute $q$create or replace function public.ia_situacao() returns json
 language sql stable security definer set search_path = privado as $f$
-  select exists (select 1 from privado.config where chave = 'anthropic_token');
+  select json_build_object(
+    'provedor', (select valor from privado.config where chave = 'ia_provedor'),
+    'modelo', (select valor from privado.config where chave = 'ia_modelo'),
+    'chaves', (select coalesce(json_agg(substr(chave, 10)), '[]'::json) from privado.config where chave like 'ia\_token\_%'));
 $f$$q$;
-execute $q$revoke execute on function public.anthropic_situacao() from public, anon$q$;
-execute $q$grant execute on function public.anthropic_situacao() to authenticated$q$;
-execute $q$create or replace function public.ia_config(p_segredo text) returns text
+execute $q$revoke execute on function public.ia_situacao() from public, anon$q$;
+execute $q$grant execute on function public.ia_situacao() to authenticated$q$;
+execute $q$create or replace function public.ia_cfg(p_segredo text) returns json
 language plpgsql stable security definer set search_path = privado, extensions as $f$
+declare v_prov text;
 begin
   if p_segredo is null or encode(extensions.digest(p_segredo, 'sha256'), 'hex')
      is distinct from (select valor from privado.config where chave = 'admin_proxy_sha256') then
     raise exception 'acesso negado';
   end if;
-  return (select valor from privado.config where chave = 'anthropic_token');
+  v_prov := (select valor from privado.config where chave = 'ia_provedor');
+  return json_build_object('provedor', v_prov,
+    'modelo', (select valor from privado.config where chave = 'ia_modelo'),
+    'token', (select valor from privado.config where chave = 'ia_token_' || v_prov));
 end $f$$q$;
-execute $q$revoke execute on function public.ia_config(text) from public$q$;
-execute $q$grant execute on function public.ia_config(text) to anon, authenticated$q$;
+execute $q$revoke execute on function public.ia_cfg(text) from public$q$;
+execute $q$grant execute on function public.ia_cfg(text) to anon, authenticated$q$;
 execute $q$insert into storage.buckets (id, name, public, file_size_limit) values ('assistente', 'assistente', false, 52428800) on conflict (id) do nothing$q$;
 execute $q$drop policy if exists assistente_gestor on storage.objects$q$;
 execute $q$create policy assistente_gestor on storage.objects for all to authenticated using (bucket_id = 'assistente' and public.is_gestor()) with check (bucket_id = 'assistente' and public.is_gestor())$q$;

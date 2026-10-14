@@ -341,3 +341,21 @@ export async function reenviarEmailAssinatura(fd) {
   }
   redirect(`/app/contratos/${id}?${msg}`);
 }
+
+export async function salvarTestemunhal({ clienteId, programaId, texto }) {
+  const { supabase, perfil } = await getSessao();
+  const limpo = String(texto || '').trim();
+  if (!limpo) return { erro: 'Nada para salvar.' };
+  const { error } = await supabase.from('testemunhais').insert({
+    cliente_id: clienteId, programa_id: programaId || null, texto: limpo, vendedor_id: perfil.id,
+  });
+  if (error) return { erro: traduzErro(error) };
+  revalidatePath(`/app/clientes/${clienteId}`);
+  return { ok: true };
+}
+
+export async function excluirTestemunhal(fd) {
+  const { supabase } = await getSessao();
+  await supabase.from('testemunhais').delete().eq('id', fd.get('id'));
+  revalidatePath(`/app/clientes/${fd.get('cliente')}`);
+}

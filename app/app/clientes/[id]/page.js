@@ -5,7 +5,8 @@ import Topo from '@/components/Topo';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import CamposCliente from '@/components/CamposCliente';
-import { atualizarCliente } from '../../actions';
+import { atualizarCliente, excluirTestemunhal } from '../../actions';
+import { Sparkles } from 'lucide-react';
 import { data, dataHora, linkWhatsApp, STATUS_CONTRATO, STATUS_VISITA } from '@/lib/format';
 
 export default async function ClientePage({ params }) {
@@ -17,10 +18,11 @@ export default async function ClientePage({ params }) {
     .maybeSingle();
   if (!c) notFound();
 
-  const [{ data: contratos }, { data: visitas }, { data: segmentos }] = await Promise.all([
+  const [{ data: contratos }, { data: visitas }, { data: segmentos }, { data: testemunhais }] = await Promise.all([
     supabase.from('contratos').select('id, numero, status, data_fim, programa:programas(nome)').eq('cliente_id', c.id).order('created_at', { ascending: false }),
     supabase.from('visitas').select('id, status, iniciada_em, vendedor:profiles(nome)').eq('cliente_id', c.id).order('iniciada_em', { ascending: false }).limit(10),
     supabase.from('segmentos').select('id, nome').order('nome'),
+    supabase.from('testemunhais').select('id, texto, created_at, vendedor_id, programa:programas(nome)').eq('cliente_id', c.id).order('created_at', { ascending: false }),
   ]);
 
   const podeEditar = isGestor || c.vendedor_id === perfil.id;
@@ -46,6 +48,35 @@ export default async function ClientePage({ params }) {
           <Link className="btn verde" href={`/app/visitas/nova?cliente=${c.id}`}>Iniciar visita</Link>
           {podeEditar && <Link className="btn" href={`/app/contratos/novo?cliente=${c.id}`}>Novo contrato</Link>}
         </div>
+        <Link className="btn sec btn-testemunhal" href={`/app/clientes/${c.id}/testemunhal`}><Sparkles className="ico" />Criar testemunhal com IA</Link>
+
+        {!!testemunhais?.length && (
+          <>
+            <div className="secao-titulo"><h2>Testemunhais</h2><span className="muted">{testemunhais.length}</span></div>
+            <div className="lista">
+              {testemunhais.map((t) => (
+                <details key={t.id} className="item material">
+                  <summary>
+                    <div className="info">
+                      <div className="nome">{t.texto.slice(0, 70)}{t.texto.length > 70 ? '...' : ''}</div>
+                      <div className="det">{data(t.created_at)}{t.programa?.nome ? ` · ${t.programa.nome}` : ''}</div>
+                    </div>
+                  </summary>
+                  <div className="material-corpo">
+                    <pre>{t.texto}</pre>
+                    {(isGestor || t.vendedor_id === perfil.id) && (
+                      <form action={excluirTestemunhal}>
+                        <input type="hidden" name="id" value={t.id} />
+                        <input type="hidden" name="cliente" value={c.id} />
+                        <BotaoEnviar className="btn peq vermelho" texto="Excluir" enviando="..." confirmar="Excluir este testemunhal?" />
+                      </form>
+                    )}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className="secao-titulo"><h2>Contratos</h2></div>
         {!contratos?.length ? <div className="vazio">Nenhum contrato.</div> : (
