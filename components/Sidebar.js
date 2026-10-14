@@ -29,11 +29,13 @@ export default function Sidebar() {
         </div>
         <b>Gestão Comercial</b>
       </div>
-      {ITENS.map(([href, Ico, txt, exato]) => (
-        <Link key={href} href={href} className={(exato ? path === href : path.startsWith(href)) ? 'ativo' : ''}>
-          <Ico className="ico" />{txt}
-        </Link>
-      ))}
+      <nav className="nav-g">
+        {ITENS.map(([href, Ico, txt, exato]) => (
+          <Link key={href} href={href} className={(exato ? path === href : path.startsWith(href)) ? 'ativo' : ''}>
+            <Ico className="ico" />{txt}
+          </Link>
+        ))}
+      </nav>
       <div className="rodape">
         <div className="sep" />
         <Link href="/app"><Smartphone className="ico" />Abrir app do vendedor</Link>

@@ -122,19 +122,6 @@ export default async function Dashboard() {
           </div>
         </div>
 
-        <div className="b-card b-lista">
-          <div className="b-topo"><h2><Hourglass className="ico" />Vencendo em 30 dias</h2><span className="contador">{vencendo?.length || 0}</span></div>
-          {!vencendo?.length ? <p className="muted">Nenhum contrato vencendo.</p> : (
-            <div className="linhas-g">
-              {vencendo.slice(0, 6).map((c) => (
-                <Link key={c.id} href={`/app/contratos/${c.id}`} className="linha-g">
-                  <div><b>{c.cliente?.nome}</b><small>{c.programa?.nome || 'Pacote avulso'} · {c.vendedor?.nome}</small></div>
-                  <span className="badge b-amarelo">{data(c.data_fim)}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
       <div className="grade-emissoras">
@@ -167,7 +154,20 @@ export default async function Dashboard() {
         })}
       </div>
 
-      <div className="grade-emissoras">
+      <div className="grade-listas">
+        <div className="b-card b-lista">
+          <div className="b-topo"><h2><Hourglass className="ico" />Vencendo em 30 dias</h2><span className="contador">{vencendo?.length || 0}</span></div>
+          {!vencendo?.length ? <p className="muted">Nenhum contrato vencendo.</p> : (
+            <div className="linhas-g">
+              {vencendo.slice(0, 6).map((c) => (
+                <Link key={c.id} href={`/app/contratos/${c.id}`} className="linha-g">
+                  <div><b>{c.cliente?.nome}</b><small>{c.programa?.nome || 'Pacote avulso'} · {c.vendedor?.nome}</small></div>
+                  <span className="badge b-amarelo">{data(c.data_fim)}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="b-card b-lista">
           <div className="b-topo"><h2><Car className="ico" />Em visitação agora</h2><span className="contador">{visitas?.length || 0}</span></div>
           {!visitas?.length ? <p className="muted">Ninguém em visita agora.</p> : (

@@ -933,6 +933,7 @@ a.linha-g:hover b { text-decoration: underline; }
 @media (max-width: 1100px) {
   .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .b-minis { grid-column: span 2; grid-template-columns: repeat(3, 1fr); }
+  .b-claro { grid-column: span 2; }
 }
 @media (max-width: 700px) {
   .bento, .grade-emissoras { grid-template-columns: 1fr; }
@@ -952,3 +953,80 @@ a.linha-g:hover b { text-decoration: underline; }
   .sidebar .marca-gestao .emissoras-mini img { height: 34px; }
 }
 .chip-r .pos { width: 24px; height: 24px; border-radius: 50%; background: #fff; color: var(--cor96); display: grid; place-items: center; font-size: .75rem; font-weight: 800; }
+
+/* =====================================================================
+   Destaque neutro das duas rádios: azul-gelo (periwinkle claro).
+   Laranja e verde ficam só no que é de cada rádio.
+   ===================================================================== */
+:root { --destaque: #9db8ff; --destaque-claro: #d4e1ff; --destaque-forte: #6f8ff5; --on-destaque: #0b1636; }
+.sidebar a.ativo { background: linear-gradient(90deg, color-mix(in srgb, var(--destaque) 20%, transparent), color-mix(in srgb, var(--destaque) 5%, transparent)); }
+.sidebar a.ativo::before { background: var(--destaque); }
+.sidebar a.ativo .ico { color: var(--destaque); }
+.gestao-main .cabecalho h1::after { background: var(--destaque); }
+.kpi.destaque { background: linear-gradient(140deg, var(--destaque-claro), var(--destaque) 55%, var(--destaque-forte)); color: var(--on-destaque); box-shadow: 0 14px 30px color-mix(in srgb, var(--destaque) 25%, transparent); }
+.kpi.destaque .kpi-topo, .kpi.destaque .rotulo, [data-theme="light"] .kpi.destaque .kpi-topo, [data-theme="light"] .kpi.destaque .rotulo { color: rgba(11, 22, 54, .72); }
+.kpi.destaque .kpi-topo .ico { background: rgba(11, 22, 54, .1); color: var(--on-destaque); }
+.kpi.destaque .barra, [data-theme="light"] .kpi.destaque .barra { background: rgba(11, 22, 54, .15); }
+.kpi.destaque .barra > span, [data-theme="light"] .kpi.destaque .barra > span { background: var(--on-destaque); }
+
+.b-hero { color: var(--on-destaque);
+  background: radial-gradient(90% 120% at 100% 0%, rgba(255, 255, 255, .55) 0%, transparent 50%), linear-gradient(135deg, var(--destaque-claro) 0%, var(--destaque) 55%, var(--destaque-forte) 100%);
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--destaque) 22%, transparent); }
+.b-hero::after { border-color: rgba(255, 255, 255, .22); }
+.b-hero .b-eyebrow, .b-hero .b-sub { color: rgba(11, 22, 54, .72); }
+.chip-r { background: rgba(255, 255, 255, .45); color: var(--on-destaque); }
+.chip-r .pos { background: var(--on-destaque); color: #fff; }
+.barras .col.atual span { background: linear-gradient(180deg, var(--destaque-claro), var(--destaque-forte)); box-shadow: 0 8px 22px color-mix(in srgb, var(--destaque) 30%, transparent); }
+
+/* =====================================================================
+   Telas grandes: o painel usa a largura toda (até 2200px)
+   ===================================================================== */
+.gestao-main { max-width: 2200px; }
+.grade-listas { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin-bottom: 26px; }
+.grade-listas .b-lista { grid-column: auto; }
+.grade-emissoras { grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); }
+.b-grafico { grid-column: span 4; }
+.b-grafico .barras { min-height: 150px; }
+@media (min-width: 1600px) {
+  .bento { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .b-grafico { grid-column: span 2; }
+  .gestao-main { padding: 32px 44px; }
+}
+@media (min-width: 2000px) {
+  body { font-size: 18px; }
+}
+@media (max-width: 1100px) {
+  .b-grafico { grid-column: span 2; }
+}
+@media (max-width: 700px) {
+  .b-grafico { grid-column: auto; }
+  .gestao-topo { margin: 0 0 10px; }
+  .po-linha { grid-template-columns: minmax(0, 1fr) auto; }
+  .po-linha .pilulas { grid-column: 1 / -1; justify-content: flex-start; max-width: none; order: 3; }
+  .b-card { padding: 18px; border-radius: 22px; }
+}
+
+/* app do vendedor em tablet e computador: aproveita a largura */
+@media (min-width: 1000px) {
+  .conteudo { max-width: 1080px; padding: 24px 28px; }
+  .lista-programas, .lista-condicoes, .planos-prog { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .conteudo > form, .conteudo .pacote { max-width: 760px; margin-left: auto; margin-right: auto; }
+}
+.nav-g { display: flex; flex-direction: column; }
+@media (max-width: 860px) {
+  .sidebar { flex-direction: column; flex-wrap: nowrap; position: sticky; top: 0; z-index: 30; padding: 10px 12px 8px; gap: 6px; }
+  .sidebar .marca-gestao { padding: 0; margin: 0; border: 0; }
+  .nav-g { flex-direction: row; overflow-x: auto; gap: 4px; margin: 0 -12px; padding: 0 12px 2px; scrollbar-width: none; }
+  .nav-g::-webkit-scrollbar { display: none; }
+  .nav-g a { white-space: nowrap; flex: none; }
+  .sidebar a.ativo::before { left: 10px; right: 10px; top: auto; bottom: 0; width: auto; height: 3px; }
+  .sidebar .rodape { display: flex; align-items: center; gap: 6px; position: absolute; top: 10px; right: 12px; }
+  .sidebar .rodape > a { display: none; }
+  .sidebar .rodape .btn { margin: 0 !important; width: auto !important; min-height: 36px; padding: 6px 12px; }
+  .sidebar .marca-gestao b { font-size: 1.05rem; }
+}
+@media (max-width: 700px) {
+  .bento, .grade-emissoras, .grade-listas { grid-template-columns: minmax(0, 1fr); }
+  .bento > *, .b-hero, .b-claro, .b-minis, .b-grafico, .b-lista { grid-column: auto; }
+  .b-minis { grid-template-columns: minmax(0, 1fr); }
+}
