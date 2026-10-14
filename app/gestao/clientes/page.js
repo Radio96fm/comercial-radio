@@ -38,7 +38,7 @@ export default async function ClientesGestao({ searchParams }) {
             {!clientes?.length && <tr><td colSpan={4} className="muted">Nenhum cliente.</td></tr>}
             {(clientes || []).map((c) => (
               <tr key={c.id}>
-                <td><Link href={`/app/clientes/${c.id}`}><b>{c.nome}</b></Link><br /><small>{c.telefone}</small></td>
+                <td><Link href={`/gestao/clientes/${c.id}`}><b>{c.nome}</b></Link><br /><small>{c.telefone}</small></td>
                 <td>{c.segmento?.nome}</td>
                 <td>{c.cidade}</td>
                 <td>

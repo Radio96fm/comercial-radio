@@ -173,7 +173,7 @@ export default async function Dashboard() {
           {!visitas?.length ? <p className="muted">Ninguém em visita agora.</p> : (
             <div className="linhas-g">
               {visitas.map((v) => (
-                <Link key={v.id} href={`/app/visitas/${v.id}`} className="linha-g">
+                <Link key={v.id} href={`/gestao/visitas/${v.id}`} className="linha-g">
                   <div><b>{v.cliente?.nome}</b><small>{v.vendedor?.nome}</small></div>
                   <span className="badge b-verde">{tempoDesde(v.iniciada_em)}</span>
                 </Link>

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
 import FormAcao from '@/components/FormAcao';
@@ -17,6 +17,7 @@ export default async function ClientePage({ params }) {
     .eq('id', params.id)
     .maybeSingle();
   if (!c) notFound();
+  if (isGestor && c.vendedor_id !== perfil.id) redirect(`/gestao/clientes/${c.id}`);
 
   const [{ data: contratos }, { data: visitas }, { data: segmentos }, { data: testemunhais }] = await Promise.all([
     supabase.from('contratos').select('id, numero, status, data_fim, programa:programas(nome)').eq('cliente_id', c.id).order('created_at', { ascending: false }),

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
 import FormAcao from '@/components/FormAcao';
@@ -16,6 +16,8 @@ export default async function VisitaPage({ params }) {
     .eq('id', params.id)
     .maybeSingle();
   if (!v) notFound();
+  // gestor olhando a visita de outro vendedor: abre a versão só de leitura do painel
+  if (isGestor && v.vendedor_id !== perfil.id) redirect(`/gestao/visitas/${v.id}`);
 
   const hoje = hojeISO();
   const [{ data: programas }, { data: ocupados }, { data: radiosVisita }] = await Promise.all([
