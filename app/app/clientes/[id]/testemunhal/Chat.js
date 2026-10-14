@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { Mic, Square, Send, Copy, Check, Volume2, Save } from 'lucide-react';
+import { Mic, Square, Send, Copy, Check, Save } from 'lucide-react';
 import { salvarTestemunhal } from '@/app/app/actions';
 
 const DURACOES = [15, 30, 45, 60];
@@ -17,23 +17,12 @@ const segundos = (t) => Math.round(t.split(/\s+/).filter(Boolean).length / 2.5);
 function Roteiro({ texto, clienteId, programaId }) {
   const [copiado, setCopiado] = useState(false);
   const [salvo, setSalvo] = useState(null);
-  const [falando, setFalando] = useState(false);
 
   async function copiar() {
     try { await navigator.clipboard.writeText(texto); } catch {
       const t = document.createElement('textarea'); t.value = texto; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
     }
     setCopiado(true); setTimeout(() => setCopiado(false), 2000);
-  }
-  function ouvir() {
-    const s = window.speechSynthesis;
-    if (!s) return;
-    if (falando) { s.cancel(); setFalando(false); return; }
-    const u = new SpeechSynthesisUtterance(texto);
-    u.lang = 'pt-BR';
-    u.onend = () => setFalando(false);
-    setFalando(true);
-    s.speak(u);
   }
   async function salvar() {
     setSalvo('...');
@@ -47,7 +36,6 @@ function Roteiro({ texto, clienteId, programaId }) {
       <p>{texto}</p>
       <div className="roteiro-acoes">
         <button type="button" className="btn peq" onClick={copiar}>{copiado ? <><Check className="ico" />Copiado!</> : <><Copy className="ico" />Copiar</>}</button>
-        <button type="button" className="btn peq cinza" onClick={ouvir}><Volume2 className="ico" />{falando ? 'Parar' : 'Ouvir'}</button>
         <button type="button" className="btn peq cinza" onClick={salvar} disabled={salvo === '...' || salvo === 'ok'}>
           <Save className="ico" />{salvo === 'ok' ? 'Salvo no cliente' : salvo === '...' ? 'Salvando...' : 'Salvar no cliente'}
         </button>
