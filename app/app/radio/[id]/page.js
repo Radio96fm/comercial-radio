@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
 import Topo from '@/components/Topo';
 import { moeda, statusPrograma } from '@/lib/format';
 import { MODALIDADE } from '@/lib/pacote';
@@ -37,11 +37,7 @@ export default async function RadioPage({ params }) {
     .eq('ativo', true)
     .order('horario_inicio', { ascending: true, nullsFirst: false });
 
-  const ids = (programas || []).map((p) => p.id);
-  const [{ data: planos }, { data: precos }] = await Promise.all([
-    ids.length ? supabase.from('programa_planos').select('id, programa_id, nome, valor').in('programa_id', ids).order('ordem') : Promise.resolve({ data: [] }),
-    supabase.from('tabela_precos').select('id, tipo, duracao, modalidade, valor').eq('radio_id', radio.id).eq('ativo', true).order('tipo').order('duracao'),
-  ]);
+  const { data: precos } = await supabase.from('tabela_precos').select('id, tipo, duracao, modalidade, valor').eq('radio_id', radio.id).eq('ativo', true).order('tipo').order('duracao');
   // avulsos agrupados como no mídia kit: uma linha por tipo+duração, colunas por horário
   const linhasAvulso = [];
   (precos || []).forEach((x) => {
@@ -99,28 +95,16 @@ export default async function RadioPage({ params }) {
           })}
         </div>
 
-        <div className="secao-titulo" style={{ marginTop: 26 }}><h2>Tabela de preços</h2></div>
-        <div className="tabela-kit" style={{ '--cor': radio.cor }}>
-          <div className="titulo-kit">Programas <small>valor por mês</small></div>
-          <table>
-            <tbody>
-              {(programas || []).map((p) => {
-                const pls = (planos || []).filter((x) => x.programa_id === p.id);
-                if (pls.length > 1) {
-                  return pls.map((x, i) => (
-                    <tr key={x.id}>
-                      <td>{i === 0 ? <b>{p.nome}</b> : null}<span className="sub-kit">{x.nome}</span></td>
-                      <td className="num">{moeda(x.valor)}</td>
-                    </tr>
-                  ));
-                }
-                return <tr key={p.id}><td><b>{p.nome}</b></td><td className="num">{moeda(pls[0]?.valor ?? p.valor_cota)}</td></tr>;
-              })}
-            </tbody>
-          </table>
-          {!!linhasAvulso.length && (
-            <>
-              <div className="titulo-kit">Inserções e testemunhais avulsos <small>valor de cada um</small></div>
+        {!!linhasAvulso.length && (
+          <details className="prog-linha acordeao" style={{ '--cor': radio.cor, '--st': 'var(--verde)' }}>
+            <summary>
+              <div className="topo-p">
+                <div className="nome">Tabela de preços</div>
+                <span className="seta"><ChevronDown className="ico" /></span>
+              </div>
+              <div className="desc">Inserções e testemunhais avulsos. Toque para ver os valores.</div>
+            </summary>
+            <div className="tabela-kit">
               <table>
                 <thead>
                   <tr><th /><th>{temMarcado ? 'Horário livre' : 'Valor'}</th>{temMarcado && <th>Horário marcado</th>}</tr>
@@ -135,11 +119,12 @@ export default async function RadioPage({ params }) {
                   ))}
                 </tbody>
               </table>
-              {temMarcado && <p className="muted" style={{ fontSize: '.85rem', margin: '8px 0 0' }}>Horário livre = {MODALIDADE.indeterminada}.</p>}
-            </>
-          )}
-          <p className="muted" style={{ fontSize: '.85rem', margin: '10px 0 0' }}>Mensal, boleto, contrato mínimo de 3 meses.</p>
-        </div>
+              <p className="muted" style={{ fontSize: '.85rem', margin: '8px 0 0' }}>
+                Valor de cada inserção ou testemunhal.{temMarcado ? ` Horário livre = ${MODALIDADE.indeterminada}.` : ''} Mensal, boleto, contrato mínimo de 3 meses.
+              </p>
+            </div>
+          </details>
+        )}
 
         <Link href={`/app/radio/${radio.id}/montar`} className="btn grande btn-radio" style={{ '--cor': radio.cor }}>
           <Sparkles className="ico" strokeWidth={2.4} /> Montar plano personalizado

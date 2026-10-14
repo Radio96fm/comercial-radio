@@ -1,15 +1,13 @@
 import Link from 'next/link';
 import { getSessao } from '@/lib/auth';
-import { ArrowUpRight, Car, ChevronRight, LogOut, Wallet } from 'lucide-react';
-import { moeda, tempoDesde } from '@/lib/format';
-import { calcularGanhos } from '@/lib/ganhos';
-import Tendencia from '@/components/Tendencia';
+import { ArrowUpRight, Car, ChevronRight, LogOut } from 'lucide-react';
+import { tempoDesde } from '@/lib/format';
 import { marcaDaRadio } from '@/lib/marca';
 
 export default async function HomeVendedor() {
   const { supabase, perfil, isGestor } = await getSessao();
 
-  const [{ data: radios }, { data: ocupacao }, { data: visitas }, ganhos] = await Promise.all([
+  const [{ data: radios }, { data: ocupacao }, { data: visitas }] = await Promise.all([
     supabase.from('radios').select('id, nome, slogan, cor').order('ordem'),
     supabase.from('programas_ocupacao').select('radio_id, cotas_livres').eq('ativo', true),
     supabase
@@ -18,7 +16,6 @@ export default async function HomeVendedor() {
       .eq('status', 'em_andamento')
       .order('iniciada_em', { ascending: false })
       .limit(5),
-    calcularGanhos(supabase, perfil),
   ]);
 
   const livresPorRadio = {};
@@ -42,21 +39,6 @@ export default async function HomeVendedor() {
             <button className="btn peq cinza" aria-label="Sair"><LogOut className="ico" /></button>
           </form>
         </div>
-
-        <Link href="/app/ganhos" className="ganhos-card">
-          <div className="topo-g">
-            <span className="ico-g"><Wallet size={22} /></span>
-            <span>Meus ganhos</span>
-            <ChevronRight className="seta" size={22} />
-          </div>
-          <small>Sua comissão neste mês</small>
-          <b className="num">{moeda(ganhos.atual)}</b>
-          <Tendencia variacao={ganhos.variacao} anterior={ganhos.anterior} />
-          <div className="rodape-g">
-            <span><b>{ganhos.ativos.length}</b> contrato{ganhos.ativos.length === 1 ? '' : 's'} ativo{ganhos.ativos.length === 1 ? '' : 's'}</span>
-            {ganhos.vencendo.length > 0 && <span className="alerta-g"><b>{ganhos.vencendo.length}</b> vencendo em breve</span>}
-          </div>
-        </Link>
 
         <p className="rotulo-secao">Escolha a rádio</p>
         {(radios || []).map((r) => {

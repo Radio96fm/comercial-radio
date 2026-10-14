@@ -8,7 +8,7 @@ import BotaoEnviar from '@/components/BotaoEnviar';
 import { moeda, data, somarMeses, somarDias, parseValor, valorParaCampo } from '@/lib/format';
 import { nomeItem, MODALIDADE, textoDireito } from '@/lib/pacote';
 
-const MESES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 24];
+const MESES = [1, 3, 6, 12];
 
 function Stepper({ valor, onChange, min = 1 }) {
   return (
@@ -170,17 +170,20 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
           </select>
         </div>
       )}
-      <div className="grid2">
-        <div className="campo">
-          <label>Início *</label>
-          <input type="date" name="data_inicio" value={inicio} onChange={(e) => setInicio(e.target.value)} required />
+      <div className="campo">
+        <label>Por quanto tempo? *</label>
+        <input type="hidden" name="meses" value={meses} />
+        <div className="seg4">
+          {MESES.map((m) => (
+            <button type="button" key={m} className={Number(meses) === m ? 'ativo' : ''} onClick={() => setMeses(m)}>
+              <b>{m}</b>{m === 1 ? 'mês' : 'meses'}
+            </button>
+          ))}
         </div>
-        <div className="campo">
-          <label>Duração *</label>
-          <select name="meses" value={meses} onChange={(e) => setMeses(e.target.value)}>
-            {MESES.map((m) => <option key={m} value={m}>{m} {m === 1 ? 'mês' : 'meses'}</option>)}
-          </select>
-        </div>
+      </div>
+      <div className="campo">
+        <label>Começa em *</label>
+        <input type="date" name="data_inicio" value={inicio} onChange={(e) => setInicio(e.target.value)} required />
       </div>
       {fim && <p className="muted" style={{ marginTop: -8 }}>Termina em <b>{data(fim)}</b>. Contrato mínimo da tabela: 3 meses.</p>}
       <div className="grid2">
@@ -213,15 +216,6 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
         <div className="ajuda">Já vem com o nome de quem está vendendo. Se a venda veio por uma agência, troque pelo nome dela.</div>
       </div>
 
-      <details className="card mais-info">
-        <summary>Campanha, produto e PI (opcional)</summary>
-        <div className="grid2" style={{ marginTop: 12 }}>
-          <div className="campo"><label>Campanha</label><input name="campanha" defaultValue="Institucional" /></div>
-          <div className="campo"><label>Produto</label><input name="produto" defaultValue="Institucional" /></div>
-          <div className="campo"><label>Nº PI</label><input name="numero_pi" /></div>
-          <div className="campo"><label>Autorização</label><input name="autorizacao" /></div>
-        </div>
-      </details>
 
       <div className="card total-contrato">
         <div><div className="muted">Por mês</div><b>{moeda(valorFinal)}</b></div>

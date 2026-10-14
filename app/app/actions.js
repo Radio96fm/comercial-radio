@@ -158,7 +158,7 @@ export async function criarContrato(_prev, fd) {
   if (!cliente_id) return { erro: 'Escolha o cliente.' };
   if (!programa_id && !pedidos.length) return { erro: 'Escolha um programa ou adicione itens avulsos ao pacote.' };
   if (!data_inicio) return { erro: 'Informe a data de início.' };
-  if (!meses || meses < 1 || meses > 60) return { erro: 'Quantidade de meses inválida (1 a 60).' };
+  if (![1, 3, 6, 12].includes(meses)) return { erro: 'Escolha o período: 1, 3, 6 ou 12 meses.' };
   if (dia_vencimento < 1 || dia_vencimento > 28) return { erro: 'Dia de vencimento deve ser entre 1 e 28.' };
 
   const [{ data: cliente }, { data: programa }, { data: plano }, { data: precos }, { data: modelo }] = await Promise.all([
