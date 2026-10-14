@@ -1,5 +1,7 @@
 'use server';
 import { valorNoPeriodo } from '@/lib/periodo';
+import { configAutentique, enviarDocumento } from '@/lib/autentique';
+import { gerarPdfContrato, nomeArquivo, SELECT_CONTRATO } from '@/lib/pdfGerar';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getSessao } from '@/lib/auth';
@@ -285,4 +287,40 @@ export async function salvarMeusDados(_prev, fd) {
   const voltar = txt(fd, 'voltar');
   if (voltar && voltar.startsWith('/app')) redirect(voltar);
   return { ok: 'Seus dados foram salvos. Eles vão aparecer nos seus contratos.' };
+}
+
+// ---------------------------------------------------------------- assinatura digital (Autentique)
+export async function enviarParaAssinatura(fd) {
+  const { supabase, perfil, isGestor } = await getSessao();
+  const id = txt(fd, 'id');
+  const voltar = (q) => redirect(`/app/contratos/${id}?${q}`);
+  const { data: c } = await supabase.from('contratos').select(SELECT_CONTRATO).eq('id', id).maybeSingle();
+  if (!c) voltar(`erro=${encodeURIComponent('Contrato não encontrado.')}`);
+  if (c.status !== 'pendente') voltar(`erro=${encodeURIComponent('Só dá para enviar contratos aguardando assinatura.')}`);
+  if (!isGestor && c.vendedor_id !== perfil.id) voltar(`erro=${encodeURIComponent('Este contrato é de outro vendedor.')}`);
+
+  let resultado;
+  try {
+    const cfg = await configAutentique();
+    if (!cfg?.token) throw new Error('A assinatura digital ainda não foi ligada. Peça ao gestor para colar a chave da Autentique no painel (Modelo de contrato).');
+    const pdf = await gerarPdfContrato(supabase, c);
+    resultado = await enviarDocumento({
+      token: cfg.token,
+      nome: nomeArquivo(c),
+      mensagem: `Contrato nº ${c.numero} com a ${c.radio?.nome}. Qualquer dúvida, fale com ${c.vendedor?.nome}.`,
+      pdf,
+      cliente: { nome: c.cliente?.contato_nome || c.cliente?.nome, email: c.cliente?.email || null },
+    });
+  } catch (e) {
+    voltar(`erro=${encodeURIComponent(e.message || 'Não foi possível enviar para a Autentique.')}`);
+  }
+  const { error } = await supabase.from('contratos').update({
+    autentique_id: resultado.id,
+    autentique_assinatura: resultado.assinatura,
+    assinatura_link: resultado.link,
+    assinatura_enviada_em: new Date().toISOString(),
+  }).eq('id', id);
+  if (error) voltar(`erro=${encodeURIComponent(traduzErro(error))}`);
+  revalidatePath(`/app/contratos/${id}`);
+  voltar('enviado=1');
 }

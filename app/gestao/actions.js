@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { requireGestor } from '@/lib/auth';
 import { adminCriarUsuario, adminAtualizarUsuario } from '@/lib/supabase/admin';
 import { parseValor } from '@/lib/format';
+import { testarChave } from '@/lib/autentique';
 
 const txt = (fd, k) => {
   const v = String(fd.get(k) ?? '').trim();
@@ -315,4 +316,20 @@ export async function excluirPreco(fd) {
   const { supabase } = await requireGestor();
   await supabase.from('tabela_precos').delete().eq('id', txt(fd, 'id'));
   revalidatePath('/gestao/precos');
+}
+
+// ------------------------------------------------------------------ assinatura digital
+export async function salvarAutentique(_prev, fd) {
+  const { supabase } = await requireGestor();
+  const token = txt(fd, 'token');
+  const webhook = txt(fd, 'webhook');
+  if (!token && !webhook) return { erro: 'Cole a chave da API da Autentique.' };
+  let conta = null;
+  if (token) {
+    try { conta = await testarChave(token); } catch (e) { return { erro: `A Autentique não aceitou esta chave: ${e.message}` }; }
+  }
+  const { error } = await supabase.rpc('salvar_autentique', { p_token: token, p_webhook: webhook });
+  if (error) return { erro: erroAmigavel(error) };
+  revalidatePath('/gestao/modelos');
+  return { ok: conta ? `Conectado à conta ${conta.name || conta.email}. Os vendedores já podem enviar contratos para assinar.` : 'Segredo do aviso automático salvo.' };
 }

@@ -1030,3 +1030,14 @@ a.linha-g:hover b { text-decoration: underline; }
   .bento > *, .b-hero, .b-claro, .b-minis, .b-grafico, .b-lista { grid-column: auto; }
   .b-minis { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---------- Assinatura digital ---------- */
+.assinatura-card { background: var(--card); border: 1px solid var(--line-2); border-left: 4px solid var(--destaque); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+.assinatura-card:empty { display: none; }
+.assinatura-card.ok { border-left-color: var(--verde); }
+.assinatura-card .topo-a { display: flex; gap: 12px; align-items: flex-start; }
+.assinatura-card .topo-a .ico { width: 26px; height: 26px; flex: none; color: var(--destaque); margin-top: 2px; }
+.assinatura-card.ok .topo-a .ico { color: var(--verde); }
+.assinatura-card .topo-a b { display: block; font-size: 1.08rem; }
+.assinatura-card .topo-a small { display: block; color: var(--muted); margin-top: 2px; }
+.autentique-cfg { margin-bottom: 22px; border-left: 4px solid var(--destaque); }

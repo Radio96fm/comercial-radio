@@ -808,3 +808,67 @@ left join lateral (
   select count(*) as ocupadas from public.contratos c
    where c.programa_id = p.id and c.status in ('pendente', 'ativo') and current_date between c.data_inicio and c.data_fim
 ) o on true;
+
+-- ---------------------------------------------------------------------
+-- Assinatura digital (Autentique). A chave da API fica em privado.config;
+-- o servidor só lê com o segredo ADMIN_PROXY_SECRET.
+-- ---------------------------------------------------------------------
+alter table public.contratos
+  add column if not exists autentique_id text,
+  add column if not exists autentique_assinatura text,
+  add column if not exists assinatura_link text,
+  add column if not exists assinatura_enviada_em timestamptz,
+  add column if not exists assinado_em timestamptz;
+
+create or replace function public.salvar_autentique(p_token text, p_webhook text) returns void
+language plpgsql security definer set search_path = public, privado as $f$
+begin
+  if not public.is_gestor() then raise exception 'Apenas o gestor pode configurar a assinatura.'; end if;
+  if coalesce(p_token, '') <> '' then
+    insert into privado.config values ('autentique_token', p_token) on conflict (chave) do update set valor = excluded.valor;
+  end if;
+  if coalesce(p_webhook, '') <> '' then
+    insert into privado.config values ('autentique_webhook_secret', p_webhook) on conflict (chave) do update set valor = excluded.valor;
+  end if;
+end $f$;
+revoke execute on function public.salvar_autentique(text, text) from public, anon;
+grant execute on function public.salvar_autentique(text, text) to authenticated;
+
+create or replace function public.autentique_situacao() returns json
+language sql stable security definer set search_path = privado as $f$
+  select json_build_object(
+    'token', exists (select 1 from privado.config where chave = 'autentique_token'),
+    'webhook', exists (select 1 from privado.config where chave = 'autentique_webhook_secret'));
+$f$;
+revoke execute on function public.autentique_situacao() from public, anon;
+grant execute on function public.autentique_situacao() to authenticated;
+
+create or replace function public.autentique_config(p_segredo text) returns json
+language plpgsql stable security definer set search_path = privado, extensions as $f$
+begin
+  if p_segredo is null or encode(extensions.digest(p_segredo, 'sha256'), 'hex')
+     is distinct from (select valor from privado.config where chave = 'admin_proxy_sha256') then
+    raise exception 'acesso negado';
+  end if;
+  return json_build_object(
+    'token', (select valor from privado.config where chave = 'autentique_token'),
+    'webhook', (select valor from privado.config where chave = 'autentique_webhook_secret'));
+end $f$;
+revoke execute on function public.autentique_config(text) from public;
+grant execute on function public.autentique_config(text) to anon, authenticated;
+
+create or replace function public.autentique_marcar_assinado(p_segredo text, p_documento text) returns int
+language plpgsql security definer set search_path = public, privado, extensions as $f$
+declare n int;
+begin
+  if p_segredo is null or encode(extensions.digest(p_segredo, 'sha256'), 'hex')
+     is distinct from (select valor from privado.config where chave = 'admin_proxy_sha256') then
+    raise exception 'acesso negado';
+  end if;
+  update public.contratos set status = 'ativo', assinado_em = coalesce(assinado_em, now())
+   where autentique_id = p_documento and status = 'pendente';
+  get diagnostics n = row_count;
+  return n;
+end $f$;
+revoke execute on function public.autentique_marcar_assinado(text, text) from public;
+grant execute on function public.autentique_marcar_assinado(text, text) to anon, authenticated;
