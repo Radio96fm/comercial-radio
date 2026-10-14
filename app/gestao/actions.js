@@ -141,7 +141,7 @@ export async function excluirSegmento(_prev, fd) {
 export async function salvarRadio(_prev, fd) {
   const { supabase } = await requireGestor();
   const id = txt(fd, 'id');
-  const registro = { nome: txt(fd, 'nome'), slogan: txt(fd, 'slogan'), cor: txt(fd, 'cor') || '#1d4ed8' };
+  const registro = { nome: txt(fd, 'nome'), slogan: txt(fd, 'slogan'), cor: txt(fd, 'cor') || '#3d7bff' };
   if (!registro.nome) return { erro: 'Informe o nome da rádio.' };
   const q = id ? supabase.from('radios').update(registro).eq('id', id) : supabase.from('radios').insert(registro);
   const { error } = await q;

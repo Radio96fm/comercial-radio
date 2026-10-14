@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
+import { Ban, Clock, Mic, Package, PenLine } from 'lucide-react';
 import { data, horario, moeda, statusPrograma, STATUS_CONTRATO, hojeISO } from '@/lib/format';
 
 export default async function ProgramaPage({ params }) {
@@ -21,7 +22,6 @@ export default async function ProgramaPage({ params }) {
   const vigentes = (contratos || []).filter((c) => c.data_inicio <= hoje);
   const futuros = (contratos || []).filter((c) => c.data_inicio > hoje);
   const st = statusPrograma(p.cotas_livres, p.cotas_total);
-  const pct = p.cotas_total ? Math.round((p.cotas_ocupadas / p.cotas_total) * 100) : 100;
 
   const Linha = ({ c }) => (
     <div className="item">
@@ -43,35 +43,38 @@ export default async function ProgramaPage({ params }) {
       <main className="conteudo">
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
-            <div>
-              <div className="muted">{p.radio_nome}</div>
-              <h1 style={{ marginBottom: 4 }}>{p.nome}</h1>
-              <div>🕒 {p.dias} · {horario(p)}</div>
-              {p.apresentador && <div className="muted">🎙️ {p.apresentador}</div>}
+            <div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="bolinha" style={{ background: p.radio_cor }} />{p.radio_nome}
             </div>
-            <span className={`badge b-${st.cor}`} style={{ fontSize: '1rem' }}>{st.texto}</span>
+            <span className={`badge b-${st.cor}`} style={{ fontSize: '.95rem' }}>{st.texto}</span>
           </div>
-          {p.descricao && <p style={{ marginTop: 10 }}>{p.descricao}</p>}
+          <h1 style={{ margin: '10px 0 8px', fontSize: '2rem' }}>{p.nome}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Clock className="ico" />{p.dias} · {horario(p)}</div>
+          {p.apresentador && <div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}><Mic className="ico" />{p.apresentador}</div>}
+          {p.descricao && <p style={{ marginTop: 12 }} className="muted">{p.descricao}</p>}
 
-          <div style={{ margin: '14px 0 6px', fontWeight: 700 }}>
-            Cotas: {p.cotas_ocupadas} de {p.cotas_total} ocupadas
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '18px 0 10px' }}>
+            <b>Cotas</b>
+            <span><b className="num" style={{ fontSize: '1.6rem' }}>{p.cotas_ocupadas}</b><span className="muted"> de {p.cotas_total} ocupadas</span></span>
           </div>
-          <div className="barra"><span style={{ width: `${pct}%`, background: st.cor === 'vermelho' ? 'var(--vermelho)' : st.cor === 'amarelo' ? '#f59e0b' : 'var(--verde)' }} /></div>
+          <div className={`cotas-blocos${p.cotas_livres <= 0 ? ' lotado' : ''}`}>
+            {Array.from({ length: p.cotas_total }, (_, i) => <span key={i} className={i < p.cotas_ocupadas ? 'cheia' : ''} />)}
+          </div>
 
-          <div className="grid2" style={{ marginTop: 14 }}>
-            <div><div className="muted">Valor da cota</div><b style={{ fontSize: '1.15rem' }}>{moeda(p.valor_cota)}/mês</b></div>
-            <div><div className="muted">Cotas livres</div><b style={{ fontSize: '1.15rem' }}>{p.cotas_livres}</b></div>
+          <div className="grid2" style={{ marginTop: 16 }}>
+            <div><div className="muted">Valor da cota</div><b className="num" style={{ fontSize: '1.3rem' }}>{moeda(p.valor_cota)}</b><span className="muted"> /mês</span></div>
+            <div><div className="muted">Cotas livres</div><b className="num" style={{ fontSize: '1.3rem' }}>{p.cotas_livres}</b></div>
           </div>
-          {p.descricao_cota && <p className="muted" style={{ marginTop: 10 }}>📦 {p.descricao_cota}</p>}
+          {p.descricao_cota && <p className="muted" style={{ marginTop: 14, marginBottom: 0, display: 'flex', gap: 8 }}><Package className="ico" />{p.descricao_cota}</p>}
         </div>
 
         {p.cotas_livres > 0 ? (
-          <Link href={`/app/contratos/novo?programa=${p.id}`} className="btn grande verde">✍️ Fechar contrato neste programa</Link>
+          <Link href={`/app/contratos/novo?programa=${p.id}`} className="btn grande"><PenLine className="ico" strokeWidth={2.4} /> Fechar contrato neste programa</Link>
         ) : (
           <div className="alerta erro">Programa lotado no momento. Veja abaixo quando os contratos terminam.</div>
         )}
 
-        <div className="secao-titulo"><h2>⛔ Segmentos ocupados</h2></div>
+        <div className="secao-titulo"><h2><Ban className="ico" style={{ color: 'var(--vermelho)' }} />Segmentos ocupados</h2></div>
         {!vigentes.length && !futuros.length ? (
           <div className="vazio">Nenhum segmento ocupado. Todos estão liberados.</div>
         ) : (

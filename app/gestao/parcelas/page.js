@@ -28,7 +28,7 @@ export default async function Parcelas({ searchParams }) {
     <>
       <div className="cabecalho"><h1>Parcelas / boletos</h1></div>
       <div className="alerta info">
-        🏦 Próxima etapa: integração com o banco/plataforma de cobrança para gerar o boleto e dar baixa automaticamente.
+        Próxima etapa: integração com o banco/plataforma de cobrança para gerar o boleto e dar baixa automaticamente.
         Por enquanto, marque aqui quando o boleto for emitido e quando for pago.
       </div>
       <div className="acoes" style={{ marginBottom: 14 }}>

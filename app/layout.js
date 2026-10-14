@@ -1,3 +1,5 @@
+import '@fontsource-variable/inter';
+import '@fontsource-variable/space-grotesk';
 import './globals.css';
 
 export const metadata = {
@@ -12,7 +14,7 @@ export const metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#1e3a8a',
+  themeColor: '#0a0a0a',
 };
 
 export default function RootLayout({ children }) {

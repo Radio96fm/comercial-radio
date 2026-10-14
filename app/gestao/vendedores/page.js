@@ -17,7 +17,7 @@ export default async function Usuarios() {
       <div className="cabecalho"><h1>Usuários</h1></div>
 
       <details className="card" open={!usuarios || usuarios.length <= 1}>
-        <summary>➕ Cadastrar vendedor ou gestor</summary>
+        <summary>Cadastrar vendedor ou gestor</summary>
         <FormAcao action={criarUsuario} limparAoSalvar>
           <div className="form-grid">
             <div className="campo"><label>Nome *</label><input name="nome" required /></div>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Radio, Wallet, PenLine, Car, Hourglass, History } from 'lucide-react';
 import { requireGestor } from '@/lib/auth';
 import { data, dataHora, moeda, tempoDesde, horario, hojeISO, somarDias, statusPrograma } from '@/lib/format';
 
@@ -14,7 +15,7 @@ export default async function Dashboard() {
     supabase.from('visitas').select('id, iniciada_em, cliente:clientes(nome), vendedor:profiles(nome)').eq('status', 'em_andamento').order('iniciada_em', { ascending: false }),
     supabase.from('contratos').select('id', { count: 'exact' }).eq('status', 'pendente'),
     supabase.from('contratos').select('valor_mensal').eq('status', 'ativo').lte('data_inicio', hoje).gte('data_fim', hoje),
-    supabase.from('atividades').select('id, descricao, created_at, usuario:profiles(nome)').order('created_at', { ascending: false }).limit(12),
+    supabase.from('atividades').select('id, descricao, created_at, usuario:profiles(nome)').order('created_at', { ascending: false }).limit(6),
   ]);
 
   const totalCotas = (programas || []).reduce((s, p) => s + p.cotas_total, 0);
@@ -29,18 +30,34 @@ export default async function Dashboard() {
 
   return (
     <>
-      <div className="cabecalho"><h1>Visão geral</h1><span className="muted">Atualiza sozinho</span></div>
+      <div className="cabecalho"><h1>Visão geral</h1><span className="ao-vivo">Ao vivo</span></div>
 
       <div className="kpis">
-        <div className="kpi"><div className="valor">{ocupadas}/{totalCotas}</div><div className="rotulo">Cotas ocupadas hoje</div></div>
-        <div className="kpi"><div className="valor">{moeda(receita)}</div><div className="rotulo">Receita mensal (contratos ativos)</div></div>
-        <div className="kpi"><div className="valor">{pendentes?.length || 0}</div><div className="rotulo">Aguardando assinatura</div></div>
-        <div className="kpi"><div className="valor">{visitas?.length || 0}</div><div className="rotulo">Visitas em andamento</div></div>
+        <div className="kpi destaque">
+          <div className="kpi-topo">Cotas ocupadas hoje<Radio className="ico" /></div>
+          <div className="valor">{ocupadas}<span style={{ opacity: .45 }}>/{totalCotas}</span></div>
+          <div className="barra"><span style={{ width: `${totalCotas ? (ocupadas / totalCotas) * 100 : 0}%` }} /></div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-topo">Receita mensal<Wallet className="ico" /></div>
+          <div className="valor">{moeda(receita)}</div>
+          <div className="rotulo">contratos ativos hoje</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-topo">Aguardando assinatura<PenLine className="ico" /></div>
+          <div className="valor">{pendentes?.length || 0}</div>
+          <div className="rotulo">contratos</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-topo">Em visita agora<Car className="ico" /></div>
+          <div className="valor">{visitas?.length || 0}</div>
+          <div className="rotulo">vendedores na rua</div>
+        </div>
       </div>
 
       {Object.entries(porRadio).map(([radio, g]) => (
         <div key={radio} style={{ marginBottom: 18 }}>
-          <h2 style={{ color: g.cor }}>{radio}</h2>
+          <div className="radio-titulo"><span className="ponto" style={{ background: g.cor }} /><h2>{radio}</h2></div>
           <div className="tabela">
             <table>
               <thead><tr><th>Programa</th><th>Horário</th><th>Ocupação</th><th>Situação</th></tr></thead>
@@ -54,7 +71,7 @@ export default async function Dashboard() {
                       <td>{p.dias}<br /><small>{horario(p)}</small></td>
                       <td style={{ minWidth: 140 }}>
                         {p.cotas_ocupadas} de {p.cotas_total}
-                        <div className="barra" style={{ marginTop: 4 }}><span style={{ width: `${pct}%` }} /></div>
+                        <div className="barra" style={{ marginTop: 4 }}><span style={{ width: `${pct}%`, background: st.cor === 'vermelho' ? 'var(--vermelho)' : undefined }} /></div>
                       </td>
                       <td><span className={`badge b-${st.cor}`}>{st.texto}</span></td>
                     </tr>
@@ -66,13 +83,13 @@ export default async function Dashboard() {
         </div>
       ))}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16, alignItems: 'start' }}>
         <div className="card">
-          <h2>⏳ Contratos vencendo em 30 dias</h2>
+          <h2 style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Hourglass className="ico" style={{ color: 'var(--accent)' }} />Vencendo em 30 dias</h2>
           {!vencendo?.length ? <p className="muted">Nenhum.</p> : (
             <div className="lista">
               {vencendo.map((c) => (
-                <Link key={c.id} href={`/app/contratos/${c.id}`} className="item" style={{ boxShadow: 'none', border: '1px solid var(--line)' }}>
+                <Link key={c.id} href={`/app/contratos/${c.id}`} className="item plano">
                   <div className="info">
                     <div className="nome">{c.cliente?.nome}</div>
                     <div className="det">{c.programa?.nome} · {c.vendedor?.nome}</div>
@@ -84,11 +101,11 @@ export default async function Dashboard() {
           )}
         </div>
         <div className="card">
-          <h2>🚗 Em visitação agora</h2>
+          <h2 style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Car className="ico" style={{ color: 'var(--accent)' }} />Em visitação agora</h2>
           {!visitas?.length ? <p className="muted">Ninguém em visita.</p> : (
             <div className="lista">
               {visitas.map((v) => (
-                <Link key={v.id} href={`/app/visitas/${v.id}`} className="item" style={{ boxShadow: 'none', border: '1px solid var(--line)' }}>
+                <Link key={v.id} href={`/app/visitas/${v.id}`} className="item plano">
                   <div className="info">
                     <div className="nome">{v.cliente?.nome}</div>
                     <div className="det">{v.vendedor?.nome} · {tempoDesde(v.iniciada_em)}</div>
@@ -99,11 +116,11 @@ export default async function Dashboard() {
           )}
         </div>
         <div className="card">
-          <h2>🕓 Últimas atividades</h2>
+          <h2 style={{ display: 'flex', gap: 8, alignItems: 'center' }}><History className="ico" style={{ color: 'var(--accent)' }} />Últimas atividades</h2>
           {!atividades?.length ? <p className="muted">Nada ainda.</p> : (
             <div>
               {atividades.map((a) => (
-                <div key={a.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
+                <div key={a.id} className="linha-atividade">
                   <div>{a.descricao}</div>
                   <small>{a.usuario?.nome || 'Sistema'} · {dataHora(a.created_at)}</small>
                 </div>

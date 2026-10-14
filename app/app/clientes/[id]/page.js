@@ -32,19 +32,19 @@ export default async function ClientePage({ params }) {
         <div className="card">
           <h1 style={{ marginBottom: 2 }}>{c.nome}</h1>
           <div className="muted">{c.segmento?.nome}{c.cidade ? ` · ${c.cidade}` : ''}</div>
-          <p style={{ marginTop: 8 }}>👤 Carteira de <b>{c.vendedor_id === perfil.id ? 'você' : c.vendedor?.nome || '—'}</b></p>
-          {c.contato_nome && <div>📇 {c.contato_nome}</div>}
+          <p style={{ marginTop: 8 }}>Carteira de <b>{c.vendedor_id === perfil.id ? 'você' : c.vendedor?.nome || '—'}</b></p>
+          {c.contato_nome && <div>{c.contato_nome}</div>}
           {c.telefone && (
             <div className="acoes" style={{ marginTop: 10 }}>
-              <a className="btn peq sec" href={`tel:${c.telefone.replace(/\D/g, '')}`}>📞 Ligar</a>
-              <a className="btn peq whats" href={linkWhatsApp(c.telefone, '')} target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>
+              <a className="btn peq sec" href={`tel:${c.telefone.replace(/\D/g, '')}`}>Ligar</a>
+              <a className="btn peq whats" href={linkWhatsApp(c.telefone, '')} target="_blank" rel="noopener noreferrer">WhatsApp</a>
             </div>
           )}
         </div>
 
         <div className="acoes" style={{ marginBottom: 8 }}>
-          <Link className="btn verde" href={`/app/visitas/nova?cliente=${c.id}`}>🚗 Iniciar visita</Link>
-          {podeEditar && <Link className="btn" href={`/app/contratos/novo?cliente=${c.id}`}>✍️ Novo contrato</Link>}
+          <Link className="btn verde" href={`/app/visitas/nova?cliente=${c.id}`}>Iniciar visita</Link>
+          {podeEditar && <Link className="btn" href={`/app/contratos/novo?cliente=${c.id}`}>Novo contrato</Link>}
         </div>
 
         <div className="secao-titulo"><h2>Contratos</h2></div>
@@ -79,7 +79,7 @@ export default async function ClientePage({ params }) {
 
         {podeEditar && (
           <details className="card" style={{ marginTop: 20 }}>
-            <summary>✏️ Editar dados do cliente</summary>
+            <summary>Editar dados do cliente</summary>
             <FormAcao action={atualizarCliente}>
               <input type="hidden" name="id" value={c.id} />
               <CamposCliente segmentos={segmentos || []} valores={c} />

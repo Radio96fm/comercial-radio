@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getSessao } from '@/lib/auth';
-import Topo from '@/components/Topo';
+import { ArrowUpRight, Car, ChevronRight, LogOut } from 'lucide-react';
 import { tempoDesde } from '@/lib/format';
 
 export default async function HomeVendedor() {
@@ -19,8 +19,9 @@ export default async function HomeVendedor() {
 
   const livresPorRadio = {};
   (ocupacao || []).forEach((p) => {
-    livresPorRadio[p.radio_id] = livresPorRadio[p.radio_id] || { programas: 0, comVaga: 0 };
+    livresPorRadio[p.radio_id] = livresPorRadio[p.radio_id] || { programas: 0, comVaga: 0, cotas: 0 };
     livresPorRadio[p.radio_id].programas += 1;
+    livresPorRadio[p.radio_id].cotas += p.cotas_livres;
     if (p.cotas_livres > 0) livresPorRadio[p.radio_id].comVaga += 1;
   });
 
@@ -28,40 +29,41 @@ export default async function HomeVendedor() {
 
   return (
     <>
-      <Topo
-        titulo={`Olá, ${primeiroNome}!`}
-        direita={
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            {isGestor && <Link href="/gestao" className="badge b-azul">Painel</Link>}
-            <form action="/sair" method="post"><button className="btn peq cinza">Sair</button></form>
-          </div>
-        }
-      />
       <main className="conteudo">
-        <p className="muted" style={{ fontSize: '1rem' }}>Escolha a rádio para ver os programas:</p>
+        <div className="ola">
+          <span className="avatar">{primeiroNome[0]}</span>
+          <div className="txt"><small>Bom trabalho,</small><b>{primeiroNome}</b></div>
+          {isGestor && <Link href="/gestao" className="btn peq cinza">Painel</Link>}
+          <form action="/sair" method="post">
+            <button className="btn peq cinza" aria-label="Sair"><LogOut className="ico" /></button>
+          </form>
+        </div>
 
+        <p className="rotulo-secao">Escolha a rádio</p>
         {(radios || []).map((r) => {
-          const info = livresPorRadio[r.id] || { programas: 0, comVaga: 0 };
+          const info = livresPorRadio[r.id] || { programas: 0, comVaga: 0, cotas: 0 };
           return (
-            <Link key={r.id} href={`/app/radio/${r.id}`} className="radio-btn" style={{ background: r.cor }}>
-              <div>
+            <Link key={r.id} href={`/app/radio/${r.id}`} className="radio-btn" style={{ '--cor': r.cor }}>
+              <div className="topo-r">
                 <div className="nome">{r.nome}</div>
-                <div className="sub">
-                  {info.programas} programas · {info.comVaga} com vaga
-                </div>
+                <span className="seta"><ArrowUpRight size={24} strokeWidth={2.4} /></span>
               </div>
-              <span className="seta">›</span>
+              <div className="numeros">
+                <div><b>{info.programas}</b><span>programas</span></div>
+                <div><b>{info.comVaga}</b><span>com vaga</span></div>
+                <div><b>{info.cotas}</b><span>cotas livres</span></div>
+              </div>
             </Link>
           );
         })}
 
-        <Link href="/app/visitas/nova" className="btn grande verde" style={{ marginBottom: 8 }}>
-          🚗 Estou visitando um cliente
+        <Link href="/app/visitas/nova" className="btn grande" style={{ marginTop: 6 }}>
+          <Car className="ico" strokeWidth={2.4} /> Estou visitando um cliente
         </Link>
 
         <div className="secao-titulo">
           <h2>Em visitação agora</h2>
-          <Link href="/app/visitas">Ver todas ›</Link>
+          <Link href="/app/visitas">Ver todas</Link>
         </div>
         {!visitas?.length ? (
           <div className="vazio">Ninguém registrou visita no momento.</div>
@@ -69,14 +71,14 @@ export default async function HomeVendedor() {
           <div className="lista">
             {visitas.map((v) => (
               <Link key={v.id} href={`/app/visitas/${v.id}`} className="item">
-                <span style={{ fontSize: '1.5rem' }}>🚗</span>
+                <span className="icone-redondo"><Car size={20} /></span>
                 <div className="info">
                   <div className="nome">{v.cliente?.nome}</div>
                   <div className="det">
                     {v.vendedor_id === perfil.id ? 'Você' : v.vendedor?.nome} · {tempoDesde(v.iniciada_em)}
                   </div>
                 </div>
-                <span className="seta">›</span>
+                <ChevronRight className="seta" size={20} />
               </Link>
             ))}
           </div>

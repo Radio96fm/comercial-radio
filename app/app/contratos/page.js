@@ -18,7 +18,7 @@ export default async function Contratos() {
     <>
       <Topo titulo="Meus contratos" voltar="/app" />
       <main className="conteudo">
-        <Link href="/app/contratos/novo" className="btn grande verde" style={{ marginBottom: 14 }}>✍️ Novo contrato</Link>
+        <Link href="/app/contratos/novo" className="btn grande verde" style={{ marginBottom: 14 }}>Novo contrato</Link>
         {!contratos?.length && <div className="vazio">Você ainda não tem contratos.</div>}
         <div className="lista">
           {(contratos || []).map((c) => (

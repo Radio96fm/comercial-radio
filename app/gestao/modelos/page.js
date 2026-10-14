@@ -30,14 +30,14 @@ export default async function Modelos() {
           {modelo && <input type="hidden" name="id" value={modelo.id} />}
           <div className="campo"><label>Nome do modelo</label><input name="nome" defaultValue={modelo?.nome || 'Contrato padrão de patrocínio'} /></div>
           <div className="campo"><label>Texto do contrato</label><textarea className="modelo" name="conteudo" defaultValue={modelo?.conteudo || ''} /></div>
-          <BotaoEnviar className="btn" texto="💾 Salvar modelo" />
+          <BotaoEnviar className="btn" texto="Salvar modelo" />
         </FormAcao>
         <div className="card" style={{ position: 'sticky', top: 16 }}>
           <h3>Campos disponíveis</h3>
           <p className="muted">Copie e cole no texto:</p>
           {CAMPOS_MODELO.map(([k, desc]) => (
             <div key={k} style={{ marginBottom: 6 }}>
-              <code style={{ background: '#eef2ff', padding: '2px 6px', borderRadius: 6, userSelect: 'all' }}>{`{{${k}}}`}</code>
+              <code style={{ userSelect: 'all' }}>{`{{${k}}}`}</code>
               <div className="muted" style={{ fontSize: '.82rem' }}>{desc}</div>
             </div>
           ))}

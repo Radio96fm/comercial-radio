@@ -1,24 +1,25 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Home, Car, Users, FileText } from 'lucide-react';
 
 const ITENS = [
-  { href: '/app', ico: '🏠', txt: 'Início', exato: true },
-  { href: '/app/visitas', ico: '🚗', txt: 'Visitas' },
-  { href: '/app/clientes', ico: '👥', txt: 'Clientes' },
-  { href: '/app/contratos', ico: '📄', txt: 'Contratos' },
+  { href: '/app', Ico: Home, txt: 'Início', exato: true },
+  { href: '/app/visitas', Ico: Car, txt: 'Visitas' },
+  { href: '/app/clientes', Ico: Users, txt: 'Clientes' },
+  { href: '/app/contratos', Ico: FileText, txt: 'Contratos' },
 ];
 
 export default function BottomNav() {
   const path = usePathname();
   return (
     <nav className="bottomnav nao-imprimir">
-      {ITENS.map((i) => {
-        const ativo = i.exato ? path === i.href || path.startsWith('/app/radio') || path.startsWith('/app/programa') : path.startsWith(i.href);
+      {ITENS.map(({ href, Ico, txt, exato }) => {
+        const ativo = exato ? path === href || path.startsWith('/app/radio') || path.startsWith('/app/programa') : path.startsWith(href);
         return (
-          <Link key={i.href} href={i.href} className={ativo ? 'ativo' : ''}>
-            <span className="ico">{i.ico}</span>
-            {i.txt}
+          <Link key={href} href={href} className={ativo ? 'ativo' : ''}>
+            <Ico className="ico" strokeWidth={2.2} />
+            {txt}
           </Link>
         );
       })}

@@ -37,7 +37,7 @@ export default function FormContrato({ clientes, programas, ocupados, vendedores
 
   return (
     <form action={acao}>
-      {estado?.erro && <div className="alerta erro">⚠️ {estado.erro}</div>}
+      {estado?.erro && <div className="alerta erro">{estado.erro}</div>}
       <input type="hidden" name="visita_id" value={inicial.visita} />
 
       <div className="campo">
@@ -50,7 +50,7 @@ export default function FormContrato({ clientes, programas, ocupados, vendedores
         </select>
         <div className="ajuda">
           {isGestor ? 'Todos os clientes.' : 'Aparecem os clientes da sua carteira.'}{' '}
-          <Link href={linkNovoCliente}>➕ Cadastrar cliente novo</Link>
+          <Link href={linkNovoCliente}>Cadastrar cliente novo</Link>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export default function FormContrato({ clientes, programas, ocupados, vendedores
 
       {conflito && (
         <div className="alerta erro">
-          ⛔ O segmento deste cliente já está ocupado neste programa até {data(conflito.data_fim)}. Escolha outro programa ou uma data de início depois disso.
+          O segmento deste cliente já está ocupado neste programa até {data(conflito.data_fim)}. Escolha outro programa ou uma data de início depois disso.
         </div>
       )}
 
@@ -116,14 +116,14 @@ export default function FormContrato({ clientes, programas, ocupados, vendedores
         <textarea name="observacoes" style={{ minHeight: 70 }} />
       </div>
 
-      <div className="card" style={{ background: '#f8fafc' }}>
+      <div className="card" style={{ background: 'var(--card-2)' }}>
         <div className="grid2">
           <div><div className="muted">Mensal</div><b>{moeda(valorNum)}</b></div>
           <div><div className="muted">Total ({meses}x)</div><b style={{ fontSize: '1.2rem' }}>{moeda(valorNum * Number(meses))}</b></div>
         </div>
       </div>
 
-      <BotaoEnviar className="btn grande verde" texto="✍️ Criar contrato" enviando="Criando contrato..." disabled={!!conflito} />
+      <BotaoEnviar className="btn grande verde" texto="Criar contrato" enviando="Criando contrato..." disabled={!!conflito} />
       <p className="muted" style={{ marginTop: 10 }}>
         O contrato já reserva a vaga no programa e fica como “Aguardando assinatura”.
       </p>

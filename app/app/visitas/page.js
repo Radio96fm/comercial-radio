@@ -26,7 +26,7 @@ export default async function Visitas() {
     <>
       <Topo titulo="Visitas" voltar="/app" />
       <main className="conteudo">
-        <Link href="/app/visitas/nova" className="btn grande verde">🚗 Registrar nova visita</Link>
+        <Link href="/app/visitas/nova" className="btn grande verde">Registrar nova visita</Link>
 
         <div className="secao-titulo"><h2>Em andamento (toda a equipe)</h2></div>
         {!agora?.length ? (
@@ -39,7 +39,7 @@ export default async function Visitas() {
                   <div className="nome">{v.cliente?.nome}</div>
                   <div className="det">{v.cliente?.segmento?.nome}</div>
                   <div className="det">
-                    👤 <b>{v.vendedor_id === perfil.id ? 'Você' : v.vendedor?.nome}</b> · {tempoDesde(v.iniciada_em)}
+                    <b>{v.vendedor_id === perfil.id ? 'Você' : v.vendedor?.nome}</b> · {tempoDesde(v.iniciada_em)}
                   </div>
                 </div>
                 <span className={`badge ${COR[v.status]}`}>{STATUS_VISITA[v.status]}</span>

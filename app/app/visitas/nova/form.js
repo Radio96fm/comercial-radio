@@ -75,7 +75,7 @@ export default function FormNovaVisita({ clientes, segmentos, meuId, clienteInic
         <textarea id="observacoes" name="observacoes" placeholder="Ex.: falar com o dono, interesse no horário da manhã..." />
       </div>
 
-      <BotaoEnviar className="btn grande verde" texto="✅ Iniciar visita" enviando="Registrando..." disabled={modo === 'existente' && !selecionado} />
+      <BotaoEnviar className="btn grande verde" texto="Iniciar visita" enviando="Registrando..." disabled={modo === 'existente' && !selecionado} />
     </form>
   );
 }

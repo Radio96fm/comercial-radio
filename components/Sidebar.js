@@ -1,32 +1,42 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import {
+  LayoutDashboard, Radio, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut,
+} from 'lucide-react';
 
 const ITENS = [
-  ['/gestao', '📊 Visão geral', true],
-  ['/gestao/programas', '📻 Programas'],
-  ['/gestao/contratos', '📄 Contratos'],
-  ['/gestao/parcelas', '💰 Parcelas / boletos'],
-  ['/gestao/clientes', '👥 Clientes'],
-  ['/gestao/vendedores', '🧑‍💼 Usuários'],
-  ['/gestao/modelos', '📝 Modelo de contrato'],
-  ['/gestao/cadastros', '🏷️ Rádios e segmentos'],
-  ['/gestao/atividades', '🕓 Histórico'],
+  ['/gestao', LayoutDashboard, 'Visão geral', true],
+  ['/gestao/programas', Radio, 'Programas'],
+  ['/gestao/contratos', FileText, 'Contratos'],
+  ['/gestao/parcelas', Wallet, 'Parcelas / boletos'],
+  ['/gestao/clientes', Users, 'Clientes'],
+  ['/gestao/vendedores', UserCog, 'Usuários'],
+  ['/gestao/modelos', FileSignature, 'Modelo de contrato'],
+  ['/gestao/cadastros', Tags, 'Rádios e segmentos'],
+  ['/gestao/atividades', History, 'Histórico'],
 ];
 
 export default function Sidebar({ nome }) {
   const path = usePathname();
   return (
     <aside className="sidebar nao-imprimir">
-      <div className="logo">📻 Comercial<br /><small style={{ color: '#b9c6f5', fontWeight: 400 }}>{nome}</small></div>
-      {ITENS.map(([href, txt, exato]) => (
-        <Link key={href} href={href} className={(exato ? path === href : path.startsWith(href)) ? 'ativo' : ''}>{txt}</Link>
+      <div className="logo">
+        <span className="marca"><Radio className="ico" strokeWidth={2.4} /></span>
+        <div><b>Comercial</b><small>{nome}</small></div>
+      </div>
+      {ITENS.map(([href, Ico, txt, exato]) => (
+        <Link key={href} href={href} className={(exato ? path === href : path.startsWith(href)) ? 'ativo' : ''}>
+          <Ico className="ico" />{txt}
+        </Link>
       ))}
-      <div className="sep" />
-      <Link href="/app">📱 Abrir app do vendedor</Link>
-      <form action="/sair" method="post">
-        <button className="btn peq cinza" style={{ margin: '8px 12px', width: 'calc(100% - 24px)' }}>Sair</button>
-      </form>
+      <div className="rodape">
+        <div className="sep" />
+        <Link href="/app"><Smartphone className="ico" />Abrir app do vendedor</Link>
+        <form action="/sair" method="post">
+          <button className="btn peq cinza" style={{ margin: '10px 0 0', width: '100%' }}><LogOut className="ico" />Sair</button>
+        </form>
+      </div>
     </aside>
   );
 }

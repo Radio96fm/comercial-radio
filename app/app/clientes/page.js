@@ -13,7 +13,7 @@ export default async function Clientes() {
     <>
       <Topo titulo="Clientes" voltar="/app" />
       <main className="conteudo">
-        <Link href="/app/clientes/novo" className="btn grande" style={{ marginBottom: 14 }}>➕ Cadastrar cliente</Link>
+        <Link href="/app/clientes/novo" className="btn grande" style={{ marginBottom: 14 }}>Cadastrar cliente</Link>
         <ListaClientes clientes={clientes || []} meuId={perfil.id} />
       </main>
     </>

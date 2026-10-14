@@ -4,8 +4,8 @@
 -- =====================================================================
 
 insert into public.radios (nome, slogan, cor, ordem) values
-  ('96 FM',          'A rádio que toca a sua vida', '#1d4ed8', 1),
-  ('Rádio do Agro',  'A voz do campo',              '#15803d', 2)
+  ('96 FM',          'A rádio que toca a sua vida', '#3d7bff', 1),
+  ('Rádio do Agro',  'A voz do campo',              '#ff6a1f', 2)
 on conflict (nome) do nothing;
 
 insert into public.segmentos (nome) values

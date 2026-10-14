@@ -49,7 +49,7 @@ export default async function ProgramasGestao({ searchParams }) {
 
       {editando ? (
         <div className="card">
-          <div className="cabecalho"><h2>Editar: {editando.nome}</h2><Link href="/gestao/programas">Fechar ✕</Link></div>
+          <div className="cabecalho"><h2>Editar: {editando.nome}</h2><Link href="/gestao/programas">Fechar</Link></div>
           <FormAcao action={salvarPrograma}>
             <CamposPrograma radios={radios || []} p={editando} />
             <BotaoEnviar className="btn" texto="Salvar alterações" />
@@ -57,7 +57,7 @@ export default async function ProgramasGestao({ searchParams }) {
         </div>
       ) : (
         <details className="card">
-          <summary>➕ Cadastrar novo programa</summary>
+          <summary>Cadastrar novo programa</summary>
           <FormAcao action={salvarPrograma} limparAoSalvar>
             <CamposPrograma radios={radios || []} />
             <BotaoEnviar className="btn" texto="Cadastrar programa" />
@@ -71,7 +71,7 @@ export default async function ProgramasGestao({ searchParams }) {
           <tbody>
             {(programas || []).map((p) => (
               <tr key={p.id} style={p.ativo ? undefined : { opacity: 0.5 }}>
-                <td><span className="badge" style={{ background: p.radio_cor, color: '#fff' }}>{p.radio_nome}</span></td>
+                <td><span className="badge" style={{ background: `color-mix(in srgb, ${p.radio_cor} 20%, transparent)`, color: p.radio_cor }}>{p.radio_nome}</span></td>
                 <td><b>{p.nome}</b>{!p.ativo && ' (inativo)'}<br /><small>{p.apresentador}</small></td>
                 <td>{p.dias}<br /><small>{horario(p)}</small></td>
                 <td>{p.cotas_ocupadas}/{p.cotas_total}</td>

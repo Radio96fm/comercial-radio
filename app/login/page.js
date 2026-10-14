@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Radio } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
@@ -58,9 +59,9 @@ export default function LoginPage() {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <div className="marca">📻</div>
+        <div className="marca"><Radio className="ico" strokeWidth={2.4} /></div>
         <h1>Comercial</h1>
-        <p className="muted" style={{ textAlign: 'center' }}>96 FM · Rádio do Agro</p>
+        <div className="emissoras"><span className="badge b-azul">96 FM</span><span className="badge" style={{ background: 'rgba(255,106,31,.15)', color: '#ff8a4c' }}>Rádio do Agro</span></div>
         <Suspense fallback={null}><LoginForm /></Suspense>
       </div>
     </div>

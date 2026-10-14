@@ -26,7 +26,7 @@ export default async function ContratosGestao({ searchParams }) {
     <>
       <div className="cabecalho">
         <h1>Contratos</h1>
-        <Link className="btn" href="/app/contratos/novo">✍️ Novo contrato</Link>
+        <Link className="btn" href="/app/contratos/novo">Novo contrato</Link>
       </div>
       <form className="card form-grid" method="get">
         <div className="campo">

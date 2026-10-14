@@ -51,19 +51,19 @@ export default async function VisitaPage({ params }) {
             <span className="badge b-azul">{STATUS_VISITA[v.status]}</span>
           </div>
           <p style={{ marginTop: 10 }}>
-            👤 Visitado por <b>{v.vendedor_id === perfil.id ? 'você' : v.vendedor?.nome}</b> · {dataHora(v.iniciada_em)}
+            Visitado por <b>{v.vendedor_id === perfil.id ? 'você' : v.vendedor?.nome}</b> · {dataHora(v.iniciada_em)}
           </p>
-          {v.cliente.contato_nome && <div>📇 {v.cliente.contato_nome}</div>}
+          {v.cliente.contato_nome && <div>{v.cliente.contato_nome}</div>}
           {v.cliente.telefone && (
             <div className="acoes" style={{ marginTop: 10 }}>
-              <a className="btn peq sec" href={`tel:${v.cliente.telefone.replace(/\D/g, '')}`}>📞 Ligar</a>
-              <a className="btn peq whats" href={linkWhatsApp(v.cliente.telefone, '')} target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>
+              <a className="btn peq sec" href={`tel:${v.cliente.telefone.replace(/\D/g, '')}`}>Ligar</a>
+              <a className="btn peq whats" href={linkWhatsApp(v.cliente.telefone, '')} target="_blank" rel="noopener noreferrer">WhatsApp</a>
             </div>
           )}
           <div style={{ marginTop: 10 }}><Link href={`/app/clientes/${v.cliente.id}`}>Ver ficha completa do cliente ›</Link></div>
         </div>
 
-        <div className="secao-titulo"><h2>✅ Programas que este cliente pode patrocinar</h2></div>
+        <div className="secao-titulo"><h2>Programas que este cliente pode patrocinar</h2></div>
         <p className="muted">
           Já filtrado: só aparecem programas com vaga e sem outro patrocinador do segmento <b>{v.cliente.segmento?.nome}</b>.
         </p>
@@ -107,13 +107,13 @@ export default async function VisitaPage({ params }) {
                     <form action={mudarStatusVisita}>
                       <input type="hidden" name="id" value={v.id} />
                       <input type="hidden" name="status" value="proposta" />
-                      <BotaoEnviar className="btn grande sec" texto="📨 Enviei proposta" enviando="..." />
+                      <BotaoEnviar className="btn grande sec" texto="Enviei proposta" enviando="..." />
                     </form>
                   )}
                   <form action={mudarStatusVisita}>
                     <input type="hidden" name="id" value={v.id} />
                     <input type="hidden" name="status" value="perdido" />
-                    <BotaoEnviar className="btn grande cinza" texto="❌ Não fechou" enviando="..." confirmar="Encerrar esta visita como 'não fechou'?" />
+                    <BotaoEnviar className="btn grande cinza" texto="Não fechou" enviando="..." confirmar="Encerrar esta visita como 'não fechou'?" />
                   </form>
                 </div>
                 <p className="muted" style={{ marginTop: 10 }}>Quando você fecha um contrato a partir desta tela, a visita é marcada como “Fechado” automaticamente.</p>

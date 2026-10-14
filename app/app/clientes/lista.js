@@ -16,7 +16,7 @@ export default function ListaClientes({ clientes, meuId }) {
   return (
     <>
       <div className="campo">
-        <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="🔍 Buscar por nome, segmento ou cidade" />
+        <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, segmento ou cidade" />
       </div>
       <div className="grid2" style={{ marginBottom: 14 }}>
         <button type="button" className={`btn peq ${soMeus ? 'sec' : ''}`} onClick={() => setSoMeus(false)}>Todos ({clientes.length})</button>
@@ -29,7 +29,7 @@ export default function ListaClientes({ clientes, meuId }) {
             <div className="info">
               <div className="nome">{c.nome}</div>
               <div className="det">{c.segmento?.nome}{c.cidade ? ` · ${c.cidade}` : ''}</div>
-              <div className="det">👤 {c.vendedor_id === meuId ? 'Sua carteira' : c.vendedor?.nome || 'Sem vendedor'}</div>
+              <div className="det">{c.vendedor_id === meuId ? 'Sua carteira' : c.vendedor?.nome || 'Sem vendedor'}</div>
             </div>
             <span className="seta">›</span>
           </Link>

@@ -37,7 +37,7 @@ export default async function ContratoPage({ params, searchParams }) {
     <>
       <Topo titulo={`Contrato nº ${c.numero}`} voltar="/app/contratos" />
       <main className="conteudo">
-        {searchParams?.novo && <div className="alerta ok nao-imprimir">✅ Contrato criado! A vaga já está reservada.</div>}
+        {searchParams?.novo && <div className="alerta ok nao-imprimir">Contrato criado! A vaga já está reservada.</div>}
         {searchParams?.erro && <div className="alerta erro nao-imprimir">{searchParams.erro}</div>}
 
         <div className="card nao-imprimir">
@@ -52,17 +52,17 @@ export default async function ContratoPage({ params, searchParams }) {
             <div><div className="muted">Período</div><b>{data(c.data_inicio)} a {data(c.data_fim)}</b></div>
             <div><div className="muted">Valor</div><b>{moeda(c.valor_mensal)} × {c.meses}</b></div>
           </div>
-          <p style={{ marginTop: 10 }}>👤 Vendedor: <b>{dono ? 'você' : c.vendedor?.nome}</b></p>
+          <p style={{ marginTop: 10 }}>Vendedor: <b>{dono ? 'você' : c.vendedor?.nome}</b></p>
         </div>
 
         <div className="acoes nao-imprimir" style={{ marginBottom: 14 }}>
           <BotaoImprimir />
-          <a className="btn whats" href={linkWhatsApp(c.cliente?.telefone, msgWhats)} target="_blank" rel="noopener noreferrer">💬 Enviar no WhatsApp</a>
+          <a className="btn whats" href={linkWhatsApp(c.cliente?.telefone, msgWhats)} target="_blank" rel="noopener noreferrer">Enviar no WhatsApp</a>
         </div>
 
         {podeMudar && (
           <div className="acoes nao-imprimir" style={{ marginBottom: 14 }}>
-            {c.status === 'pendente' && <Status status="ativo" texto="✅ Cliente assinou (ativar)" classe="verde" />}
+            {c.status === 'pendente' && <Status status="ativo" texto="Cliente assinou (ativar)" classe="verde" />}
             {(c.status === 'pendente' || (isGestor && c.status === 'ativo')) && (
               <Status status="cancelado" texto="Cancelar contrato" classe="cinza" confirmar="Cancelar este contrato? A vaga será liberada." />
             )}
@@ -90,7 +90,7 @@ export default async function ContratoPage({ params, searchParams }) {
           </table>
         </div>
         <div className="alerta info nao-imprimir">
-          🏦 Emissão automática de boletos: será ativada quando a integração com o banco for configurada. Por enquanto, o financeiro emite a partir desta lista.
+          Emissão automática de boletos: será ativada quando a integração com o banco for configurada. Por enquanto, o financeiro emite a partir desta lista.
         </div>
 
         <div className="secao-titulo nao-imprimir"><h2>Texto do contrato</h2></div>

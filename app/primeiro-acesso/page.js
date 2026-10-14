@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { existeGestor } from '@/lib/setup';
 import FormPrimeiroAcesso from './form';
+import { ShieldCheck } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,7 @@ export default async function PrimeiroAcesso() {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <div className="marca">🛠️</div>
+        <div className="marca"><ShieldCheck className="ico" strokeWidth={2.4} /></div>
         <h1>Primeiro acesso</h1>
         {erro ? (
           <div className="alerta erro">{erro}</div>

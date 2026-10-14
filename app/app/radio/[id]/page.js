@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
+import { ChevronRight } from 'lucide-react';
 import { horario, statusPrograma } from '@/lib/format';
 
 export default async function RadioPage({ params }) {
@@ -21,9 +22,9 @@ export default async function RadioPage({ params }) {
       <Topo titulo={radio.nome} voltar="/app" cor={radio.cor} />
       <main className="conteudo">
         <div className="tags" style={{ marginBottom: 14 }}>
-          <span className="badge b-verde">🟢 Tem vaga</span>
-          <span className="badge b-amarelo">🟡 Última vaga</span>
-          <span className="badge b-vermelho">🔴 Lotado</span>
+          <span className="badge b-verde"><span className="bolinha verde" />Tem vaga</span>
+          <span className="badge b-amarelo"><span className="bolinha amarelo" />Última vaga</span>
+          <span className="badge b-vermelho"><span className="bolinha vermelho" />Lotado</span>
         </div>
         {!programas?.length && <div className="vazio">Nenhum programa cadastrado nesta rádio.</div>}
         <div className="lista">
@@ -37,6 +38,7 @@ export default async function RadioPage({ params }) {
                   <div className="det">{p.dias} · {horario(p)}</div>
                 </div>
                 <span className={`badge b-${st.cor}`}>{st.texto}</span>
+                <ChevronRight className="seta" size={20} />
               </Link>
             );
           })}
