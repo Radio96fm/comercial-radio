@@ -10,7 +10,7 @@
 --  Só gestor altera programas, rádios, segmentos, modelos e usuários.
 -- =====================================================================
 
-create extension if not exists btree_gist;
+create extension if not exists btree_gist with schema extensions;
 
 -- ---------------------------------------------------------------------
 -- Tipos
@@ -569,6 +569,11 @@ create policy parcelas_insert on public.parcelas for insert to authenticated
 create policy parcelas_update on public.parcelas for update to authenticated
   using (public.is_gestor()) with check (public.is_gestor());
 create policy parcelas_delete on public.parcelas for delete to authenticated using (public.is_gestor());
+
+-- Funções de gatilho não devem ser chamadas pela API
+revoke execute on function public.fechar_visita_do_contrato(), public.handle_new_user(), public.proteger_cliente(),
+  public.proteger_contrato(), public.registrar_atividade(), public.sincronizar_papel(), public.validar_contrato()
+  from public, anon, authenticated;
 
 -- ATIVIDADES: só gestor lê; ninguém grava direto (só o gatilho)
 create policy atividades_select on public.atividades for select to authenticated using (public.is_gestor());
