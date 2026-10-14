@@ -872,3 +872,61 @@ begin
 end $f$;
 revoke execute on function public.autentique_marcar_assinado(text, text) from public;
 grant execute on function public.autentique_marcar_assinado(text, text) to anon, authenticated;
+do $do$ begin
+execute $q$create table if not exists public.assistente_materiais (
+  id         uuid primary key default gen_random_uuid(),
+  tipo       text not null check (tipo in ('instrucao','testemunhal','texto','pdf','link')),
+  titulo     text not null,
+  conteudo   text not null,
+  origem     text,
+  ativo      boolean not null default true,
+  created_at timestamptz not null default now())$q$;
+execute $q$alter table public.assistente_materiais enable row level security$q$;
+execute $q$drop policy if exists am_ler on public.assistente_materiais$q$;
+execute $q$create policy am_ler on public.assistente_materiais for select to authenticated using (public.usuario_ativo())$q$;
+execute $q$drop policy if exists am_gestor on public.assistente_materiais$q$;
+execute $q$create policy am_gestor on public.assistente_materiais for all to authenticated using (public.is_gestor()) with check (public.is_gestor())$q$;
+execute $q$create table if not exists public.testemunhais (
+  id          uuid primary key default gen_random_uuid(),
+  cliente_id  uuid not null references public.clientes(id) on delete cascade,
+  vendedor_id uuid references public.profiles(id) on delete set null default auth.uid(),
+  programa_id uuid references public.programas(id) on delete set null,
+  texto       text not null,
+  created_at  timestamptz not null default now())$q$;
+execute $q$create index if not exists testemunhais_cliente_idx on public.testemunhais(cliente_id)$q$;
+execute $q$alter table public.testemunhais enable row level security$q$;
+execute $q$drop policy if exists t_ler on public.testemunhais$q$;
+execute $q$create policy t_ler on public.testemunhais for select to authenticated using (public.usuario_ativo())$q$;
+execute $q$drop policy if exists t_criar on public.testemunhais$q$;
+execute $q$create policy t_criar on public.testemunhais for insert to authenticated with check (public.usuario_ativo() and vendedor_id = auth.uid())$q$;
+execute $q$drop policy if exists t_apagar on public.testemunhais$q$;
+execute $q$create policy t_apagar on public.testemunhais for delete to authenticated using (vendedor_id = auth.uid() or public.is_gestor())$q$;
+execute $q$create or replace function public.salvar_anthropic(p_token text) returns void
+language plpgsql security definer set search_path = public, privado as $f$
+begin
+  if not public.is_gestor() then raise exception 'Apenas o gestor pode configurar o assistente.'; end if;
+  insert into privado.config values ('anthropic_token', p_token) on conflict (chave) do update set valor = excluded.valor;
+end $f$$q$;
+execute $q$revoke execute on function public.salvar_anthropic(text) from public, anon$q$;
+execute $q$grant execute on function public.salvar_anthropic(text) to authenticated$q$;
+execute $q$create or replace function public.anthropic_situacao() returns boolean
+language sql stable security definer set search_path = privado as $f$
+  select exists (select 1 from privado.config where chave = 'anthropic_token');
+$f$$q$;
+execute $q$revoke execute on function public.anthropic_situacao() from public, anon$q$;
+execute $q$grant execute on function public.anthropic_situacao() to authenticated$q$;
+execute $q$create or replace function public.ia_config(p_segredo text) returns text
+language plpgsql stable security definer set search_path = privado, extensions as $f$
+begin
+  if p_segredo is null or encode(extensions.digest(p_segredo, 'sha256'), 'hex')
+     is distinct from (select valor from privado.config where chave = 'admin_proxy_sha256') then
+    raise exception 'acesso negado';
+  end if;
+  return (select valor from privado.config where chave = 'anthropic_token');
+end $f$$q$;
+execute $q$revoke execute on function public.ia_config(text) from public$q$;
+execute $q$grant execute on function public.ia_config(text) to anon, authenticated$q$;
+execute $q$insert into storage.buckets (id, name, public, file_size_limit) values ('assistente', 'assistente', false, 52428800) on conflict (id) do nothing$q$;
+execute $q$drop policy if exists assistente_gestor on storage.objects$q$;
+execute $q$create policy assistente_gestor on storage.objects for all to authenticated using (bucket_id = 'assistente' and public.is_gestor()) with check (bucket_id = 'assistente' and public.is_gestor())$q$;
+end $do$;
