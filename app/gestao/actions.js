@@ -374,3 +374,10 @@ export async function excluirMaterial(fd) {
   await supabase.from('assistente_materiais').delete().eq('id', fd.get('id'));
   revalidatePath('/gestao/assistente');
 }
+
+// libera a exclusividade de 15 dias de uma visita (a empresa fica livre para outros vendedores)
+export async function liberarVisita(fd) {
+  const { supabase } = await requireGestor();
+  await supabase.from('visitas_liberadas').upsert({ visita_id: fd.get('id') });
+  revalidatePath('/gestao/negociacoes');
+}

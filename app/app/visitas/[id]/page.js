@@ -6,6 +6,7 @@ import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import { mudarStatusVisita, salvarObsVisita } from '../../actions';
 import { dataHora, horario, moeda, linkWhatsApp, STATUS_VISITA, hojeISO } from '@/lib/format';
+import { prazoVisita, textoRestam, PRAZO_DIAS } from '@/lib/prazo';
 
 export default async function VisitaPage({ params }) {
   const { supabase, perfil, isGestor } = await getSessao();
@@ -38,6 +39,8 @@ export default async function VisitaPage({ params }) {
 
   const podeEditar = isGestor || v.vendedor_id === perfil.id;
   const aberta = v.status === 'em_andamento' || v.status === 'proposta';
+  const { data: liberada } = await supabase.from('visitas_liberadas').select('visita_id').eq('visita_id', v.id).maybeSingle();
+  const prazo = prazoVisita(v.iniciada_em);
 
   return (
     <>
@@ -54,6 +57,20 @@ export default async function VisitaPage({ params }) {
           <p style={{ marginTop: 10 }}>
             Visitado por <b>{v.vendedor_id === perfil.id ? 'você' : v.vendedor?.nome}</b> · {dataHora(v.iniciada_em)}
           </p>
+          {aberta && !liberada && (
+            <div className={`prazo-visita ${prazo.vencido ? 'fim' : prazo.avisar ? 'alerta-p' : ''}`}>
+              <b>{prazo.vencido ? 'Prazo de exclusividade encerrado' : `Exclusividade: ${textoRestam(prazo.restam)}`}</b>
+              <span>
+                {prazo.vencido
+                  ? 'A empresa está livre para os outros vendedores.'
+                  : `Até ${prazo.ate}, só ${v.vendedor_id === perfil.id ? 'você negocia' : `${v.vendedor?.nome} negocia`} com esta empresa (${PRAZO_DIAS} dias a partir da visita). Depois ela fica livre para os outros vendedores.`}
+              </span>
+              {!prazo.vencido && (
+                <i style={{ width: `${Math.min(100, Math.max(4, ((PRAZO_DIAS - prazo.restam) / PRAZO_DIAS) * 100))}%` }} />
+              )}
+            </div>
+          )}
+          {liberada && aberta && <div className="prazo-visita fim"><b>Exclusividade liberada pelo gestor</b><span>Outros vendedores já podem visitar esta empresa.</span></div>}
           {v.cliente.contato_nome && <div>{v.cliente.contato_nome}</div>}
           {v.cliente.telefone && (
             <div className="acoes" style={{ marginTop: 10 }}>

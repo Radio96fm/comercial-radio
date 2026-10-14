@@ -942,3 +942,129 @@ execute $q$insert into storage.buckets (id, name, public, file_size_limit) value
 execute $q$drop policy if exists assistente_gestor on storage.objects$q$;
 execute $q$create policy assistente_gestor on storage.objects for all to authenticated using (bucket_id = 'assistente' and public.is_gestor()) with check (bucket_id = 'assistente' and public.is_gestor())$q$;
 end $do$;
+
+-- Exclusividade de 15 dias por visita
+do $do$ begin
+execute $q$create table if not exists public.visitas_liberadas (
+  visita_id uuid primary key references public.visitas(id) on delete cascade,
+  liberada_por uuid references public.profiles(id) on delete set null default auth.uid(),
+  liberada_em timestamptz not null default now())$q$;
+execute $q$alter table public.visitas_liberadas enable row level security$q$;
+execute $q$create policy vl_ler on public.visitas_liberadas for select to authenticated using (public.usuario_ativo())$q$;
+execute $q$create policy vl_gestor on public.visitas_liberadas for all to authenticated using (public.is_gestor()) with check (public.is_gestor())$q$;
+execute $q$create or replace function public.normalizar_nome(p text) returns text
+language sql immutable as $f$
+  select regexp_replace(translate(lower(coalesce(p, '')), 'áàâãäéèêëíìîïóòôõöúùûüçñ', 'aaaaaeeeeiiiiooooouuuucn'), '[^a-z0-9]', '', 'g');
+$f$$q$;
+execute $q$create or replace function public.trava_visita(p_cliente uuid, p_vendedor uuid)
+returns table (visita_id uuid, vendedor_id uuid, vendedor_nome text, expira_em timestamptz)
+language sql stable security definer set search_path = public as $f$
+  select v.id, v.vendedor_id, p.nome, v.iniciada_em + interval '15 days'
+    from public.visitas v join public.profiles p on p.id = v.vendedor_id
+   where v.cliente_id = p_cliente
+     and v.vendedor_id is distinct from p_vendedor
+     and v.status in ('em_andamento', 'proposta', 'fechado')
+     and not exists (select 1 from public.visitas_liberadas l where l.visita_id = v.id)
+     and v.iniciada_em > now() - interval '15 days'
+   order by v.iniciada_em desc
+   limit 1;
+$f$$q$;
+execute $q$revoke execute on function public.trava_visita(uuid, uuid) from public, anon$q$;
+execute $q$grant execute on function public.trava_visita(uuid, uuid) to authenticated$q$;
+execute $q$create or replace function public.msg_trava(p_nome text, p_expira timestamptz) returns text
+language sql stable as $f$
+  select format('Esta empresa já está sendo visitada por %s. Ela fica livre em %s dia(s), no dia %s.',
+    p_nome, greatest(1, ceil(extract(epoch from (p_expira - now())) / 86400))::int,
+    to_char(p_expira at time zone 'America/Sao_Paulo', 'DD/MM'));
+$f$$q$;
+execute $q$create or replace function public.visitas_travar() returns trigger
+language plpgsql security definer set search_path = public as $f$
+declare t record;
+begin
+  if public.is_gestor() then return new; end if;
+  select * into t from public.trava_visita(new.cliente_id, new.vendedor_id);
+  if found then raise exception '%', public.msg_trava(t.vendedor_nome, t.expira_em); end if;
+  return new;
+end $f$$q$;
+if not exists (select 1 from pg_trigger where tgname = 'visitas_travar') then
+  execute $q$create trigger visitas_travar before insert on public.visitas for each row execute function public.visitas_travar()$q$;
+end if;
+execute $q$create or replace function public.situacao_empresa(p_cliente uuid)
+returns table (situacao text, dono_nome text, dias int, ate date)
+language plpgsql stable security definer set search_path = public as $f$
+declare c record; t record; k record;
+begin
+  select cl.vendedor_id, p.nome into c from public.clientes cl left join public.profiles p on p.id = cl.vendedor_id where cl.id = p_cliente;
+  if not found then return; end if;
+  if c.vendedor_id = auth.uid() then return query select 'sua'::text, c.nome, null::int, null::date; return; end if;
+  select * into t from public.trava_visita(p_cliente, auth.uid());
+  if found then
+    return query select 'negociando'::text, t.vendedor_nome, greatest(1, ceil(extract(epoch from (t.expira_em - now())) / 86400))::int, (t.expira_em at time zone 'America/Sao_Paulo')::date;
+    return;
+  end if;
+  select ct.data_fim, p.nome into k from public.contratos ct join public.profiles p on p.id = ct.vendedor_id
+   where ct.cliente_id = p_cliente and ct.status in ('pendente', 'ativo') and ct.vendedor_id <> auth.uid()
+   order by ct.data_fim desc limit 1;
+  if found then return query select 'contrato'::text, k.nome, null::int, k.data_fim; return; end if;
+  return query select 'livre'::text, c.nome, null::int, null::date;
+end $f$$q$;
+execute $q$revoke execute on function public.situacao_empresa(uuid) from public, anon$q$;
+execute $q$grant execute on function public.situacao_empresa(uuid) to authenticated$q$;
+execute $q$create or replace function public.procurar_empresa(p_busca text)
+returns table (id uuid, nome text, cidade text, situacao text, dono_nome text, dias int, ate date)
+language plpgsql stable security definer set search_path = public as $f$
+declare b text := public.normalizar_nome(p_busca); d text := regexp_replace(coalesce(p_busca, ''), '\D', '', 'g');
+begin
+  if not public.usuario_ativo() or length(b) < 3 then return; end if;
+  return query
+    select cl.id, cl.nome, cl.cidade, s.situacao, s.dono_nome, s.dias, s.ate
+      from public.clientes cl
+      cross join lateral public.situacao_empresa(cl.id) s
+     where public.normalizar_nome(cl.nome) like '%' || b || '%'
+        or public.normalizar_nome(cl.razao_social) like '%' || b || '%'
+        or (length(d) >= 11 and regexp_replace(coalesce(cl.documento, ''), '\D', '', 'g') = d)
+     order by (public.normalizar_nome(cl.nome) = b) desc, cl.nome
+     limit 8;
+end $f$$q$;
+execute $q$revoke execute on function public.procurar_empresa(text) from public, anon$q$;
+execute $q$grant execute on function public.procurar_empresa(text) to authenticated$q$;
+execute $q$create or replace function public.empresa_existente(p_nome text, p_documento text)
+returns table (id uuid, nome text, situacao text, dono_nome text, dias int, ate date)
+language plpgsql stable security definer set search_path = public as $f$
+declare n text := public.normalizar_nome(p_nome); d text := regexp_replace(coalesce(p_documento, ''), '\D', '', 'g');
+begin
+  if not public.usuario_ativo() then return; end if;
+  return query
+    select cl.id, cl.nome, s.situacao, s.dono_nome, s.dias, s.ate
+      from public.clientes cl cross join lateral public.situacao_empresa(cl.id) s
+     where (n <> '' and public.normalizar_nome(cl.nome) = n)
+        or (length(d) >= 11 and regexp_replace(coalesce(cl.documento, ''), '\D', '', 'g') = d)
+     limit 1;
+end $f$$q$;
+execute $q$revoke execute on function public.empresa_existente(text, text) from public, anon$q$;
+execute $q$grant execute on function public.empresa_existente(text, text) to authenticated$q$;
+execute $q$create or replace function public.iniciar_visita(p_cliente uuid, p_obs text) returns uuid
+language plpgsql security definer set search_path = public as $f$
+declare s record; v_id uuid;
+begin
+  if not public.usuario_ativo() then raise exception 'Sem permissão.'; end if;
+  select * into s from public.situacao_empresa(p_cliente);
+  if not found then raise exception 'Cliente não encontrado.'; end if;
+  if not public.is_gestor() then
+    if s.situacao = 'negociando' then
+      raise exception 'Esta empresa já está sendo visitada por %. Ela fica livre em % dia(s), no dia %.', s.dono_nome, s.dias, to_char(s.ate, 'DD/MM');
+    end if;
+    if s.situacao = 'contrato' then
+      raise exception 'Esta empresa já é cliente de % com contrato até %.', s.dono_nome, to_char(s.ate, 'DD/MM/YYYY');
+    end if;
+    -- livre: a empresa passa para a carteira de quem começou a visita
+    if s.situacao = 'livre' then
+      update public.clientes set vendedor_id = auth.uid() where id = p_cliente;
+    end if;
+  end if;
+  insert into public.visitas (cliente_id, vendedor_id, observacoes) values (p_cliente, auth.uid(), nullif(trim(p_obs), '')) returning id into v_id;
+  return v_id;
+end $f$$q$;
+execute $q$revoke execute on function public.iniciar_visita(uuid, text) from public, anon$q$;
+execute $q$grant execute on function public.iniciar_visita(uuid, text) to authenticated$q$;
+end $do$;

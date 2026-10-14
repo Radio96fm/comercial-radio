@@ -16,6 +16,8 @@ const txt = (fd, k) => {
   return v === '' ? null : v;
 };
 
+const dataCurta = (iso, ano) => (iso ? iso.split('-').reverse().slice(0, ano ? 3 : 2).join('/') : '');
+
 function traduzErro(error) {
   if (!error) return null;
   const m = error.message || '';
@@ -31,11 +33,14 @@ async function criarClienteInterno(supabase, fd, prefixo = '') {
   if (!nome) return { erro: 'Informe o nome do cliente.' };
   if (!segmento_id) return { erro: 'Escolha o segmento do cliente.' };
 
-  // evita dois vendedores atendendo o mesmo cliente (confere em todas as carteiras)
-  const { data: existentes } = await supabase.rpc('cliente_existente', { p_nome: nome });
+  // evita dois vendedores atendendo a mesma empresa (confere nome e CNPJ em todas as carteiras)
+  const { data: existentes } = await supabase.rpc('empresa_existente', { p_nome: nome, p_documento: txt(fd, prefixo + 'documento') });
   if (existentes?.length) {
     const e = existentes[0];
-    return { erro: `O cliente "${e.nome}" já está cadastrado${e.vendedor_nome ? ` na carteira de ${e.vendedor_nome}` : ''}.` };
+    if (e.situacao === 'negociando') return { erro: `A empresa "${e.nome}" já está sendo visitada por ${e.dono_nome}. Ela fica livre em ${e.dias} dia(s), no dia ${dataCurta(e.ate)}.` };
+    if (e.situacao === 'contrato') return { erro: `A empresa "${e.nome}" já é cliente de ${e.dono_nome}, com contrato até ${dataCurta(e.ate, true)}.` };
+    if (e.situacao === 'sua') return { erro: `A empresa "${e.nome}" já está na sua carteira.`, existente: e.id };
+    return { erro: `A empresa "${e.nome}" já está cadastrada.`, existente: e.id, livre: true };
   }
 
   // "Outro": segmento digitado à mão
@@ -106,16 +111,15 @@ export async function iniciarVisita(_prev, fd) {
   let cliente_id = txt(fd, 'cliente_id');
   if (!cliente_id) {
     const r = await criarClienteInterno(supabase, fd, 'novo_');
-    if (r.erro) return r;
-    cliente_id = r.id;
+    // empresa já cadastrada e livre (ou já sua): começa a visita com ela
+    if (r.erro && !r.existente) return r;
+    cliente_id = r.existente || r.id;
   }
-  const { data, error } = await supabase
-    .from('visitas')
-    .insert({ cliente_id, vendedor_id: perfil.id, observacoes: txt(fd, 'observacoes') })
-    .select('id')
-    .single();
+  // o banco confere a exclusividade de 15 dias e passa a empresa livre para a carteira de quem visita
+  const { data: id, error } = await supabase.rpc('iniciar_visita', { p_cliente: cliente_id, p_obs: txt(fd, 'observacoes') || '' });
   if (error) return { erro: traduzErro(error) };
-  redirect(`/app/visitas/${data.id}`);
+  revalidatePath('/app', 'layout');
+  redirect(`/app/visitas/${id}`);
 }
 
 export async function mudarStatusVisita(fd) {
@@ -358,4 +362,10 @@ export async function excluirTestemunhal(fd) {
   const { supabase } = await getSessao();
   await supabase.from('testemunhais').delete().eq('id', fd.get('id'));
   revalidatePath(`/app/clientes/${fd.get('cliente')}`);
+}
+
+export async function procurarEmpresa(busca) {
+  const { supabase } = await getSessao();
+  const { data } = await supabase.rpc('procurar_empresa', { p_busca: String(busca || '') });
+  return data || [];
 }

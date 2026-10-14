@@ -1090,3 +1090,14 @@ details.material.desligado { opacity: .55; }
 .atalho-ia .txt b { font-size: 1.08rem; }
 .atalho-ia .txt small { color: var(--muted); font-size: .88rem; }
 .bolha.resposta { white-space: normal; }
+/* prazo de exclusividade da visita */
+.prazo-visita { margin: 12px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line-2); display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; }
+.prazo-visita span { color: var(--muted); font-size: .9rem; }
+.prazo-visita i { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--destaque, #9db8ff); }
+.prazo-visita.alerta-p { background: rgba(250, 204, 21, .12); border-color: rgba(250, 204, 21, .45); }
+.prazo-visita.alerta-p i { background: var(--amarelo); }
+.prazo-visita.fim { background: var(--card); opacity: .85; }
+.prazo-linha.alerta-p { color: var(--amarelo); font-weight: 700; }
+[data-theme="light"] .prazo-linha.alerta-p { color: #a16207; }
+.item.travada { opacity: .7; }
+.aviso-prazo + .aviso-condicao { border-top: 1px solid rgba(0, 0, 0, .12); }

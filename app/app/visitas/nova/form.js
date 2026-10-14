@@ -1,7 +1,7 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormState } from 'react-dom';
-import { iniciarVisita } from '../../actions';
+import { iniciarVisita, procurarEmpresa } from '../../actions';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import CamposCliente from '@/components/CamposCliente';
 
@@ -17,7 +17,19 @@ export default function FormNovaVisita({ clientes, segmentos, meuId, clienteInic
     return lista.slice(0, 30);
   }, [busca, clientes]);
 
-  const escolhido = clientes.find((c) => c.id === selecionado);
+  // procura também nas outras carteiras: mostra quem está negociando e até quando
+  const [outras, setOutras] = useState([]);
+  useEffect(() => {
+    const b = busca.trim();
+    if (b.length < 3) { setOutras([]); return undefined; }
+    const t = setTimeout(async () => {
+      const r = await procurarEmpresa(b).catch(() => []);
+      setOutras(r.filter((x) => !clientes.some((c) => c.id === x.id)));
+    }, 350);
+    return () => clearTimeout(t);
+  }, [busca, clientes]);
+
+  const escolhido = clientes.find((c) => c.id === selecionado) || outras.find((c) => c.id === selecionado);
 
   return (
     <form action={acao}>
@@ -40,7 +52,8 @@ export default function FormNovaVisita({ clientes, segmentos, meuId, clienteInic
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700 }}>{escolhido.nome}</div>
                 <div className="muted">
-                  {escolhido.vendedor_id === meuId ? 'Sua carteira' : `Carteira de ${escolhido.vendedor?.nome || '—'}`}
+                  {escolhido.situacao === 'livre' ? 'Empresa livre: entra na sua carteira ao iniciar a visita'
+                    : escolhido.vendedor_id === meuId ? 'Sua carteira' : `Carteira de ${escolhido.vendedor?.nome || '—'}`}
                 </div>
               </div>
               <button type="button" className="btn peq cinza" onClick={() => setSelecionado('')}>Trocar</button>
@@ -61,7 +74,25 @@ export default function FormNovaVisita({ clientes, segmentos, meuId, clienteInic
                     </div>
                   </button>
                 ))}
-                {!filtrados.length && <div className="vazio">Nenhum cliente encontrado. Toque em “Cliente novo”.</div>}
+                {outras.map((c) => {
+                  const travada = c.situacao === 'negociando' || c.situacao === 'contrato';
+                  return (
+                    <button type="button" key={c.id} className={`item ${travada ? 'travada' : ''}`} disabled={travada}
+                      style={{ border: 0, textAlign: 'left', font: 'inherit', cursor: travada ? 'not-allowed' : 'pointer' }}
+                      onClick={() => !travada && setSelecionado(c.id)}>
+                      <div className="info">
+                        <div className="nome">{c.nome}</div>
+                        <div className="det">
+                          {c.situacao === 'negociando' && <>Sendo visitada por <b>{c.dono_nome}</b>. Fica livre em {c.dias} dia(s), no dia {c.ate?.split('-').reverse().slice(0, 2).join('/')}.</>}
+                          {c.situacao === 'contrato' && <>Cliente de <b>{c.dono_nome}</b> com contrato ativo.</>}
+                          {c.situacao === 'livre' && <>Livre para visitar{c.cidade ? ` · ${c.cidade}` : ''}</>}
+                        </div>
+                      </div>
+                      <span className={`badge ${travada ? 'b-vermelho' : 'b-verde'}`}>{travada ? 'Ocupada' : 'Livre'}</span>
+                    </button>
+                  );
+                })}
+                {!filtrados.length && !outras.length && <div className="vazio">Nenhum cliente encontrado. Toque em “Cliente novo”.</div>}
               </div>
             </>
           )}
