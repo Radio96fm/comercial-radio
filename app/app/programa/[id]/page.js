@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
-import { Ban, Clock, Mic, Package, PenLine } from 'lucide-react';
+import { Ban, Building2, Clock, Mic, Package, PenLine } from 'lucide-react';
 import { data, horario, moeda, statusPrograma, STATUS_CONTRATO, hojeISO } from '@/lib/format';
 
 export default async function ProgramaPage({ params }) {
@@ -24,16 +24,17 @@ export default async function ProgramaPage({ params }) {
   const st = statusPrograma(p.cotas_livres, p.cotas_total);
 
   const Linha = ({ c }) => (
-    <div className="item">
+    <div className="item patrocinador">
+      <span className="icone-redondo"><Building2 size={20} /></span>
       <div className="info">
+        <div className="seg">{c.segmento?.nome}</div>
         <div className="nome">{c.cliente?.nome}</div>
         <div className="det">
-          {c.segmento?.nome} · até {data(c.data_fim)}
-          {c.data_inicio > hoje && ` · começa ${data(c.data_inicio)}`}
+          {c.data_inicio > hoje ? `Começa ${data(c.data_inicio)} · ` : ''}até {data(c.data_fim)}
+          {' · '}{c.vendedor_id === perfil.id ? 'você' : c.vendedor?.nome}
         </div>
-        <div className="det">Vendedor: <b>{c.vendedor_id === perfil.id ? 'Você' : c.vendedor?.nome}</b></div>
+        {c.status !== 'ativo' && <span className="badge b-amarelo" style={{ marginTop: 6 }}>{STATUS_CONTRATO[c.status]}</span>}
       </div>
-      <span className={`badge ${c.status === 'ativo' ? 'b-verde' : 'b-amarelo'}`}>{STATUS_CONTRATO[c.status]}</span>
     </div>
   );
 
@@ -57,7 +58,7 @@ export default async function ProgramaPage({ params }) {
             <b>Cotas</b>
             <span><b className="num" style={{ fontSize: '1.6rem' }}>{p.cotas_ocupadas}</b><span className="muted"> de {p.cotas_total} ocupadas</span></span>
           </div>
-          <div className={`cotas-blocos${p.cotas_livres <= 0 ? ' lotado' : ''}`}>
+          <div className={`cotas-blocos${p.cotas_livres <= 0 ? ' lotado' : ''}`} style={{ '--cheia': p.radio_cor }}>
             {Array.from({ length: p.cotas_total }, (_, i) => <span key={i} className={i < p.cotas_ocupadas ? 'cheia' : ''} />)}
           </div>
 
@@ -68,36 +69,26 @@ export default async function ProgramaPage({ params }) {
           {p.descricao_cota && <p className="muted" style={{ marginTop: 14, marginBottom: 0, display: 'flex', gap: 8 }}><Package className="ico" />{p.descricao_cota}</p>}
         </div>
 
-        {p.cotas_livres > 0 ? (
-          <Link href={`/app/contratos/novo?programa=${p.id}`} className="btn grande"><PenLine className="ico" strokeWidth={2.4} /> Fechar contrato neste programa</Link>
-        ) : (
-          <div className="alerta erro">Programa lotado no momento. Veja abaixo quando os contratos terminam.</div>
-        )}
-
-        <div className="secao-titulo"><h2><Ban className="ico" style={{ color: 'var(--vermelho)' }} />Segmentos ocupados</h2></div>
+        <div className="secao-titulo">
+          <h2><Ban className="ico" style={{ color: 'var(--vermelho)' }} />Segmentos já ocupados</h2>
+          <span className="muted">{vigentes.length + futuros.length}</span>
+        </div>
+        <p className="muted" style={{ marginTop: -6 }}>Estas empresas já anunciam aqui. O mesmo segmento não pode entrar de novo.</p>
         {!vigentes.length && !futuros.length ? (
           <div className="vazio">Nenhum segmento ocupado. Todos estão liberados.</div>
         ) : (
-          <div className="tags">
-            {[...new Map([...vigentes, ...futuros].map((c) => [c.segmento?.id, c.segmento?.nome])).values()].map((nome) => (
-              <span key={nome} className="badge b-vermelho">{nome}</span>
-            ))}
-          </div>
+          <div className="lista">{[...vigentes, ...futuros].map((c) => <Linha key={c.id} c={c} />)}</div>
         )}
 
-        <div className="secao-titulo"><h2>Patrocinadores no ar</h2></div>
-        {!vigentes.length ? (
-          <div className="vazio">Nenhum patrocinador no momento.</div>
-        ) : (
-          <div className="lista">{vigentes.map((c) => <Linha key={c.id} c={c} />)}</div>
-        )}
-
-        {futuros.length > 0 && (
-          <>
-            <div className="secao-titulo"><h2>Já vendidos (começam depois)</h2></div>
-            <div className="lista">{futuros.map((c) => <Linha key={c.id} c={c} />)}</div>
-          </>
-        )}
+        <div className="rodape-acao">
+          {p.cotas_livres > 0 ? (
+            <Link href={`/app/contratos/novo?programa=${p.id}`} className="btn grande" style={{ boxShadow: '0 10px 30px rgba(31,46,255,.35)' }}>
+              <PenLine className="ico" strokeWidth={2.4} /> Fechar contrato
+            </Link>
+          ) : (
+            <div className="alerta erro" style={{ marginBottom: 0 }}>Programa lotado. Veja acima quando cada contrato termina.</div>
+          )}
+        </div>
       </main>
     </>
   );

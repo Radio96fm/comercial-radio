@@ -12,11 +12,15 @@
   --line: #262626;
   --line-2: #333333;
 
-  --accent: #d4ff3f;        /* destaque principal */
-  --on-accent: #0a0a0a;
-  --primary: #d4ff3f;
-  --azul: #3d7bff;          /* 96 FM */
-  --laranja: #ff6a1f;       /* Rádio do Agro */
+  --accent: #1f2eff;        /* botões de ação: azul da Organização Júlio Capparelli */
+  --accent-hover: #3442ff;
+  --on-accent: #ffffff;
+  --link: #8f97ff;          /* azul mais claro para textos/links sobre o preto */
+  --primary: #1f2eff;
+  --cor96: #ec7020;         /* 96 FM: laranja da logo */
+  --agro: #00b13e;          /* Rádio do Agro: verde da logo */
+  --agro-2: #00318b;        /* Rádio do Agro: azul da logo */
+  --azul: #1f2eff;
 
   --verde: #4ade80;
   --verde-bg: rgba(74, 222, 128, .13);
@@ -44,7 +48,7 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
-a { color: var(--accent); text-decoration: none; }
+a { color: var(--link); text-decoration: none; }
 h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; margin: 0 0 .5rem; letter-spacing: -.02em; }
 h1 { font-size: 1.75rem; font-weight: 700; }
 h2 { font-size: 1.2rem; font-weight: 600; }
@@ -109,17 +113,19 @@ small, .muted { color: var(--muted); }
 
 /* cartão grande de cada rádio na tela inicial */
 .radio-btn {
-  --cor: var(--azul);
+  --cor: var(--cor96);
   position: relative; overflow: hidden; display: block;
   border-radius: 26px; padding: 22px 20px; margin-bottom: 14px;
   color: #fff; min-height: 150px;
   background:
-    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--cor) 85%, transparent) 0%, transparent 60%),
-    linear-gradient(160deg, color-mix(in srgb, var(--cor) 55%, #0a0a0a) 0%, #111 100%);
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--cor) 90%, transparent) 0%, transparent 62%),
+    radial-gradient(90% 120% at 0% 100%, color-mix(in srgb, var(--cor2, var(--cor)) 55%, transparent) 0%, transparent 65%),
+    linear-gradient(160deg, color-mix(in srgb, var(--cor) 45%, #0a0a0a) 0%, #111 100%);
   border: 1px solid color-mix(in srgb, var(--cor) 45%, #262626);
 }
-.radio-btn .topo-r { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.radio-btn .nome { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; letter-spacing: -.03em; }
+.radio-btn .topo-r { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.radio-btn .logo-r { width: 58px; height: 58px; object-fit: contain; flex: none; filter: drop-shadow(0 4px 10px rgba(0,0,0,.35)); }
+.radio-btn .nome { flex: 1; font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; letter-spacing: -.03em; }
 .radio-btn .seta {
   width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center;
   background: #fff; color: #0a0a0a; flex: none;
@@ -141,7 +147,7 @@ small, .muted { color: var(--muted); }
 .item .seta { color: var(--muted); }
 .item .icone-redondo {
   width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none;
-  background: var(--card-2); border: 1px solid var(--line-2); color: var(--accent);
+  background: var(--card-2); border: 1px solid var(--line-2); color: var(--link);
 }
 
 .badge {
@@ -166,7 +172,7 @@ small, .muted { color: var(--muted); }
 /* barra de cotas em "blocos": uma caixinha para cada cota */
 .cotas-blocos { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
 .cotas-blocos span { height: 34px; border-radius: 8px; background: var(--card-2); border: 1px dashed var(--line-2); }
-.cotas-blocos span.cheia { background: var(--accent); border: 0; }
+.cotas-blocos span.cheia { background: var(--cheia, var(--accent)); border: 0; }
 .cotas-blocos.lotado span.cheia { background: var(--vermelho); }
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -178,10 +184,10 @@ small, .muted { color: var(--muted); }
 .kpi .valor { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
 .kpi .rotulo { color: var(--muted); font-size: .9rem; }
 .kpi.destaque { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-.kpi.destaque .kpi-topo, .kpi.destaque .rotulo { color: rgba(10, 10, 10, .7); }
+.kpi.destaque .kpi-topo, .kpi.destaque .rotulo { color: rgba(255, 255, 255, .8); }
 .kpi .barra { background: rgba(255, 255, 255, .08); }
-.kpi.destaque .barra { background: rgba(10, 10, 10, .15); }
-.kpi.destaque .barra > span { background: #0a0a0a; }
+.kpi.destaque .barra { background: rgba(255, 255, 255, .2); }
+.kpi.destaque .barra > span { background: #fff; }
 
 .tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .secao-titulo { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 26px 0 12px; }
@@ -195,6 +201,7 @@ small, .muted { color: var(--muted); }
   font: inherit; font-size: 1.05rem; font-weight: 700; cursor: pointer;
   background: var(--accent); color: var(--on-accent); text-align: center;
 }
+.btn:hover { filter: brightness(1.1); }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn.grande { width: 100%; font-size: 1.15rem; min-height: 62px; }
 .btn.sec { background: transparent; color: var(--text); border: 1px solid var(--line-2); }
@@ -214,7 +221,7 @@ input, select, textarea {
   padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--radius-sm); background: var(--card); color: var(--text);
 }
 input::placeholder, textarea::placeholder { color: #6b6b6b; }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212, 255, 63, .18); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31, 46, 255, .3); }
 textarea { min-height: 110px; resize: vertical; }
 textarea.modelo { min-height: 520px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .92rem; }
 input[type=checkbox] { width: auto; transform: scale(1.3); margin-right: 8px; accent-color: var(--accent); }
@@ -238,8 +245,9 @@ th { color: var(--muted); font-size: .76rem; font-weight: 600; text-transform: u
 .login-wrap {
   min-height: 100dvh; display: grid; place-items: center; padding: 20px;
   background:
-    radial-gradient(60% 50% at 15% 10%, rgba(61, 123, 255, .35), transparent 70%),
-    radial-gradient(60% 50% at 90% 95%, rgba(255, 106, 31, .28), transparent 70%),
+    radial-gradient(60% 50% at 10% 5%, rgba(236, 112, 32, .35), transparent 70%),
+    radial-gradient(60% 50% at 95% 95%, rgba(0, 177, 62, .28), transparent 70%),
+    radial-gradient(50% 40% at 50% 100%, rgba(31, 46, 255, .25), transparent 70%),
     var(--bg);
 }
 .login-card { width: 100%; max-width: 420px; background: rgba(21, 21, 21, .9); border: 1px solid var(--line-2); border-radius: 28px; padding: 32px 24px; backdrop-filter: blur(10px); }
@@ -249,7 +257,9 @@ th { color: var(--muted); font-size: .76rem; font-weight: 600; text-transform: u
   background: var(--accent); color: var(--on-accent);
 }
 .login-card .marca .ico { width: 32px; height: 32px; }
-.login-card .emissoras { display: flex; justify-content: center; gap: 8px; margin: 4px 0 22px; }
+.login-card .emissoras { display: flex; justify-content: center; align-items: center; gap: 18px; margin: 0 0 18px; }
+.login-card .emissoras img { height: 64px; width: auto; }
+.login-jc { display: block; margin: 22px auto 0; height: 46px; width: auto; opacity: .9; }
 
 /* ---------- Painel do gestor ---------- */
 .gestao { display: grid; grid-template-columns: 260px 1fr; min-height: 100dvh; background: linear-gradient(90deg, #0f0f0f 0 259px, var(--line) 259px 260px, var(--bg) 260px); }
@@ -305,3 +315,27 @@ code { background: var(--card-2); border: 1px solid var(--line-2); padding: 2px 
   .gestao { display: block; }
   .contrato-texto { padding: 0; font-size: 11.5pt; }
 }
+
+/* ---------- Lista compacta de programas (tela da rádio) ---------- */
+.grade-programas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.prog-mini {
+  display: flex; flex-direction: column; gap: 6px; min-height: 128px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; color: inherit;
+  border-top: 4px solid var(--st, var(--line-2));
+}
+.prog-mini .nome { font-family: var(--font-display); font-weight: 700; font-size: 1.08rem; line-height: 1.15; letter-spacing: -.01em; }
+.prog-mini .resumo { color: var(--muted); font-size: .82rem; line-height: 1.3; }
+.prog-mini .resumo.desc { color: #cfcfcf; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.prog-mini .rodape-p { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.prog-mini .vagas { font-weight: 700; font-size: .92rem; display: flex; align-items: center; gap: 6px; }
+.prog-mini .mini-blocos { display: flex; gap: 3px; }
+.prog-mini .mini-blocos i { width: 8px; height: 14px; border-radius: 3px; background: var(--card-2); border: 1px solid var(--line-2); }
+.prog-mini .mini-blocos i.cheia { background: var(--st); border-color: var(--st); }
+.cabeca-radio { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.cabeca-radio img { width: 54px; height: 54px; object-fit: contain; }
+.cabeca-radio .t b { display: block; font-family: var(--font-display); font-size: 1.5rem; letter-spacing: -.02em; }
+.cabeca-radio .t small { font-size: .92rem; }
+.patrocinador { display: flex; align-items: center; gap: 12px; }
+.patrocinador .seg { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--vermelho); }
+.rodape-acao { position: sticky; bottom: 104px; margin-top: 22px; }
+.rodape-acao::after { content: ''; display: block; height: 4px; }

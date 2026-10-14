@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getSessao } from '@/lib/auth';
 import { ArrowUpRight, Car, ChevronRight, LogOut } from 'lucide-react';
 import { tempoDesde } from '@/lib/format';
+import { marcaDaRadio } from '@/lib/marca';
 
 export default async function HomeVendedor() {
   const { supabase, perfil, isGestor } = await getSessao();
@@ -42,9 +43,11 @@ export default async function HomeVendedor() {
         <p className="rotulo-secao">Escolha a rádio</p>
         {(radios || []).map((r) => {
           const info = livresPorRadio[r.id] || { programas: 0, comVaga: 0, cotas: 0 };
+          const marca = marcaDaRadio(r.nome);
           return (
-            <Link key={r.id} href={`/app/radio/${r.id}`} className="radio-btn" style={{ '--cor': r.cor }}>
+            <Link key={r.id} href={`/app/radio/${r.id}`} className="radio-btn" style={{ '--cor': r.cor, '--cor2': marca.cor2 || r.cor }}>
               <div className="topo-r">
+                {marca.logo && <img src={marca.logo} alt="" className="logo-r" />}
                 <div className="nome">{r.nome}</div>
                 <span className="seta"><ArrowUpRight size={24} strokeWidth={2.4} /></span>
               </div>

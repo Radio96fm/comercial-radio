@@ -2,8 +2,16 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
-import { ChevronRight } from 'lucide-react';
-import { horario, statusPrograma } from '@/lib/format';
+import { statusPrograma } from '@/lib/format';
+import { marcaDaRadio } from '@/lib/marca';
+
+const COR_STATUS = { verde: 'var(--verde)', amarelo: 'var(--amarelo)', vermelho: 'var(--vermelho)' };
+
+// "Segunda a sexta" -> "Seg a sex"; mantém curto para caber no quadradinho
+function diasCurto(d = '') {
+  return d.replace(/Segunda/gi, 'Seg').replace(/sexta/gi, 'sex').replace(/Sábado/gi, 'Sáb').replace(/Domingo/gi, 'Dom');
+}
+const hhmm = (t) => (t ? t.slice(0, 5) : '');
 
 export default async function RadioPage({ params }) {
   const { supabase } = await getSessao();
@@ -17,28 +25,44 @@ export default async function RadioPage({ params }) {
     .eq('ativo', true)
     .order('horario_inicio', { ascending: true, nullsFirst: false });
 
+  const marca = marcaDaRadio(radio.nome);
+  const comVaga = (programas || []).filter((p) => p.cotas_livres > 0).length;
+
   return (
     <>
       <Topo titulo={radio.nome} voltar="/app" cor={radio.cor} />
       <main className="conteudo">
+        <div className="cabeca-radio">
+          {marca.logo && <img src={marca.logo} alt="" />}
+          <div className="t">
+            <b>{radio.nome}</b>
+            <small className="muted">{programas?.length || 0} programas · {comVaga} com vaga</small>
+          </div>
+        </div>
+
         <div className="tags" style={{ marginBottom: 14 }}>
           <span className="badge b-verde"><span className="bolinha verde" />Tem vaga</span>
           <span className="badge b-amarelo"><span className="bolinha amarelo" />Última vaga</span>
           <span className="badge b-vermelho"><span className="bolinha vermelho" />Lotado</span>
         </div>
+
         {!programas?.length && <div className="vazio">Nenhum programa cadastrado nesta rádio.</div>}
-        <div className="lista">
+        <div className="grade-programas">
           {(programas || []).map((p) => {
             const st = statusPrograma(p.cotas_livres, p.cotas_total);
             return (
-              <Link key={p.id} href={`/app/programa/${p.id}`} className="item">
-                <span className={`bolinha ${st.cor}`} />
-                <div className="info">
-                  <div className="nome">{p.nome}</div>
-                  <div className="det">{p.dias} · {horario(p)}</div>
+              <Link key={p.id} href={`/app/programa/${p.id}`} className="prog-mini" style={{ '--st': COR_STATUS[st.cor] }}>
+                <div className="nome">{p.nome}</div>
+                {p.descricao && <div className="resumo desc">{p.descricao}</div>}
+                <div className="resumo">
+                  {diasCurto(p.dias)} · {hhmm(p.horario_inicio)}–{hhmm(p.horario_fim)}
                 </div>
-                <span className={`badge b-${st.cor}`}>{st.texto}</span>
-                <ChevronRight className="seta" size={20} />
+                <div className="rodape-p">
+                  <span className="vagas" style={{ color: COR_STATUS[st.cor] }}>{st.texto}</span>
+                  <span className="mini-blocos">
+                    {Array.from({ length: Math.min(p.cotas_total, 8) }, (_, i) => <i key={i} className={i < p.cotas_ocupadas ? 'cheia' : ''} />)}
+                  </span>
+                </div>
               </Link>
             );
           })}
