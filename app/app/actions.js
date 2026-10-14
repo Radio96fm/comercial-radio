@@ -1,4 +1,5 @@
 'use server';
+import { valorNoPeriodo } from '@/lib/periodo';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getSessao } from '@/lib/auth';
@@ -172,6 +173,7 @@ export async function criarContrato(_prev, fd) {
   if (!cliente) return { erro: 'Cliente não encontrado.' };
   if (programa_id && !programa) return { erro: 'Programa não encontrado.' };
   if (plano_id && !plano) return { erro: 'Plano não encontrado para este programa.' };
+  if (programa && meses < (programa.meses_minimo || 1)) return { erro: `Este programa tem contrato mínimo de ${programa.meses_minimo} meses.` };
   if (!isGestor && cliente.vendedor_id && cliente.vendedor_id !== perfil.id) {
     return { erro: 'Este cliente é da carteira de outro vendedor. Fale com o gestor para transferir.' };
   }
@@ -187,8 +189,8 @@ export async function criarContrato(_prev, fd) {
   const { data: radio } = await supabase.from('radios').select('id, nome').eq('id', radio_id).maybeSingle();
   if (!radio) return { erro: 'Escolha a rádio.' };
 
-  // valor de tabela; o vendedor pode negociar o valor final
-  const valorPrograma = programa ? Number(plano ? plano.valor : programa.valor_cota) : 0;
+  // valor de tabela conforme o período escolhido (1, 3, 6 ou 12 meses)
+  const valorPrograma = programa ? (plano ? valorNoPeriodo(plano, meses) : Number(programa.valor_cota)) : 0;
   const valorTabela = Math.round((valorPrograma + itens.reduce((s, i) => s + i.quantidade * i.valor_unitario, 0)) * 100) / 100;
   // valor sempre o da tabela (o vendedor não altera)
   const valor_mensal = valorTabela;

@@ -770,3 +770,41 @@ begin
 end $$;
 revoke execute on function public.atualizar_meu_perfil(text, text, text) from public, anon;
 grant execute on function public.atualizar_meu_perfil(text, text, text) to authenticated;
+
+-- Preço por período (valor por mês conforme a duração do contrato) -------------
+alter table public.programa_planos add column if not exists valor_1  numeric(12,2) check (valor_1  >= 0);
+alter table public.programa_planos add column if not exists valor_3  numeric(12,2) check (valor_3  >= 0);
+alter table public.programa_planos add column if not exists valor_6  numeric(12,2) check (valor_6  >= 0);
+alter table public.programa_planos add column if not exists valor_12 numeric(12,2) check (valor_12 >= 0);
+alter table public.programas add column if not exists meses_minimo int not null default 1 check (meses_minimo in (1, 3, 6, 12));
+
+-- Condições especiais (avisos para os vendedores) ------------------------------
+create table if not exists public.condicoes_especiais (
+  id          uuid primary key default gen_random_uuid(),
+  programa_id uuid not null references public.programas(id) on delete cascade,
+  texto       text not null,
+  ativo       boolean not null default true,
+  expira_em   timestamptz,          -- null = até o gestor desativar
+  created_at  timestamptz not null default now()
+);
+create index if not exists condicoes_prog_idx on public.condicoes_especiais(programa_id);
+alter table public.condicoes_especiais enable row level security;
+grant select, insert, update, delete on public.condicoes_especiais to authenticated;
+drop policy if exists condicoes_select on public.condicoes_especiais;
+drop policy if exists condicoes_write on public.condicoes_especiais;
+create policy condicoes_select on public.condicoes_especiais for select to authenticated using (public.usuario_ativo());
+create policy condicoes_write  on public.condicoes_especiais for all to authenticated using (public.is_gestor()) with check (public.is_gestor());
+
+-- a view passa a mostrar o contrato mínimo (coluna nova no fim)
+create or replace view public.programas_ocupacao with (security_invoker = true) as
+select p.id, p.radio_id, p.nome, p.apresentador, p.dias, p.horario_inicio, p.horario_fim, p.descricao, p.cotas_total, p.valor_cota, p.descricao_cota, p.ativo, p.created_at,
+  r.nome as radio_nome, r.cor as radio_cor,
+  coalesce(o.ocupadas, 0)::int as cotas_ocupadas,
+  greatest(p.cotas_total - coalesce(o.ocupadas, 0), 0)::int as cotas_livres,
+  p.meses_minimo
+from public.programas p
+join public.radios r on r.id = p.radio_id
+left join lateral (
+  select count(*) as ocupadas from public.contratos c
+   where c.programa_id = p.id and c.status in ('pendente', 'ativo') and current_date between c.data_inicio and c.data_fim
+) o on true;

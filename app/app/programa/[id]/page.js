@@ -4,13 +4,18 @@ import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
 import { Ban, Building2, Check, Clock, Mic, PenLine } from 'lucide-react';
 import { data, horario, moeda, statusPrograma, STATUS_CONTRATO, hojeISO } from '@/lib/format';
+import { PERIODOS, nomePeriodo, valorNoPeriodo, temPrecoPorPeriodo, buscarCondicoesAtivas } from '@/lib/periodo';
+import { Sparkles } from 'lucide-react';
 
 export default async function ProgramaPage({ params }) {
   const { supabase, perfil } = await getSessao();
   const { data: p } = await supabase.from('programas_ocupacao').select('*').eq('id', params.id).maybeSingle();
   if (!p) notFound();
 
-  const { data: planos } = await supabase.from('programa_planos').select('id, nome, descricao, valor').eq('programa_id', p.id).order('ordem');
+  const [{ data: planos }, { data: condicoes }] = await Promise.all([
+    supabase.from('programa_planos').select('id, nome, descricao, valor, valor_1, valor_3, valor_6, valor_12').eq('programa_id', p.id).order('ordem'),
+    buscarCondicoesAtivas(supabase, p.id),
+  ]);
   const valores = (planos || []).map((x) => Number(x.valor));
   const aPartir = valores.length > 1 && Math.min(...valores) !== Math.max(...valores);
   const valorRef = valores.length ? Math.min(...valores) : p.valor_cota;
@@ -46,6 +51,9 @@ export default async function ProgramaPage({ params }) {
     <>
       <Topo titulo={p.nome} voltar={`/app/radio/${p.radio_id}`} cor={p.radio_cor} />
       <main className="conteudo">
+        {(condicoes || []).map((c) => (
+          <div key={c.id} className="cond-destaque"><Sparkles size={18} className="ico" /><div><small>Condição especial</small><b>{c.texto}</b></div></div>
+        ))}
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
             <div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -90,6 +98,14 @@ export default async function ProgramaPage({ params }) {
                       {x.descricao.split('\n').filter(Boolean).map((t, i) => <li key={i}><Check className="ico" />{t}</li>)}
                     </ul>
                   )}
+                  {temPrecoPorPeriodo(x) && (
+                    <div className="tabela-periodo">
+                      <small>Valor por mês conforme o tempo de contrato</small>
+                      <div className="linha">
+                        {PERIODOS.filter((m) => m >= (p.meses_minimo || 1)).map((m) => <div key={m}><span>{nomePeriodo(m)}</span><b>{moeda(valorNoPeriodo(x, m))}</b></div>)}
+                      </div>
+                    </div>
+                  )}
                   {p.cotas_livres > 0 && (
                     <Link href={`/app/contratos/novo?programa=${p.id}&plano=${x.id}`} className="btn cinza">
                       {planos.length > 1 ? `Escolher ${x.nome}` : 'Fechar este plano'}
@@ -98,7 +114,7 @@ export default async function ProgramaPage({ params }) {
                 </div>
               ))}
             </div>
-            <p className="muted" style={{ fontSize: '.9rem' }}>Mensal, boleto, contrato mínimo de 3 meses.</p>
+            <p className="muted" style={{ fontSize: '.9rem' }}>Mensal, boleto{(p.meses_minimo || 1) > 1 ? `, contrato mínimo de ${p.meses_minimo} meses` : ''}.</p>
           </>
         )}
 

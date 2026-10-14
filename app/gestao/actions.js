@@ -34,6 +34,7 @@ export async function salvarPrograma(_prev, fd) {
     valor_cota: Number.isFinite(valor) ? valor : 0,
     descricao_cota: txt(fd, 'descricao_cota'),
     ativo: fd.get('ativo') === 'on',
+    meses_minimo: [1, 3, 6, 12].includes(Number(fd.get('meses_minimo'))) ? Number(fd.get('meses_minimo')) : 1,
   };
   if (!registro.radio_id || !registro.nome) return { erro: 'Rádio e nome do programa são obrigatórios.' };
   const q = id ? supabase.from('programas').update(registro).eq('id', id) : supabase.from('programas').insert(registro);
@@ -239,6 +240,12 @@ export async function salvarPlano(_prev, fd) {
   const id = txt(fd, 'id');
   const valor = parseValor(fd.get('valor'));
   const registro = { nome: txt(fd, 'nome'), descricao: txt(fd, 'descricao'), valor: Number.isFinite(valor) ? valor : NaN, ordem: parseInt(fd.get('ordem'), 10) || 0 };
+  for (const m of [1, 3, 6, 12]) {
+    const bruto = String(fd.get(`valor_${m}`) ?? '').trim();
+    const v = bruto ? parseValor(bruto) : null;
+    if (bruto && !(v >= 0)) return { erro: `Valor de ${m === 1 ? '1 mês' : `${m} meses`} inválido.` };
+    registro[`valor_${m}`] = v;
+  }
   if (!registro.nome) return { erro: 'Dê um nome ao plano (ex.: Plano 01).' };
   if (!(registro.valor >= 0)) return { erro: 'Valor do plano inválido.' };
   const q = id
@@ -254,6 +261,34 @@ export async function excluirPlano(fd) {
   const { supabase } = await requireGestor();
   await supabase.from('programa_planos').delete().eq('id', txt(fd, 'id'));
   revalidatePath('/gestao/programas');
+}
+
+// ------------------------------------------------------------------ condições especiais
+export async function criarCondicao(_prev, fd) {
+  const { supabase } = await requireGestor();
+  const texto = txt(fd, 'texto');
+  if (!texto) return { erro: 'Escreva qual é a condição especial.' };
+  const dias = parseInt(fd.get('dias'), 10);
+  const expira_em = dias > 0 ? new Date(Date.now() + dias * 86400000).toISOString() : null;
+  const { error } = await supabase.from('condicoes_especiais').insert({ programa_id: txt(fd, 'programa_id'), texto, expira_em });
+  if (error) return { erro: erroAmigavel(error) };
+  revalidatePath('/gestao/programas');
+  revalidatePath('/app', 'layout');
+  return { ok: 'Condição publicada. Os vendedores já estão vendo o aviso.' };
+}
+
+export async function alternarCondicao(fd) {
+  const { supabase } = await requireGestor();
+  await supabase.from('condicoes_especiais').update({ ativo: fd.get('ativo') === '1' }).eq('id', txt(fd, 'id'));
+  revalidatePath('/gestao/programas');
+  revalidatePath('/app', 'layout');
+}
+
+export async function excluirCondicao(fd) {
+  const { supabase } = await requireGestor();
+  await supabase.from('condicoes_especiais').delete().eq('id', txt(fd, 'id'));
+  revalidatePath('/gestao/programas');
+  revalidatePath('/app', 'layout');
 }
 
 export async function salvarPreco(_prev, fd) {

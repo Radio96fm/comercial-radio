@@ -7,6 +7,7 @@ import { criarContrato } from '../../actions';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import { moeda, data, somarMeses, somarDias } from '@/lib/format';
 import { nomeItem, MODALIDADE, textoDireito } from '@/lib/pacote';
+import { valorNoPeriodo, temPrecoPorPeriodo } from '@/lib/periodo';
 
 const MESES = [1, 3, 6, 12];
 
@@ -28,7 +29,8 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
     [inicial.itens, precos, progInicial]
   );
   const [inicio, setInicio] = useState(hoje);
-  const [meses, setMeses] = useState(3);
+  const minimoInicial = progInicial?.meses_minimo || 1;
+  const [meses, setMeses] = useState(Math.max(3, minimoInicial));
   const [vencimento, setVencimento] = useState(() => { const d = somarMeses(hoje, 1); return `${d.slice(0, 8)}10`; });
   const [vendedorId, setVendedorId] = useState(meuId);
   const [obsManual, setObsManual] = useState(null);
@@ -39,7 +41,10 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
   const plano = planosProg.find((x) => x.id === planoId);
   const cli = clientes.find((c) => c.id === clienteId);
 
-  const valorPrograma = prog ? Number(plano ? plano.valor : prog.valor_cota) : 0;
+  const minimo = prog?.meses_minimo || 1;
+  const precoPrograma = (m) => (prog ? (plano ? valorNoPeriodo(plano, m) : Number(prog.valor_cota)) : 0);
+  const valorPrograma = precoPrograma(Number(meses));
+  const variaPorPeriodo = !!plano && temPrecoPorPeriodo(plano);
   const linhas = itens.map((i) => ({ ...i, preco: precos.find((p) => p.id === i.id) })).filter((l) => l.preco);
   const total = Math.round((valorPrograma + linhas.reduce((s, l) => s + l.qtd * Number(l.preco.valor), 0)) * 100) / 100;
 
@@ -113,7 +118,7 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
               <b>{moeda(l.qtd * Number(l.preco.valor))}</b>
             </div>
           ))}
-          <div className="valor"><span>Valor por mês</span><b className="num">{moeda(total)}</b></div>
+          <div className="valor"><span>Valor por mês{variaPorPeriodo ? ` (${meses} ${Number(meses) === 1 ? 'mês' : 'meses'})` : ''}</span><b className="num">{moeda(total)}</b></div>
         </div>
       )}
       {conflito && (
@@ -137,11 +142,14 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
       <input type="hidden" name="meses" value={meses} />
       <div className="seg4">
         {MESES.map((m) => (
-          <button type="button" key={m} className={Number(meses) === m ? 'ativo' : ''} onClick={() => setMeses(m)}>
+          <button type="button" key={m} className={Number(meses) === m ? 'ativo' : ''} disabled={m < minimo} onClick={() => setMeses(m)}>
             <b>{m}</b>{m === 1 ? 'mês' : 'meses'}
+            {variaPorPeriodo && m >= minimo && <small className="preco-p">{moeda(precoPrograma(m)).replace(",00", "")}</small>}
           </button>
         ))}
       </div>
+      {minimo > 1 && <p className="muted" style={{ marginTop: 8 }}>Este programa tem contrato mínimo de {minimo} meses.</p>}
+      {variaPorPeriodo && <p className="muted" style={{ marginTop: 8 }}>O valor por mês muda conforme o tempo de contrato.</p>}
       <div className="grid2" style={{ marginTop: 14 }}>
         <div className="campo">
           <label>Começa em *</label>

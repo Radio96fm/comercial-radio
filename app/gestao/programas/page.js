@@ -2,10 +2,37 @@ import Link from 'next/link';
 import { requireGestor } from '@/lib/auth';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
-import { salvarPrograma, salvarPlano, excluirPlano } from '../actions';
+import { salvarPrograma, salvarPlano, excluirPlano, criarCondicao, alternarCondicao, excluirCondicao } from '../actions';
+import { PERIODOS, nomePeriodo } from '@/lib/periodo';
 import { horario, moeda, hora, valorParaCampo } from '@/lib/format';
 import { CartoesRadio, AbasRadio, FaixaRadio } from '@/components/gestao/RadiosGestao';
-import { Clock, Mic, Plus } from 'lucide-react';
+import { Clock, Mic, Plus, Sparkles } from 'lucide-react';
+
+// valor por mês conforme a duração do contrato (vazio = valor normal)
+function CamposPeriodo({ x = {} }) {
+  return (
+    <div className="periodos-g">
+      <div className="t">Valor por mês conforme o tempo de contrato <small>deixe vazio para usar o valor normal</small></div>
+      <div className="linha">
+        {PERIODOS.map((m) => (
+          <div key={m} className="campo">
+            <label>{nomePeriodo(m)}</label>
+            <input name={`valor_${m}`} inputMode="decimal" placeholder={x.valor != null ? valorParaCampo(x.valor) : 'normal'} defaultValue={x[`valor_${m}`] != null ? valorParaCampo(x[`valor_${m}`]) : ''} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function prazoCondicao(c) {
+  if (!c.ativo) return 'desativada';
+  if (!c.expira_em) return 'até você desativar';
+  const ms = new Date(c.expira_em) - Date.now();
+  if (ms <= 0) return 'expirou';
+  const h = Math.ceil(ms / 3600000);
+  return h > 48 ? `mais ${Math.ceil(h / 24)} dias` : `mais ${h} h`;
+}
 
 function CamposPrograma({ radios, p = {}, radioPadrao }) {
   return (
@@ -25,6 +52,12 @@ function CamposPrograma({ radios, p = {}, radioPadrao }) {
         <div className="campo"><label>Fim</label><input type="time" name="horario_fim" defaultValue={hora(p.horario_fim)} /></div>
         <div className="campo"><label>Total de cotas *</label><input type="number" min="0" name="cotas_total" defaultValue={p.cotas_total ?? 6} required /></div>
         <div className="campo"><label>Valor de referência (R$/mês)</label><input name="valor_cota" inputMode="decimal" defaultValue={valorParaCampo(p.valor_cota ?? 0)} /></div>
+        <div className="campo">
+          <label>Contrato mínimo</label>
+          <select name="meses_minimo" defaultValue={p.meses_minimo ?? 1}>
+            {PERIODOS.map((m) => <option key={m} value={m}>{nomePeriodo(m)}</option>)}
+          </select>
+        </div>
       </div>
       <div className="campo"><label>Descrição do programa</label><textarea name="descricao" defaultValue={p.descricao || ''} style={{ minHeight: 70 }} /></div>
       <div className="campo"><label>O que o patrocinador recebe</label><textarea name="descricao_cota" defaultValue={p.descricao_cota || ''} style={{ minHeight: 70 }} /></div>
@@ -39,11 +72,15 @@ function CamposPrograma({ radios, p = {}, radioPadrao }) {
 
 export default async function ProgramasGestao({ searchParams }) {
   const { supabase } = await requireGestor();
-  const [{ data: radios }, { data: programas }, { data: planos }] = await Promise.all([
+  const [{ data: radios }, { data: programas }, { data: planos }, { data: condicoes }] = await Promise.all([
     supabase.from('radios').select('id, nome, cor, slogan').order('ordem'),
     supabase.from('programas_ocupacao').select('*').order('horario_inicio', { nullsFirst: false }),
     supabase.from('programa_planos').select('*').order('ordem'),
+    supabase.from('condicoes_especiais').select('*').order('created_at', { ascending: false }),
   ]);
+  const agora = Date.now();
+  const condAtiva = (c) => c.ativo && (!c.expira_em || new Date(c.expira_em) > agora);
+  const condicoesDe = (id) => (condicoes || []).filter((c) => c.programa_id === id);
   const editando = (programas || []).find((p) => p.id === searchParams?.editar);
   const radio = (radios || []).find((r) => r.id === (editando?.radio_id || searchParams?.radio));
   const planosDe = (id) => (planos || []).filter((x) => x.programa_id === id);
@@ -87,6 +124,42 @@ export default async function ProgramasGestao({ searchParams }) {
             <BotaoEnviar className="btn" texto="Salvar alterações" />
           </FormAcao>
 
+          <div className="condicoes-g">
+            <h2><Sparkles className="ico" /> Condição especial</h2>
+            <p className="muted">Os vendedores veem uma barrinha amarela no app avisando desta condição.</p>
+            {condicoesDe(editando.id).map((c) => (
+              <div key={c.id} className={`cond-item ${condAtiva(c) ? 'ativa' : ''}`}>
+                <div className="txt"><b>{c.texto}</b><small>{condAtiva(c) ? `Aparecendo para os vendedores · ${prazoCondicao(c)}` : `Não aparece mais · ${prazoCondicao(c)}`}</small></div>
+                <form action={alternarCondicao}>
+                  <input type="hidden" name="id" value={c.id} />
+                  <input type="hidden" name="ativo" value={c.ativo ? '0' : '1'} />
+                  <BotaoEnviar className="btn peq cinza" texto={c.ativo ? 'Desativar' : 'Ativar'} enviando="..." />
+                </form>
+                <form action={excluirCondicao}>
+                  <input type="hidden" name="id" value={c.id} />
+                  <BotaoEnviar className="btn peq vermelho" texto="Excluir" enviando="..." confirmar="Excluir esta condição?" />
+                </form>
+              </div>
+            ))}
+            <FormAcao action={criarCondicao} limparAoSalvar>
+              <input type="hidden" name="programa_id" value={editando.id} />
+              <div className="form-grid">
+                <div className="campo" style={{ gridColumn: 'span 2' }}><label>Qual é a condição?</label><input name="texto" placeholder="Ex.: Fechando 12 meses, R$ 1.700 por mês" required /></div>
+                <div className="campo">
+                  <label>Mostrar por</label>
+                  <select name="dias" defaultValue="3">
+                    <option value="1">1 dia</option>
+                    <option value="3">3 dias</option>
+                    <option value="7">7 dias</option>
+                    <option value="30">30 dias</option>
+                    <option value="0">Até eu desativar</option>
+                  </select>
+                </div>
+              </div>
+              <BotaoEnviar className="btn peq amarelo" texto="Publicar condição especial" />
+            </FormAcao>
+          </div>
+
           <h2 style={{ marginTop: 24 }}>Planos de venda</h2>
           <p className="muted">Cada plano aparece para o vendedor escolher ao fechar o contrato deste programa. Programa com um valor só = um plano.</p>
           {planosDe(editando.id).map((x) => (
@@ -98,6 +171,7 @@ export default async function ProgramasGestao({ searchParams }) {
                   <div className="campo"><label>Valor (R$/mês)</label><input name="valor" inputMode="decimal" defaultValue={valorParaCampo(x.valor)} required /></div>
                   <div className="campo"><label>Ordem</label><input name="ordem" type="number" defaultValue={x.ordem} /></div>
                 </div>
+                <CamposPeriodo x={x} />
                 <div className="campo"><label>O que inclui</label><textarea name="descricao" defaultValue={x.descricao || ''} style={{ minHeight: 60 }} /></div>
                 <BotaoEnviar className="btn peq" texto="Salvar plano" />
               </FormAcao>
@@ -116,6 +190,7 @@ export default async function ProgramasGestao({ searchParams }) {
                 <div className="campo"><label>Valor (R$/mês)</label><input name="valor" inputMode="decimal" required /></div>
                 <div className="campo"><label>Ordem</label><input name="ordem" type="number" defaultValue={planosDe(editando.id).length + 1} /></div>
               </div>
+              <CamposPeriodo />
               <div className="campo"><label>O que inclui</label><textarea name="descricao" style={{ minHeight: 60 }} /></div>
               <BotaoEnviar className="btn peq" texto="Adicionar plano" />
             </FormAcao>
@@ -144,6 +219,7 @@ export default async function ProgramasGestao({ searchParams }) {
                   <div className="topo">
                     <b>{p.nome}</b>
                     {!p.ativo && <span className="badge b-cinza">inativo</span>}
+                    {condicoesDe(p.id).some(condAtiva) && <span className="badge b-amarelo"><Sparkles size={13} /> condição especial</span>}
                   </div>
                   {p.apresentador && <div className="det"><Mic className="ico" />{p.apresentador}</div>}
                   <div className="det"><Clock className="ico" />{p.dias}{horario(p) ? ` · ${horario(p)}` : ''}</div>
@@ -156,6 +232,7 @@ export default async function ProgramasGestao({ searchParams }) {
                       {pls.length > 1
                         ? <>{pls.length} planos · a partir de <b>{moeda(Math.min(...pls.map((x) => Number(x.valor))))}</b></>
                         : <b>{moeda(pls[0]?.valor ?? p.valor_cota)}<small>/mês</small></b>}
+                      {p.meses_minimo > 1 && <small className="min"> · mínimo {p.meses_minimo} meses</small>}
                     </span>
                     <span className="editar">Editar ›</span>
                   </div>

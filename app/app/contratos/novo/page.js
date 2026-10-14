@@ -12,8 +12,8 @@ export default async function NovoContrato({ searchParams }) {
 
   const [{ data: clientes }, { data: programas }, { data: planos }, { data: precos }, { data: radios }, { data: ocupados }, { data: vendedores }, { data: modelo }] = await Promise.all([
     qClientes,
-    supabase.from('programas_ocupacao').select('id, nome, radio_id, radio_nome, valor_cota, descricao_cota, cotas_livres, cotas_total, horario_inicio').eq('ativo', true).order('radio_nome').order('horario_inicio', { nullsFirst: false }),
-    supabase.from('programa_planos').select('id, programa_id, nome, descricao, valor').order('ordem'),
+    supabase.from('programas_ocupacao').select('id, nome, radio_id, radio_nome, valor_cota, descricao_cota, cotas_livres, cotas_total, horario_inicio, meses_minimo').eq('ativo', true).order('radio_nome').order('horario_inicio', { nullsFirst: false }),
+    supabase.from('programa_planos').select('id, programa_id, nome, descricao, valor, valor_1, valor_3, valor_6, valor_12').order('ordem'),
     supabase.from('tabela_precos').select('id, radio_id, tipo, duracao, modalidade, valor').eq('ativo', true).order('tipo').order('duracao').order('modalidade', { ascending: false }),
     supabase.from('radios').select('id, nome, cor').order('ordem'),
     supabase.from('contratos').select('programa_id, segmento_id, data_fim').in('status', ['pendente', 'ativo']).not('programa_id', 'is', null).gte('data_fim', hoje),

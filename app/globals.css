@@ -790,3 +790,44 @@ details.novo-programa > summary { display: flex; align-items: center; gap: 8px; 
   .faixa-radio-g { flex-wrap: wrap; }
   .faixa-radio-g .extra { margin-left: 0; width: 100%; justify-content: flex-start; }
 }
+
+/* ---------- Preço por período e condições especiais ---------- */
+.btn.amarelo { background: var(--amarelo); color: #1a1405; }
+.aviso-condicao {
+  display: flex; align-items: center; gap: 8px; padding: 7px 14px; font-size: .88rem; line-height: 1.2;
+  background: var(--amarelo); color: #1a1405; text-decoration: none; font-weight: 500;
+}
+.aviso-condicao .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aviso-condicao b { font-weight: 800; }
+.seg4 button:disabled { opacity: .35; cursor: not-allowed; }
+.seg4 button .preco-p { font-size: .72rem; margin-top: 4px; opacity: .85; font-variant-numeric: tabular-nums; }
+.tabela-periodo { margin: 10px 0; }
+.tabela-periodo small { display: block; color: var(--muted); font-size: .8rem; margin-bottom: 6px; }
+.tabela-periodo .linha { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.tabela-periodo .linha > div { background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 7px 6px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
+.tabela-periodo .linha span { font-size: .75rem; color: var(--muted); }
+.tabela-periodo .linha b { font-size: .92rem; font-variant-numeric: tabular-nums; }
+.cond-destaque { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-bottom: 14px; border-radius: var(--radius-sm); background: var(--amarelo-bg); border: 1px solid rgba(251, 191, 36, .35); color: var(--text); }
+.cond-destaque .ico { color: var(--amarelo); flex: none; margin-top: 2px; }
+.cond-destaque small { display: block; color: var(--amarelo); font-weight: 700; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+.lista-condicoes { display: grid; gap: 12px; }
+.cond-card { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--cor, var(--amarelo)); border-radius: var(--radius); padding: 14px 16px; }
+.cond-card .radio { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .85rem; }
+.cond-card .prog { display: block; font-size: 1.2rem; margin: 4px 0 8px; }
+.cond-card .texto { display: flex; gap: 8px; margin: 0 0 6px; font-size: 1.02rem; }
+.cond-card .texto .ico { color: var(--amarelo); flex: none; margin-top: 3px; }
+.cond-card .rodape { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; }
+.periodos-g { background: var(--card); border: 1px dashed var(--line-2); border-radius: var(--radius-sm); padding: 10px 12px 2px; margin-bottom: 12px; }
+.periodos-g .t { font-weight: 600; font-size: .92rem; margin-bottom: 8px; }
+.periodos-g .t small { font-weight: 400; color: var(--muted); margin-left: 6px; }
+.periodos-g .linha { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.condicoes-g { margin-top: 22px; padding: 16px; border-radius: var(--radius); background: var(--amarelo-bg); border: 1px solid rgba(251, 191, 36, .3); }
+.condicoes-g h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
+.condicoes-g h2 .ico { color: var(--amarelo); }
+.cond-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 8px 0; border-radius: var(--radius-sm); background: var(--card); border: 1px solid var(--line); opacity: .65; }
+.cond-item.ativa { opacity: 1; border-color: rgba(251, 191, 36, .5); }
+.cond-item .txt { flex: 1; min-width: 0; }
+.cond-item .txt small { display: block; color: var(--muted); }
+.prog-card-g .rodape .min { color: var(--muted); }
+@media (max-width: 700px) { .periodos-g .linha { grid-template-columns: repeat(2, 1fr); } }
+[data-theme="light"] .cond-destaque small, [data-theme="light"] .cond-card .texto .ico, [data-theme="light"] .condicoes-g h2 .ico { color: #a16207; }
