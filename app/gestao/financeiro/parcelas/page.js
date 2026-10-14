@@ -28,7 +28,7 @@ export default async function ParcelasFin({ searchParams }) {
     if (sit === 'a_emitir') q = q.eq('status', 'a_emitir');
   }
   const [{ data: parcelas }, { data: vendedores }] = await Promise.all([
-    q, supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor']).order('nome'),
+    q, supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
   ]);
   const total = (parcelas || []).reduce((s, p) => s + Number(p.valor), 0);
 

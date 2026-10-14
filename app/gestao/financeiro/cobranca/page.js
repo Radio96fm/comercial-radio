@@ -14,7 +14,7 @@ export default async function Cobranca({ searchParams }) {
     .lte('vencimento', somarDias(hoje, 31)).order('vencimento');
   if (vend) q = q.eq('contrato.vendedor_id', vend);
   const [{ data: parcelas }, { data: vendedores }] = await Promise.all([
-    q, supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor']).order('nome'),
+    q, supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
   ]);
   const lista = parcelas || [];
   const comFone = lista.filter((p) => p.contrato?.cliente?.telefone);

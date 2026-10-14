@@ -17,7 +17,7 @@ export default async function ContratosFin({ searchParams }) {
   if (vend) q = q.eq('vendedor_id', vend);
   if (st) q = q.eq('status', st);
   const [{ data: contratos }, { data: vendedores }] = await Promise.all([
-    q, supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor']).order('nome'),
+    q, supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
   ]);
   const lista = contratos || [];
 

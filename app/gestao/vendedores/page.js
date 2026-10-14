@@ -1,4 +1,4 @@
-import { requireGestor } from '@/lib/auth';
+import { requireMaster } from '@/lib/auth';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import { criarUsuario, atualizarUsuario, alternarAtivo, redefinirSenha, novoConvite } from '../actions';
@@ -6,7 +6,7 @@ import { headers } from 'next/headers';
 import CopiarTexto from '@/components/CopiarTexto';
 
 export default async function Usuarios() {
-  const { supabase, perfil } = await requireGestor();
+  const { supabase, perfil } = await requireMaster();
   const [{ data: usuarios }, { data: contagem }] = await Promise.all([
     supabase.from('profiles').select('*').order('ativo', { ascending: false }).order('nome'),
     supabase.from('contratos').select('vendedor_id').in('status', ['pendente', 'ativo']),
@@ -33,7 +33,7 @@ export default async function Usuarios() {
       </div>
 
       <details className="card" open={!usuarios || usuarios.length <= 1}>
-        <summary>Cadastrar vendedor ou gestor</summary>
+        <summary>Criar acesso (gestor, financeiro ou vendedor)</summary>
         <FormAcao action={criarUsuario} limparAoSalvar>
           <div className="form-grid">
             <div className="campo"><label>Nome *</label><input name="nome" required /></div>
@@ -48,8 +48,9 @@ export default async function Usuarios() {
               <label>Tipo de acesso</label>
               <select name="papel" defaultValue="vendedor">
                 <option value="vendedor">Vendedor (app no celular)</option>
-                <option value="gestor">Gestor comercial (painel)</option>
-                <option value="financeiro">Financeiro (comissões e boletos)</option>
+                <option value="comercial">Gestor comercial (painel, sem usuários e financeiro)</option>
+                <option value="gestor">Gestor master (tudo)</option>
+                <option value="financeiro">Financeiro</option>
               </select>
             </div>
           </div>
@@ -61,7 +62,7 @@ export default async function Usuarios() {
         {(usuarios || []).map((u) => (
           <details key={u.id} className="card" style={{ marginBottom: 0, opacity: u.ativo ? 1 : 0.6 }}>
             <summary>
-              {u.nome} {u.id === perfil.id && '(você)'} — <span className={`badge ${u.papel === 'gestor' ? 'b-azul' : 'b-cinza'}`}>{u.papel}</span>{' '}
+              {u.nome} {u.id === perfil.id && '(você)'} — <span className={`badge ${u.papel === 'gestor' ? 'b-azul' : u.papel === 'vendedor' ? 'b-cinza' : 'b-amarelo'}`}>{{ gestor: 'gestor master', comercial: 'gestor comercial', financeiro: 'financeiro', vendedor: 'vendedor' }[u.papel] || u.papel}</span>{' '}
               {!u.ativo && <span className="badge b-vermelho">desativado</span>}{' '}
               <small>{u.email} · {qtd[u.id] || 0} contratos vigentes</small>
             </summary>
@@ -76,7 +77,8 @@ export default async function Usuarios() {
                   <label>Tipo de acesso</label>
                   <select name="papel" defaultValue={u.papel}>
                     <option value="vendedor">Vendedor</option>
-                    <option value="gestor">Gestor</option>
+                    <option value="comercial">Gestor comercial</option>
+                    <option value="gestor">Gestor master</option>
                     <option value="financeiro">Financeiro</option>
                   </select>
                 </div>

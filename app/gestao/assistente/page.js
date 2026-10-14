@@ -1,4 +1,4 @@
-import { requireGestor } from '@/lib/auth';
+import { requireMaster } from '@/lib/auth';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import { salvarIA, alternarMaterial, excluirMaterial } from '../actions';
@@ -8,7 +8,7 @@ import { data } from '@/lib/format';
 import NovoMaterial from './NovoMaterial';
 
 export default async function Assistente() {
-  const { supabase } = await requireGestor();
+  const { supabase } = await requireMaster();
   const [{ data: ia }, { data: materiais }, { count: feitos }] = await Promise.all([
     supabase.rpc('ia_situacao'),
     supabase.from('assistente_materiais').select('*').order('created_at', { ascending: false }),

@@ -4,7 +4,7 @@ import { requireFinanceiro } from '@/lib/auth';
 import { emitirBoleto } from '@/lib/cobranca';
 import { hojeISO, parseValor } from '@/lib/format';
 
-const atualizar = () => ['/financeiro', '/financeiro/parcelas', '/financeiro/cobranca', '/financeiro/comissoes'].forEach((p) => revalidatePath(p));
+const atualizar = () => revalidatePath('/gestao/financeiro', 'layout');
 
 export async function mudarParcela(fd) {
   const { supabase } = await requireFinanceiro();

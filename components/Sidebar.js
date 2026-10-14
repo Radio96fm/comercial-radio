@@ -2,9 +2,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, MessageCircleQuestion, Timer,
+  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, MessageCircleQuestion, Timer, BadgePercent, Send,
 } from 'lucide-react';
 
+// m = só para o gestor master
 const ITENS = [
   ['/gestao', LayoutDashboard, 'Visão geral', true],
   ['/gestao/perguntar', MessageCircleQuestion, 'Perguntar à IA'],
@@ -13,14 +14,22 @@ const ITENS = [
   ['/gestao/contratos', FileText, 'Contratos'],
   ['/gestao/clientes', Users, 'Clientes'],
   ['/gestao/negociacoes', Timer, 'Negociações'],
-  ['/gestao/vendedores', UserCog, 'Usuários'],
+  ['/gestao/vendedores', UserCog, 'Usuários', false, 'm'],
   ['/gestao/modelos', FileSignature, 'Modelo de contrato'],
-  ['/gestao/assistente', Sparkles, 'Treinar assistente'],
+  ['/gestao/assistente', Sparkles, 'Treinar assistente', false, 'm'],
   ['/gestao/cadastros', Tags, 'Rádios e segmentos'],
   ['/gestao/atividades', History, 'Histórico'],
 ];
 
-export default function Sidebar() {
+const FINANCEIRO = [
+  ['/gestao/financeiro', LayoutDashboard, 'Resumo financeiro', true],
+  ['/gestao/financeiro/comissoes', BadgePercent, 'Comissões'],
+  ['/gestao/financeiro/parcelas', Wallet, 'Parcelas / boletos'],
+  ['/gestao/financeiro/cobranca', Send, 'Cobrança do mês'],
+  ['/gestao/financeiro/contratos', FileText, 'Contratos fechados'],
+];
+
+export default function Sidebar({ master }) {
   const path = usePathname();
   return (
     <aside className="sidebar nao-imprimir">
@@ -32,11 +41,21 @@ export default function Sidebar() {
         <b>Gestão Comercial</b>
       </div>
       <nav className="nav-g">
-        {ITENS.map(([href, Ico, txt, exato]) => (
+        {ITENS.filter((i) => master || i[4] !== 'm').map(([href, Ico, txt, exato]) => (
           <Link key={href} href={href} className={(exato ? path === href : path.startsWith(href)) ? 'ativo' : ''}>
             <Ico className="ico" />{txt}
           </Link>
         ))}
+        {master && (
+          <>
+            <span className="nav-grupo">Financeiro</span>
+            {FINANCEIRO.map(([href, Ico, txt, exato]) => (
+              <Link key={href} href={href} className={(exato ? path === href : path.startsWith(href)) ? 'ativo' : ''}>
+                <Ico className="ico" />{txt}
+              </Link>
+            ))}
+          </>
+        )}
       </nav>
       <div className="rodape">
         <div className="sep" />

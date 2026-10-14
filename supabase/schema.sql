@@ -1161,3 +1161,86 @@ if not exists (select 1 from pg_trigger where tgname = 'contratos_travar') then
   execute $q$create trigger contratos_travar before insert on public.contratos for each row execute function public.contratos_travar()$q$;
 end if;
 end $do$;
+
+-- Gestor master x gestor comercial
+alter type public.papel_usuario add value if not exists 'comercial';
+do $do$ begin
+execute $q$create or replace function public.is_gestor() returns boolean
+language sql stable security definer set search_path = public as $f$
+  select exists (select 1 from public.profiles where id = auth.uid() and ativo and papel::text in ('gestor', 'comercial'));
+$f$$q$;
+execute $q$create or replace function public.is_master() returns boolean
+language sql stable security definer set search_path = public as $f$
+  select exists (select 1 from public.profiles where id = auth.uid() and ativo and papel::text = 'gestor');
+$f$$q$;
+execute $q$revoke all on function public.is_master() from public, anon$q$;
+execute $q$grant execute on function public.is_master() to authenticated$q$;
+execute $q$create or replace function public.is_financeiro() returns boolean
+language sql stable security definer set search_path = public as $f$
+  select exists (select 1 from public.profiles where id = auth.uid() and ativo and papel::text in ('financeiro', 'gestor'));
+$f$$q$;
+execute $q$create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $f$
+begin
+  insert into public.profiles (id, nome, email, telefone, papel, ativo)
+  values (
+    new.id,
+    coalesce(nullif(new.raw_user_meta_data->>'nome', ''), split_part(new.email, '@', 1)),
+    new.email,
+    new.raw_user_meta_data->>'telefone',
+    case when new.raw_app_meta_data->>'papel' in ('gestor', 'financeiro', 'comercial') then (new.raw_app_meta_data->>'papel')::papel_usuario
+         else 'vendedor'::papel_usuario end,
+    coalesce(new.raw_app_meta_data->>'papel' in ('gestor', 'vendedor', 'financeiro', 'comercial'), false)
+  )
+  on conflict (id) do nothing;
+  return new;
+end $f$$q$;
+execute $q$create or replace function public.sincronizar_papel() returns trigger
+language plpgsql security definer set search_path = public as $f$
+begin
+  if new.raw_app_meta_data->>'papel' in ('gestor', 'vendedor', 'financeiro', 'comercial')
+     and new.raw_app_meta_data->>'papel' is distinct from old.raw_app_meta_data->>'papel' then
+    update public.profiles
+       set papel = (new.raw_app_meta_data->>'papel')::papel_usuario,
+           ativo = case when old.raw_app_meta_data->>'papel' is null then true else ativo end
+     where id = new.id;
+  end if;
+  return new;
+end $f$$q$;
+execute $q$create or replace function public.profiles_proteger() returns trigger
+language plpgsql security definer set search_path = public as $f$
+begin
+  -- papel, comissão e bloqueio: só o gestor master (ou o servidor) muda
+  if auth.uid() is not null and not public.is_master()
+     and (new.papel is distinct from old.papel or new.comissao is distinct from old.comissao or new.ativo is distinct from old.ativo) then
+    raise exception 'Só o gestor master pode mudar tipo de acesso, comissão ou bloqueio.';
+  end if;
+  return new;
+end $f$$q$;
+if not exists (select 1 from pg_trigger where tgname = 'profiles_proteger') then
+  execute $q$create trigger profiles_proteger before update on public.profiles for each row execute function public.profiles_proteger()$q$;
+end if;
+execute $q$create or replace function public.salvar_ia(p_provedor text, p_modelo text, p_token text) returns void
+language plpgsql security definer set search_path = public, privado as $f$
+begin
+  if not public.is_master() then raise exception 'Apenas o gestor master pode configurar o assistente.'; end if;
+  if p_provedor not in ('claude','gemini','openai') then raise exception 'IA inválida.'; end if;
+  insert into privado.config values ('ia_provedor', p_provedor) on conflict (chave) do update set valor = excluded.valor;
+  insert into privado.config values ('ia_modelo', coalesce(p_modelo, '')) on conflict (chave) do update set valor = excluded.valor;
+  if coalesce(p_token, '') <> '' then
+    insert into privado.config values ('ia_token_' || p_provedor, p_token) on conflict (chave) do update set valor = excluded.valor;
+  end if;
+end $f$$q$;
+execute $q$create or replace function public.convite_vendedor(p_novo boolean default false) returns text
+language plpgsql security definer set search_path = public, privado, extensions as $f$
+declare v text;
+begin
+  if not public.is_master() then raise exception 'Apenas o gestor master.'; end if;
+  select valor into v from privado.config where chave = 'convite_vendedor';
+  if v is null or p_novo then
+    v := encode(extensions.gen_random_bytes(12), 'hex');
+    insert into privado.config values ('convite_vendedor', v) on conflict (chave) do update set valor = excluded.valor;
+  end if;
+  return v;
+end $f$$q$;
+end $do$;

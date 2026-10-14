@@ -1,6 +1,6 @@
 'use server';
 import { revalidatePath } from 'next/cache';
-import { requireGestor } from '@/lib/auth';
+import { requireGestor, requireMaster } from '@/lib/auth';
 import { adminCriarUsuario, adminAtualizarUsuario } from '@/lib/supabase/admin';
 import { parseValor } from '@/lib/format';
 import { testarChave } from '@/lib/autentique';
@@ -48,11 +48,11 @@ export async function salvarPrograma(_prev, fd) {
 
 // ------------------------------------------------------------------ usuários
 export async function criarUsuario(_prev, fd) {
-  await requireGestor();
+  await requireMaster();
   const nome = txt(fd, 'nome');
   const email = (txt(fd, 'email') || '').toLowerCase();
   const senha = String(fd.get('senha') || '');
-  const papel = ['gestor', 'financeiro'].includes(txt(fd, 'papel')) ? txt(fd, 'papel') : 'vendedor';
+  const papel = ['gestor', 'comercial', 'financeiro'].includes(txt(fd, 'papel')) ? txt(fd, 'papel') : 'vendedor';
   if (!nome || !email) return { erro: 'Nome e e-mail são obrigatórios.' };
   if (senha.length < 8) return { erro: 'A senha precisa ter pelo menos 8 caracteres.' };
 
@@ -70,10 +70,10 @@ export async function criarUsuario(_prev, fd) {
 }
 
 export async function atualizarUsuario(_prev, fd) {
-  const { supabase, perfil } = await requireGestor();
+  const { supabase, perfil } = await requireMaster();
   const id = txt(fd, 'id');
-  const papel = ['gestor', 'financeiro'].includes(txt(fd, 'papel')) ? txt(fd, 'papel') : 'vendedor';
-  if (id === perfil.id && papel !== 'gestor') return { erro: 'Você não pode tirar o seu próprio acesso de gestor.' };
+  const papel = ['gestor', 'comercial', 'financeiro'].includes(txt(fd, 'papel')) ? txt(fd, 'papel') : 'vendedor';
+  if (id === perfil.id && papel !== 'gestor') return { erro: 'Você não pode tirar o seu próprio acesso de gestor master.' };
   const comissao = Number(String(fd.get('comissao') ?? '18').replace(',', '.'));
   if (!Number.isFinite(comissao) || comissao < 0 || comissao > 100) return { erro: 'Comissão deve ser entre 0 e 100%.' };
 
@@ -88,7 +88,7 @@ export async function atualizarUsuario(_prev, fd) {
 }
 
 export async function alternarAtivo(fd) {
-  const { supabase, perfil } = await requireGestor();
+  const { supabase, perfil } = await requireMaster();
   const id = txt(fd, 'id');
   const ativar = fd.get('ativar') === '1';
   if (id === perfil.id) return;
@@ -99,7 +99,7 @@ export async function alternarAtivo(fd) {
 }
 
 export async function redefinirSenha(_prev, fd) {
-  await requireGestor();
+  await requireMaster();
   const id = txt(fd, 'id');
   const senha = String(fd.get('senha') || '');
   if (senha.length < 8) return { erro: 'A nova senha precisa ter pelo menos 8 caracteres.' };
@@ -336,7 +336,7 @@ export async function salvarAutentique(_prev, fd) {
 }
 
 export async function salvarIA(_prev, fd) {
-  const { supabase } = await requireGestor();
+  const { supabase } = await requireMaster();
   const provedor = txt(fd, 'provedor');
   const token = txt(fd, 'token');
   if (!PROVEDORES[provedor]) return { erro: 'Escolha a IA.' };
@@ -364,13 +364,13 @@ export async function salvarIA(_prev, fd) {
 }
 
 export async function alternarMaterial(fd) {
-  const { supabase } = await requireGestor();
+  const { supabase } = await requireMaster();
   await supabase.from('assistente_materiais').update({ ativo: fd.get('ativo') === '1' }).eq('id', fd.get('id'));
   revalidatePath('/gestao/assistente');
 }
 
 export async function excluirMaterial(fd) {
-  const { supabase } = await requireGestor();
+  const { supabase } = await requireMaster();
   await supabase.from('assistente_materiais').delete().eq('id', fd.get('id'));
   revalidatePath('/gestao/assistente');
 }
@@ -384,7 +384,7 @@ export async function liberarVisita(fd) {
 
 // link único de cadastro dos vendedores (gerar um novo invalida o anterior)
 export async function novoConvite() {
-  const { supabase } = await requireGestor();
+  const { supabase } = await requireMaster();
   await supabase.rpc('convite_vendedor', { p_novo: true });
   revalidatePath('/gestao/vendedores');
 }

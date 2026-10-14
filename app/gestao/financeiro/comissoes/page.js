@@ -13,7 +13,7 @@ export default async function Comissoes({ searchParams }) {
   const mes = meses.includes(searchParams?.mes) ? searchParams.mes : atual;
   const vend = searchParams?.vendedor || '';
   const [{ data: vendedores }, lista] = await Promise.all([
-    supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor']).order('nome'),
+    supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
     comissoesDoMes(supabase, mes, vend || null),
   ]);
   const { de, ate } = janelaComissao(mes);
