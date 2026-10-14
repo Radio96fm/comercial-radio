@@ -21,12 +21,19 @@ export default async function NovoContrato({ searchParams }) {
     supabase.from('modelos_contrato').select('id').eq('ativo', true).limit(1).maybeSingle(),
   ]);
 
-  const programaInicial = typeof searchParams?.programa === 'string' ? searchParams.programa : '';
+  const param = (k) => (typeof searchParams?.[k] === 'string' ? searchParams[k] : '');
+  const programaInicial = param('programa');
+  // itens vindos da tabela de preços: "id:qtd,id:qtd"
+  const itensIniciais = param('itens').split(',').map((par) => {
+    const [id, q] = par.split(':');
+    return { id, qtd: parseInt(q, 10) };
+  }).filter((i) => i.id && i.qtd > 0);
+  const daTabela = !!param('itens') || !!param('radio');
   const voltarCliente = `/app/contratos/novo?programa=${programaInicial}`;
 
   return (
     <>
-      <Topo titulo={programaInicial ? 'Fechar contrato' : 'Montar pacote'} voltar={programaInicial ? `/app/programa/${programaInicial}` : '/app/contratos'} />
+      <Topo titulo={programaInicial && !daTabela ? 'Fechar contrato' : 'Montar pacote'} voltar={daTabela ? '/app/tabela' : programaInicial ? `/app/programa/${programaInicial}` : '/app/contratos'} />
       <main className="conteudo">
         {!modelo && (
           <div className="alerta aviso">Nenhum modelo de contrato ativo. O contrato será criado, mas sem o texto. Avise o gestor.</div>
@@ -44,6 +51,9 @@ export default async function NovoContrato({ searchParams }) {
           hoje={hoje}
           inicial={{
             programa: programaInicial,
+            plano: param('plano'),
+            radio: param('radio'),
+            itens: itensIniciais,
             cliente: typeof searchParams?.cliente === 'string' ? searchParams.cliente : '',
             visita: typeof searchParams?.visita === 'string' ? searchParams.visita : '',
           }}

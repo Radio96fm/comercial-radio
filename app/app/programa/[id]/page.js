@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
-import { Ban, Building2, Clock, Mic, Package, PenLine } from 'lucide-react';
+import { Ban, Building2, Check, Clock, Mic, PenLine } from 'lucide-react';
 import { data, horario, moeda, statusPrograma, STATUS_CONTRATO, hojeISO } from '@/lib/format';
 
 export default async function ProgramaPage({ params }) {
@@ -10,7 +10,7 @@ export default async function ProgramaPage({ params }) {
   const { data: p } = await supabase.from('programas_ocupacao').select('*').eq('id', params.id).maybeSingle();
   if (!p) notFound();
 
-  const { data: planos } = await supabase.from('programa_planos').select('nome, valor').eq('programa_id', p.id).order('ordem');
+  const { data: planos } = await supabase.from('programa_planos').select('id, nome, descricao, valor').eq('programa_id', p.id).order('ordem');
   const valores = (planos || []).map((x) => Number(x.valor));
   const aPartir = valores.length > 1 && Math.min(...valores) !== Math.max(...valores);
   const valorRef = valores.length ? Math.min(...valores) : p.valor_cota;
@@ -70,8 +70,37 @@ export default async function ProgramaPage({ params }) {
             <div><div className="muted">{aPartir ? `${valores.length} planos, a partir de` : 'Valor da cota'}</div><b className="num" style={{ fontSize: '1.3rem' }}>{moeda(valorRef)}</b><span className="muted"> /mês</span></div>
             <div><div className="muted">Cotas livres</div><b className="num" style={{ fontSize: '1.3rem' }}>{p.cotas_livres}</b></div>
           </div>
-          {p.descricao_cota && <p className="muted" style={{ marginTop: 14, marginBottom: 0, display: 'flex', gap: 8 }}><Package className="ico" />{p.descricao_cota}</p>}
         </div>
+
+        {!!planos?.length && (
+          <>
+            <div className="secao-titulo">
+              <h2>{planos.length > 1 ? 'Planos para escolher' : 'O que o cliente leva'}</h2>
+              {planos.length > 1 && <span className="muted">{planos.length}</span>}
+            </div>
+            <div className="planos-prog">
+              {planos.map((x) => (
+                <div key={x.id} className="plano-card">
+                  <div className="cab">
+                    <b>{x.nome}</b>
+                    <span className="preco"><b className="num">{moeda(x.valor)}</b><small>por mês</small></span>
+                  </div>
+                  {x.descricao && (
+                    <ul>
+                      {x.descricao.split('\n').filter(Boolean).map((t, i) => <li key={i}><Check className="ico" />{t}</li>)}
+                    </ul>
+                  )}
+                  {p.cotas_livres > 0 && (
+                    <Link href={`/app/contratos/novo?programa=${p.id}&plano=${x.id}`} className="btn cinza">
+                      {planos.length > 1 ? `Escolher ${x.nome}` : 'Fechar este plano'}
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="muted" style={{ fontSize: '.9rem' }}>Mensal, boleto, contrato mínimo de 3 meses.</p>
+          </>
+        )}
 
         <div className="secao-titulo">
           <h2><Ban className="ico" style={{ color: 'var(--vermelho)' }} />Segmentos já ocupados</h2>

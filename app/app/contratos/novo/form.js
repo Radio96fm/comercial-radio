@@ -24,11 +24,15 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
   const [estado, acao] = useFormState(criarContrato, null);
   const progInicial = programas.find((p) => p.id === inicial.programa);
   const [clienteId, setClienteId] = useState(inicial.cliente);
-  const [radioId, setRadioId] = useState(progInicial?.radio_id || radios[0]?.id || '');
-  const [programaId, setProgramaId] = useState(inicial.programa);
+  const [radioId, setRadioId] = useState(progInicial?.radio_id || radios.find((r) => r.id === inicial.radio)?.id || radios[0]?.id || '');
+  const [programaId, setProgramaId] = useState(progInicial ? inicial.programa : '');
   const planosDe = (id) => planos.filter((x) => x.programa_id === id);
-  const [planoId, setPlanoId] = useState(planosDe(inicial.programa)[0]?.id || '');
-  const [itens, setItens] = useState([]); // [{ id, qtd }]
+  const [planoId, setPlanoId] = useState(
+    planosDe(inicial.programa).find((x) => x.id === inicial.plano)?.id || planosDe(inicial.programa)[0]?.id || ''
+  );
+  const [itens, setItens] = useState(() => // [{ id, qtd }]
+    (inicial.itens || []).filter((i) => precos.some((p) => p.id === i.id && (!progInicial || p.radio_id === progInicial.radio_id)))
+  );
   const [inicio, setInicio] = useState(hoje);
   const [meses, setMeses] = useState(3);
   const [valorManual, setValorManual] = useState(null);

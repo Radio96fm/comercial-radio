@@ -1,11 +1,12 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Car, Users, FileText } from 'lucide-react';
+import { Home, Car, Users, FileText, Receipt } from 'lucide-react';
 
 const ITENS = [
   { href: '/app', Ico: Home, txt: 'Início', exato: true },
   { href: '/app/visitas', Ico: Car, txt: 'Visitas' },
+  { href: '/app/tabela', Ico: Receipt, txt: 'Preços' },
   { href: '/app/clientes', Ico: Users, txt: 'Clientes' },
   { href: '/app/contratos', Ico: FileText, txt: 'Contratos' },
 ];

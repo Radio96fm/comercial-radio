@@ -82,13 +82,13 @@ small, .muted { color: var(--muted); }
   position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 10;
   background: rgba(23, 23, 23, .92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--line-2); border-radius: 24px;
-  display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px;
+  display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, .5);
   max-width: 560px; margin: 0 auto;
 }
 .bottomnav a {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 9px 4px; color: var(--muted); font-size: .8rem; font-weight: 600; border-radius: 18px;
+  padding: 9px 2px; color: var(--muted); font-size: .75rem; font-weight: 600; border-radius: 18px;
 }
 .bottomnav a .ico { width: 24px; height: 24px; }
 .bottomnav a.ativo { color: var(--on-accent); background: var(--accent); }
@@ -381,7 +381,7 @@ code { background: var(--card-2); border: 1px solid var(--line-2); padding: 2px 
 .plano-op.ativo { border-color: var(--accent); background: var(--card-2); }
 .plano-op input { width: 22px; height: 22px; accent-color: var(--accent); flex: none; }
 .plano-op .txt { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.plano-op .txt small { color: var(--muted); font-size: .85rem; line-height: 1.3; }
+.plano-op .txt small { color: var(--muted); font-size: .85rem; line-height: 1.35; white-space: pre-line; }
 .plano-op .preco { font-weight: 700; white-space: nowrap; text-align: right; }
 .plano-op .preco small, .preco-un small { display: block; color: var(--muted); font-weight: 500; font-size: .8rem; }
 .adicionar-item .campo { margin-bottom: 12px; }
@@ -406,3 +406,39 @@ code { background: var(--card-2); border: 1px solid var(--line-2); padding: 2px 
 .total-contrato b { font-size: 1.1rem; }
 .total-contrato b.grande { font-size: 1.3rem; }
 .itens-contrato td.num { text-align: right; white-space: nowrap; }
+
+/* ---------- Planos na tela do programa ---------- */
+.planos-prog { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+.plano-card { background: var(--card); border: 1px solid var(--line-2); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.plano-card .cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.plano-card .cab > b { font-size: 1.15rem; }
+.plano-card .preco { text-align: right; white-space: nowrap; }
+.plano-card .preco b { font-size: 1.25rem; }
+.plano-card .preco small { display: block; color: var(--muted); font-size: .8rem; }
+.plano-card ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.plano-card li { display: flex; gap: 8px; align-items: flex-start; line-height: 1.35; }
+.plano-card li .ico { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--verde, #4ade80); }
+
+/* ---------- Tabela de preços do vendedor ---------- */
+.tabela-prog { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+.tabela-prog .cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.tabela-prog .cab small { display: block; color: var(--muted); font-size: .85rem; }
+.tabela-prog.lotado { opacity: .55; }
+.tabela-prog .planos { margin-bottom: 0; }
+.plano-op.sem-input input { display: none; }
+.linha-preco { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.linha-preco:last-child { border-bottom: 0; }
+.linha-preco .info { flex: 1; display: flex; flex-direction: column; }
+.linha-preco .info small { color: var(--muted); font-size: .85rem; }
+.linha-preco.ativa .info b { color: var(--accent); }
+.barra-total {
+  position: sticky; bottom: 104px; margin-top: 18px; z-index: 5;
+  display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 18px;
+  background: var(--card-2); border: 1px solid var(--line-2); border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .6);
+}
+.barra-total .soma { flex: 1; display: flex; flex-direction: column; }
+.barra-total .soma small { color: var(--muted); font-size: .8rem; }
+.barra-total .soma b { font-size: 1.35rem; }
+.barra-total .btn { flex: none; }
+.barra-total .limpar { background: none; border: 0; color: var(--muted); text-decoration: underline; font: inherit; font-size: .85rem; cursor: pointer; padding: 0; text-align: left; }

@@ -79,14 +79,29 @@ _____________________________________
 {{cliente_contato}}
 $txt$, true
 where not exists (select 1 from public.modelos_contrato);
+-- O que cada programa entrega (uma linha por item; a tela mostra como lista)
+update public.programas set descricao_cota = E'88 informativos por mês (08h50, 10h50, 14h50 e 17h40)\n22 vinhetas de abertura\n22 vinhetas de encerramento\n22 inserções de 30" (1 em cada comentário)\n88 inserções de 30" em horário livre (4 por dia)\nTotal: 242 inserções por mês' where nome = 'Agro em Foco';
+update public.programas set descricao_cota = E'66 informativos por mês (08h00, 11h20 e 15h00)\n22 vinhetas de abertura\n22 vinhetas de encerramento\n22 inserções de 30" (1 em cada comentário)\n110 inserções de 30" em horário livre (5 por dia)\nTotal: 242 inserções por mês' where nome = 'Alexandre Garcia: Comentário do Dia';
+update public.programas set descricao_cota = E'88 informativos por mês (08h20, 10h10, 14h10 e 17h10)\n22 vinhetas de abertura\n22 vinhetas de encerramento\n22 inserções de 30" (1 em cada comentário)\n88 inserções de 30" em horário livre (4 por dia)\nTotal: 242 inserções por mês' where nome = 'De Dentro da Porteira';
+update public.programas set descricao_cota = E'22 vinhetas de abertura\n22 vinhetas de encerramento\n22 testemunhais de até 60"\n66 inserções de 30" durante o programa, com break exclusivo\n110 inserções de 30" em horário livre (5 por dia)\nTotal: 242 inserções por mês' where nome = 'Boa Tarde Produtor';
+update public.programas set descricao_cota = E'22 vinhetas de abertura\n22 vinhetas de encerramento\n22 testemunhais de até 60"\n66 inserções de 30" durante o programa (3 por dia)\nTotal: 132 inserções por mês' where nome = 'Rio Verde Notícias 1ª Edição';
+update public.programas set descricao_cota = E'22 vinhetas de abertura\n22 vinhetas de encerramento\n22 testemunhais de até 60"\n66 inserções de 30" durante o programa (3 por dia)\nTotal: 132 inserções por mês' where nome = 'Rio Verde Notícias 2ª Edição';
+update public.programas set descricao_cota = E'20 chamadas de oferecimento de 7" por dia\nDe hora em hora, de segunda a sexta' where nome = 'Hora Certa';
+update public.programas set descricao_cota = E'1 testemunhal ao vivo dentro do programa\nDe segunda a sexta' where nome = 'Hora do Rush I';
+update public.programas set descricao_cota = E'1 testemunhal ao vivo dentro do programa\nDe segunda a sexta' where nome = 'Hora do Rush II';
+update public.programas set descricao_cota = E'1 testemunhal ao vivo dentro do programa\nDe segunda a sexta' where nome = 'O Papo é com Ela';
+update public.programas set descricao_cota = E'1 testemunhal ao vivo dentro do programa\nDe segunda a sexta' where nome = 'Rock Radio';
+update public.programas set descricao_cota = E'4 oferecimentos\n4 minutos informativos, cada um seguido de 1 inserção de 30"\n1 vez de manhã e 3 à tarde, de segunda a sexta' where nome = 'Momento Produtor';
+update public.programas set descricao_cota = E'Escolha um dos 4 planos (Plano 01 a 04).' where nome = 'Bom Dia Produtor';
+
 -- Planos de cada programa (mídia kits 2026). Programa com um só valor = um plano.
 insert into public.programa_planos (programa_id, nome, descricao, valor, ordem)
 select p.id, x.nome, x.descr, x.valor, x.ordem
 from (values
-  ('Bom Dia Produtor', 'Plano 01', 'Abertura e encerramento do programa + 4 inserções de 15" dentro do programa', 2350.00, 1),
-  ('Bom Dia Produtor', 'Plano 02', 'Abertura e encerramento do programa + 2 inserções de 30" dentro do programa', 2350.00, 2),
-  ('Bom Dia Produtor', 'Plano 03', 'Abertura e encerramento + 4 inserções de 15" + 1 testemunhal ao vivo dentro do programa', 3135.00, 3),
-  ('Bom Dia Produtor', 'Plano 04', 'Abertura e encerramento + 2 inserções de 30" + 1 testemunhal ao vivo dentro do programa', 3135.00, 4)
+  ('Bom Dia Produtor', 'Plano 01', E'Abertura e encerramento do programa\n4 inserções de 15" dentro do programa', 2350.00, 1),
+  ('Bom Dia Produtor', 'Plano 02', E'Abertura e encerramento do programa\n2 inserções de 30" dentro do programa', 2350.00, 2),
+  ('Bom Dia Produtor', 'Plano 03', E'Abertura e encerramento do programa\n4 inserções de 15" dentro do programa\n1 testemunhal ao vivo dentro do programa', 3135.00, 3),
+  ('Bom Dia Produtor', 'Plano 04', E'Abertura e encerramento do programa\n2 inserções de 30" dentro do programa\n1 testemunhal ao vivo dentro do programa', 3135.00, 4)
 ) as x(programa, nome, descr, valor, ordem)
 join public.programas p on p.nome = x.programa
 where not exists (select 1 from public.programa_planos pp where pp.programa_id = p.id);
