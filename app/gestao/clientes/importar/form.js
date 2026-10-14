@@ -8,6 +8,10 @@ import { importarClientes } from '../../actions';
 const CAMPOS = [
   { k: 'razao_social', rotulo: 'Razão social', chaves: ['razao social', 'razao'] },
   { k: 'documento', rotulo: 'CNPJ / CPF', chaves: ['cnpj', 'cpf', 'documento'] },
+  { k: 'inscricao_estadual', rotulo: 'Insc. estadual', chaves: ['inscricao estadual', 'insc. estadual', 'insc estadual', 'inscricao'] },
+  { k: 'bairro', rotulo: 'Bairro', chaves: ['bairro'] },
+  { k: 'cep', rotulo: 'CEP', chaves: ['cep'] },
+  { k: 'fax', rotulo: 'Fax', chaves: ['fax'] },
   { k: 'email', rotulo: 'E-mail', chaves: ['e-mail', 'email'] },
   { k: 'telefone', rotulo: 'Telefone', chaves: ['telefone', 'fone', 'celular', 'whatsapp'] },
   { k: 'contato_nome', rotulo: 'Contato', chaves: ['contato', 'responsavel', 'pessoa'] },

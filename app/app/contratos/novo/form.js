@@ -6,7 +6,7 @@ import { Minus, Plus, X } from 'lucide-react';
 import { criarContrato } from '../../actions';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import { moeda, data, somarMeses, somarDias, parseValor, valorParaCampo } from '@/lib/format';
-import { nomeItem, MODALIDADE } from '@/lib/pacote';
+import { nomeItem, MODALIDADE, textoDireito } from '@/lib/pacote';
 
 const MESES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 24];
 
@@ -37,6 +37,8 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
   const [inicio, setInicio] = useState(hoje);
   const [meses, setMeses] = useState(3);
   const [valorManual, setValorManual] = useState(null);
+  const [vendedorId, setVendedorId] = useState(meuId);
+  const [obsManual, setObsManual] = useState(null);
 
 
   const radio = radios.find((r) => r.id === radioId);
@@ -71,6 +73,8 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
     return ocupados.find((o) => o.programa_id === prog.id && o.segmento_id === cli.segmento_id && o.data_fim >= inicio);
   }, [cli, prog, inicio, ocupados]);
   const vazio = !prog && !linhas.length;
+  const obsAuto = textoDireito({ programa: prog, plano, itens: linhas });
+  const vend = vendedores.find((v) => v.id === vendedorId) || vendedores[0];
 
   return (
     <form action={acao} className="pacote">
@@ -161,7 +165,7 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
       {isGestor && (
         <div className="campo">
           <label>Vendedor responsável</label>
-          <select name="vendedor_id" defaultValue={meuId}>
+          <select name="vendedor_id" value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}>
             {vendedores.map((v) => <option key={v.id} value={v.id}>{v.nome}</option>)}
           </select>
         </div>
@@ -191,9 +195,33 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
         </div>
       </div>
       <div className="campo">
-        <label>Observações (aparece no contrato)</label>
-        <textarea name="observacoes" style={{ minHeight: 70 }} />
+        <label>Observações: o que o cliente tem direito</label>
+        <textarea name="observacoes" style={{ minHeight: 110 }} value={obsManual ?? obsAuto} onChange={(e) => setObsManual(e.target.value)} />
+        <div className="ajuda">
+          Já vem escrito pelo que foi escolhido. Pode mudar à vontade. Os vencimentos entram sozinhos no contrato.
+          {obsManual !== null && <> <button type="button" className="link-btn" onClick={() => setObsManual(null)}>Voltar ao texto automático</button></>}
+        </div>
       </div>
+
+      <h2 className="passo">4. Agência / vendedor</h2>
+      <div key={vend?.id} className="card">
+        <div className="campo"><label>Nome da agência</label><input name="agencia_nome" defaultValue={vend?.nome || ''} /></div>
+        <div className="grid2">
+          <div className="campo"><label>CNPJ/CPF</label><input name="agencia_documento" inputMode="numeric" defaultValue={vend?.documento || ''} /></div>
+          <div className="campo"><label>Contato</label><input name="agencia_contato" /></div>
+        </div>
+        <div className="ajuda">Já vem com o nome de quem está vendendo. Se a venda veio por uma agência, troque pelo nome dela.</div>
+      </div>
+
+      <details className="card mais-info">
+        <summary>Campanha, produto e PI (opcional)</summary>
+        <div className="grid2" style={{ marginTop: 12 }}>
+          <div className="campo"><label>Campanha</label><input name="campanha" defaultValue="Institucional" /></div>
+          <div className="campo"><label>Produto</label><input name="produto" defaultValue="Institucional" /></div>
+          <div className="campo"><label>Nº PI</label><input name="numero_pi" /></div>
+          <div className="campo"><label>Autorização</label><input name="autorizacao" /></div>
+        </div>
+      </details>
 
       <div className="card total-contrato">
         <div><div className="muted">Por mês</div><b>{moeda(valorFinal)}</b></div>

@@ -136,3 +136,43 @@ from (values
 ) as x(radio, tipo, dur, modal, valor)
 join public.radios r on r.nome = x.radio
 on conflict (radio_id, tipo, duracao, modalidade) do nothing;
+
+-- Dados da emissora e contrato padrão (cláusulas do contrato usado hoje)
+
+update public.radios set razao_social = coalesce(razao_social, 'Rádio 96 FM Ltda'), cnpj = coalesce(cnpj, '02.928.356/0001-15'),
+  inscricao_estadual = coalesce(inscricao_estadual, '10224863-0'), endereco = coalesce(endereco, 'Rua O, 1044 Setor 26, Sala LUC 249'),
+  cep = coalesce(cep, '75907-681'), cidade_uf = coalesce(cidade_uf, 'Rio Verde-GO'), telefone = coalesce(telefone, '6436124862'),
+  fax = coalesce(fax, '6436121191'), email = coalesce(email, 'comercial01@radio96fm.com')
+where nome ilike '%96%';
+
+update public.modelos_contrato set nome = 'Contrato padrão', updated_at = now(), conteudo = $txt$
+1. OBJETO DO CONTRATO
+1.1. O presente contrato tem como objeto a prestação de serviços de veiculação publicitária pela CONTRATADA, consistindo na exibição de anúncios comerciais do CONTRATANTE na programação da {{radio_maiusculo}}, nos termos e condições especificados neste instrumento.
+1.2. O material publicitário a ser veiculado será fornecido pelo CONTRATANTE, podendo a CONTRATADA prestar serviços adicionais de produção e edição de conteúdo mediante negociação específica.
+1.3. A veiculação dos anúncios ocorrerá conforme cronograma e plano de mídia previamente acordados, sendo responsabilidade da CONTRATADA garantir a execução dentro dos parâmetros estabelecidos.
+2. PAGAMENTO E CONDIÇÕES FINANCEIRAS
+2.1. O CONTRATANTE compromete-se ao pagamento dos valores acordados, que deverão ser quitados exclusivamente por meio de boleto bancário ou transferência eletrônica para a conta indicada pela CONTRATADA.
+2.2. O não pagamento até a data do vencimento acarretará multa moratória de 2% (dois por cento) sobre o valor devido, juros de mora de 1% (um por cento) ao mês sobre o montante em atraso e correção monetária pelo INPC-IBGE.
+2.4. Caso o inadimplemento persista por mais de 05 (cinco) dias úteis, a CONTRATADA poderá suspender a veiculação dos anúncios até a regularização do pagamento, sem prejuízo da cobrança dos valores em atraso.
+2.5. O inadimplemento superior a 30 (trinta) dias facultará à CONTRATADA a rescisão do contrato e a adoção das medidas judiciais cabíveis, incluindo a cobrança do débito acrescido de honorários advocatícios de 20% (vinte por cento) sobre o valor total da dívida.
+3. INADIMPLEMENTO E PENALIDADES
+3.1. O presente contrato constitui título executivo extrajudicial, conforme disposto no artigo 784, inciso III, do Código de Processo Civil, possibilitando à CONTRATADA a cobrança imediata da dívida em caso de inadimplência do CONTRATANTE.
+3.2. Caso qualquer das partes descumpra as obrigações previstas neste contrato, será aplicada uma multa de 20% (vinte por cento) sobre o valor total do contrato, sem prejuízo de eventuais perdas e danos.
+3.3. A parte prejudicada poderá exigir indenização adicional correspondente a danos materiais e lucros cessantes comprovados, caso o descumprimento contratual gere prejuízos financeiros diretos.
+4. CONDIÇÕES DE VEICULAÇÃO
+4.1. A CONTRATADA reserva-se o direito de recusar qualquer inserção publicitária que esteja em desacordo com as normas do CONAR (Conselho Nacional de Autorregulamentação Publicitária), contenha conteúdo ofensivo, ilegal ou prejudicial à imagem da emissora ou seja considerada incompatível com a linha editorial da rádio.
+4.2. Caso ocorra a recusa de veiculação por qualquer dos motivos acima, o CONTRATANTE será notificado para fornecer novo material compatível.
+4.3. As gravações, jingles e demais materiais publicitários serão armazenados pela CONTRATADA e pela CONTRATANTE por 30 (trinta) dias após a veiculação, após o que poderão ser descartados.
+5. RESPONSABILIDADE SOLIDÁRIA DA AGÊNCIA
+5.1. Caso a contratação da veiculação publicitária seja intermediada por uma agência de propaganda, esta responderá solidariamente pelas obrigações assumidas pelo CONTRATANTE.
+6. RESCISÃO ANTECIPADA
+6.1. Qualquer das partes poderá rescindir este contrato unilateralmente, desde que comunique à outra por escrito com antecedência mínima de 30 (trinta) dias, ficando sujeita ao pagamento de uma multa de 10% (dez por cento) sobre o valor restante do contrato em caso de rescisão antecipada, salvo nos casos de força maior.
+6.3. O contrato será rescindido de pleno direito em caso de falência, recuperação judicial ou impedimento legal de qualquer das partes, transferência de direitos e obrigações sem prévia anuência ou descumprimento reiterado de cláusulas contratuais não regularizado no prazo de 07 (sete) dias após notificação.
+7. TRATAMENTO DE DADOS PESSOAIS (LGPD)
+7.1. Ambas as partes se comprometem a cumprir a Lei nº 13.709/2018 (LGPD), garantindo que qualquer tratamento de dados pessoais será realizado exclusivamente para fins de execução deste contrato.
+7.2. As partes deverão adotar medidas de segurança e confidencialidade para garantir a proteção dos dados pessoais envolvidos na execução do contrato.
+8. VIGÊNCIA E FORO
+8.1. O presente contrato vigora até a quitação integral das obrigações entre as partes e obriga seus herdeiros e sucessores.
+8.2. Fica eleito o foro da comarca de Rio Verde-GO para dirimir quaisquer dúvidas ou litígios decorrentes deste contrato, renunciando as partes a qualquer outro foro por mais privilegiado que seja. E, por estarem justos e contratados, assinam o presente contrato.
+$txt$
+where ativo and conteudo like '%MODELO DE EXEMPLO%';

@@ -3,6 +3,7 @@ import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import BotaoImprimir from '@/components/BotaoImprimir';
+import DocumentoContrato from '@/components/DocumentoContrato';
 import { mudarStatusContrato } from '../../actions';
 import { data, moeda, linkWhatsApp, STATUS_CONTRATO, STATUS_PARCELA } from '@/lib/format';
 
@@ -12,7 +13,7 @@ export default async function ContratoPage({ params, searchParams }) {
   const { supabase, perfil, isGestor } = await getSessao();
   const { data: c } = await supabase
     .from('contratos')
-    .select('*, cliente:clientes(nome, telefone, contato_nome), programa:programas(nome), plano:programa_planos(nome), radio:radios(nome), segmento:segmentos(nome), vendedor:profiles(nome)')
+    .select('*, cliente:clientes(*), programa:programas(nome, valor_cota), plano:programa_planos(nome, valor), radio:radios(*), segmento:segmentos(nome), vendedor:profiles(nome)')
     .eq('id', params.id)
     .maybeSingle();
   if (!c) notFound();
@@ -113,12 +114,8 @@ export default async function ContratoPage({ params, searchParams }) {
           Emissão automática de boletos: será ativada quando a integração com o banco for configurada. Por enquanto, o financeiro emite a partir desta lista.
         </div>
 
-        <div className="secao-titulo nao-imprimir"><h2>Texto do contrato</h2></div>
-        {c.conteudo_gerado ? (
-          <div className="contrato-texto">{c.conteudo_gerado}</div>
-        ) : (
-          <div className="vazio">Contrato sem texto (não havia modelo ativo quando foi criado).</div>
-        )}
+        <div className="secao-titulo nao-imprimir"><h2>Contrato</h2><span className="muted">Imprimir ou salvar em PDF no botão acima</span></div>
+        <DocumentoContrato c={c} itens={itens || []} parcelas={parcelas || []} />
       </main>
     </>
   );

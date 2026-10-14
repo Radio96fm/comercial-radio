@@ -71,10 +71,12 @@ export async function atualizarUsuario(_prev, fd) {
   const id = txt(fd, 'id');
   const papel = txt(fd, 'papel') === 'gestor' ? 'gestor' : 'vendedor';
   if (id === perfil.id && papel !== 'gestor') return { erro: 'Você não pode tirar o seu próprio acesso de gestor.' };
+  const comissao = Number(String(fd.get('comissao') ?? '18').replace(',', '.'));
+  if (!Number.isFinite(comissao) || comissao < 0 || comissao > 100) return { erro: 'Comissão deve ser entre 0 e 100%.' };
 
   const { error } = await supabase
     .from('profiles')
-    .update({ nome: txt(fd, 'nome'), telefone: txt(fd, 'telefone'), papel })
+    .update({ nome: txt(fd, 'nome'), telefone: txt(fd, 'telefone'), documento: txt(fd, 'documento'), comissao, papel })
     .eq('id', id);
   if (error) return { erro: erroAmigavel(error) };
   await adminAtualizarUsuario(id, { app_metadata: { papel } });
@@ -139,6 +141,8 @@ export async function salvarRadio(_prev, fd) {
   const { supabase } = await requireGestor();
   const id = txt(fd, 'id');
   const registro = { nome: txt(fd, 'nome'), slogan: txt(fd, 'slogan'), cor: txt(fd, 'cor') || '#1f2eff' };
+  // dados da emissora que saem no cabeçalho do contrato
+  for (const k of ['razao_social', 'cnpj', 'inscricao_estadual', 'endereco', 'cep', 'cidade_uf', 'telefone', 'fax', 'email']) registro[k] = txt(fd, k);
   if (!registro.nome) return { erro: 'Informe o nome da rádio.' };
   const q = id ? supabase.from('radios').update(registro).eq('id', id) : supabase.from('radios').insert(registro);
   const { error } = await q;
@@ -217,6 +221,7 @@ export async function importarClientes(linhas) {
       razao_social: campo('razao_social'), documento: campo('documento'), contato_nome: campo('contato_nome'),
       telefone: campo('telefone'), email: campo('email'), endereco: campo('endereco'),
       cidade: campo('cidade'), observacoes: campo('observacoes'),
+      inscricao_estadual: campo('inscricao_estadual'), bairro: campo('bairro'), cep: campo('cep'), fax: campo('fax'),
     });
   }
 

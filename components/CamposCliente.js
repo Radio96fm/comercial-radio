@@ -36,15 +36,21 @@ export default function CamposCliente({ segmentos, prefixo = '', valores = {}, s
         </div>
       )}
       <div className="campo">
-        <label>Cidade</label>
-        <input name={n('cidade')} defaultValue={valores.cidade || ''} />
+        <label>{simples ? 'Cidade' : 'Cidade-UF'}</label>
+        <input name={n('cidade')} defaultValue={valores.cidade || ''} placeholder={simples ? '' : 'Ex.: Rio Verde-GO'} />
       </div>
       {!simples && (
         <>
           <div className="campo"><label>Razão social</label><input name={n('razao_social')} defaultValue={valores.razao_social || ''} /></div>
           <div className="campo"><label>CNPJ ou CPF</label><input name={n('documento')} inputMode="numeric" defaultValue={valores.documento || ''} /></div>
+          <div className="campo"><label>Inscrição estadual</label><input name={n('inscricao_estadual')} defaultValue={valores.inscricao_estadual || ''} /></div>
           <div className="campo"><label>E-mail</label><input name={n('email')} type="email" defaultValue={valores.email || ''} /></div>
-          <div className="campo"><label>Endereço</label><input name={n('endereco')} defaultValue={valores.endereco || ''} /></div>
+          <div className="campo"><label>Endereço</label><input name={n('endereco')} defaultValue={valores.endereco || ''} placeholder="Rua, número, sala" /></div>
+          <div className="grid2">
+            <div className="campo"><label>Bairro</label><input name={n('bairro')} defaultValue={valores.bairro || ''} /></div>
+            <div className="campo"><label>CEP</label><input name={n('cep')} inputMode="numeric" defaultValue={valores.cep || ''} /></div>
+          </div>
+          <div className="campo"><label>Fax / outro telefone</label><input name={n('fax')} type="tel" inputMode="tel" defaultValue={valores.fax || ''} /></div>
           <div className="campo"><label>Observações</label><textarea name={n('observacoes')} defaultValue={valores.observacoes || ''} /></div>
         </>
       )}

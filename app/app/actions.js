@@ -55,6 +55,10 @@ async function criarClienteInterno(supabase, fd, prefixo = '') {
       email: txt(fd, prefixo + 'email'),
       endereco: txt(fd, prefixo + 'endereco'),
       cidade: txt(fd, prefixo + 'cidade'),
+      inscricao_estadual: txt(fd, prefixo + 'inscricao_estadual'),
+      bairro: txt(fd, prefixo + 'bairro'),
+      cep: txt(fd, prefixo + 'cep'),
+      fax: txt(fd, prefixo + 'fax'),
       observacoes: txt(fd, prefixo + 'observacoes'),
     })
     .select('id')
@@ -75,7 +79,7 @@ export async function atualizarCliente(_prev, fd) {
   const { supabase } = await getSessao();
   const id = txt(fd, 'id');
   const campos = {};
-  for (const k of ['nome', 'razao_social', 'documento', 'contato_nome', 'telefone', 'email', 'endereco', 'cidade', 'observacoes', 'segmento_id']) {
+  for (const k of ['nome', 'razao_social', 'documento', 'inscricao_estadual', 'contato_nome', 'telefone', 'fax', 'email', 'endereco', 'bairro', 'cep', 'cidade', 'observacoes', 'segmento_id']) {
     campos[k] = txt(fd, k);
   }
   if (!campos.nome || !campos.segmento_id) return { erro: 'Nome e segmento são obrigatórios.' };
@@ -214,6 +218,14 @@ export async function criarContrato(_prev, fd) {
     dia_vencimento,
     descricao_produto: partes.join('\n'),
     observacoes: txt(fd, 'observacoes'),
+    // "Nome da agência" do contrato: por padrão, quem vendeu
+    agencia_nome: txt(fd, 'agencia_nome'),
+    agencia_documento: txt(fd, 'agencia_documento'),
+    agencia_contato: txt(fd, 'agencia_contato'),
+    campanha: txt(fd, 'campanha'),
+    produto: txt(fd, 'produto'),
+    numero_pi: txt(fd, 'numero_pi'),
+    autorizacao: txt(fd, 'autorizacao'),
     status: 'pendente',
   };
 
@@ -231,6 +243,7 @@ export async function criarContrato(_prev, fd) {
     const { data: v } = await supabase.from('profiles').select('nome').eq('id', vendedor_id).single();
     vendedorNome = v?.nome || '';
   }
+  if (!criado.agencia_nome) await supabase.from('contratos').update({ agencia_nome: vendedorNome }).eq('id', criado.id);
   const texto = modelo
     ? preencherModelo(
         modelo.conteudo,

@@ -731,3 +731,27 @@ create policy itens_insert on public.contrato_itens for insert to authenticated
     select 1 from public.contratos c where c.id = contrato_id and c.vendedor_id = auth.uid() and public.usuario_ativo()));
 create policy itens_update on public.contrato_itens for update to authenticated using (public.is_gestor()) with check (public.is_gestor());
 create policy itens_delete on public.contrato_itens for delete to authenticated using (public.is_gestor());
+
+-- Contrato padrão (modelo usado hoje pela rádio) -------------------------------
+alter table public.radios add column if not exists razao_social text;
+alter table public.radios add column if not exists cnpj text;
+alter table public.radios add column if not exists inscricao_estadual text;
+alter table public.radios add column if not exists endereco text;
+alter table public.radios add column if not exists cep text;
+alter table public.radios add column if not exists cidade_uf text;
+alter table public.radios add column if not exists telefone text;
+alter table public.radios add column if not exists fax text;
+alter table public.radios add column if not exists email text;
+alter table public.clientes add column if not exists inscricao_estadual text;
+alter table public.clientes add column if not exists bairro text;
+alter table public.clientes add column if not exists cep text;
+alter table public.clientes add column if not exists fax text;
+alter table public.profiles add column if not exists documento text;          -- CPF/CNPJ do vendedor ou agência
+alter table public.profiles add column if not exists comissao numeric(5,2) not null default 18;  -- % de comissão
+alter table public.contratos add column if not exists agencia_nome text;
+alter table public.contratos add column if not exists agencia_documento text;
+alter table public.contratos add column if not exists agencia_contato text;
+alter table public.contratos add column if not exists autorizacao text;
+alter table public.contratos add column if not exists numero_pi text;
+alter table public.contratos add column if not exists campanha text;
+alter table public.contratos add column if not exists produto text;

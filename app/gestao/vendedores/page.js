@@ -53,6 +53,8 @@ export default async function Usuarios() {
                 <input type="hidden" name="id" value={u.id} />
                 <div className="campo"><label>Nome</label><input name="nome" defaultValue={u.nome} /></div>
                 <div className="campo"><label>Telefone</label><input name="telefone" defaultValue={u.telefone || ''} /></div>
+                <div className="campo"><label>CPF/CNPJ (sai no contrato como agência)</label><input name="documento" defaultValue={u.documento || ''} /></div>
+                <div className="campo"><label>Comissão (%)</label><input name="comissao" inputMode="decimal" defaultValue={String(u.comissao ?? 18).replace('.', ',')} /></div>
                 <div className="campo">
                   <label>Tipo de acesso</label>
                   <select name="papel" defaultValue={u.papel}>

@@ -17,7 +17,7 @@ export default async function NovoContrato({ searchParams }) {
     supabase.from('tabela_precos').select('id, radio_id, tipo, duracao, modalidade, valor').eq('ativo', true).order('tipo').order('duracao').order('modalidade', { ascending: false }),
     supabase.from('radios').select('id, nome, cor').order('ordem'),
     supabase.from('contratos').select('programa_id, segmento_id, data_fim').in('status', ['pendente', 'ativo']).not('programa_id', 'is', null).gte('data_fim', hoje),
-    isGestor ? supabase.from('profiles').select('id, nome').eq('ativo', true).order('nome') : Promise.resolve({ data: [] }),
+    isGestor ? supabase.from('profiles').select('id, nome, documento').eq('ativo', true).order('nome') : Promise.resolve({ data: [] }),
     supabase.from('modelos_contrato').select('id').eq('ativo', true).limit(1).maybeSingle(),
   ]);
 
@@ -47,7 +47,7 @@ export default async function NovoContrato({ searchParams }) {
           precos={precos || []}
           radios={radios || []}
           ocupados={ocupados || []}
-          vendedores={vendedores || []}
+          vendedores={isGestor ? vendedores || [] : [{ id: perfil.id, nome: perfil.nome, documento: perfil.documento }]}
           isGestor={isGestor}
           meuId={perfil.id}
           hoje={hoje}

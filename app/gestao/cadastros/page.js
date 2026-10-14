@@ -23,6 +23,10 @@ export default async function Cadastros() {
               <div className="campo"><label>Nome</label><input name="nome" defaultValue={r.nome} /></div>
               <div className="campo"><label>Slogan</label><input name="slogan" defaultValue={r.slogan || ''} /></div>
               <div className="campo"><label>Cor</label><input type="color" name="cor" defaultValue={r.cor} style={{ height: 50, padding: 4 }} /></div>
+              <p className="muted" style={{ margin: '4px 0 10px' }}><b>Dados da emissora no contrato</b></p>
+              {[['razao_social', 'Razão social'], ['cnpj', 'CNPJ'], ['inscricao_estadual', 'Inscrição estadual'], ['endereco', 'Endereço'], ['cep', 'CEP'], ['cidade_uf', 'Cidade-UF'], ['telefone', 'Fone'], ['fax', 'Fax'], ['email', 'E-mail']].map(([k, rot]) => (
+                <div className="campo" key={k}><label>{rot}</label><input name={k} defaultValue={r[k] || ''} /></div>
+              ))}
               <BotaoEnviar className="btn peq" texto="Salvar" />
             </FormAcao>
           </div>
