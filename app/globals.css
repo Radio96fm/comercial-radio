@@ -1101,3 +1101,31 @@ details.material.desligado { opacity: .55; }
 [data-theme="light"] .prazo-linha.alerta-p { color: #a16207; }
 .item.travada { opacity: .7; }
 .aviso-prazo + .aviso-condicao { border-top: 1px solid rgba(0, 0, 0, .12); }
+/* ===== Painel financeiro ===== */
+.filtros-fin { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.filtros-fin .campo { margin: 0; min-width: 180px; flex: 1; }
+.filtros-fin .btn { min-height: 46px; }
+.fin-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.fin-card { display: flex; flex-direction: column; gap: 4px; color: var(--text); margin: 0; }
+.fin-card small { color: var(--muted); font-weight: 600; }
+.fin-card b { font-size: 1.6rem; }
+.fin-card.perigo b { color: var(--vermelho); }
+.fin-card.destaque { background: var(--destaque, #9db8ff); color: var(--on-destaque, #0b1636); border-color: transparent; }
+.fin-card.destaque small { color: inherit; opacity: .75; }
+.comissao-v summary { display: flex; align-items: center; gap: 12px; cursor: pointer; list-style: none; }
+.comissao-v summary::-webkit-details-marker { display: none; }
+.comissao-v summary .info { flex: 1; display: flex; flex-direction: column; }
+.comissao-v summary .num { font-size: 1.2rem; }
+details.parcela-fin { display: block; }
+details.parcela-fin summary { display: flex; gap: 12px; cursor: pointer; list-style: none; }
+details.parcela-fin summary::-webkit-details-marker { display: none; }
+.parcela-acoes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.parcela-acoes form { margin: 0; }
+.inline-pago { display: flex; gap: 6px; align-items: center; }
+.inline-pago input { width: auto; padding: 8px 10px; }
+.boleto-manual { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.boleto-manual input { flex: 1; min-width: 180px; padding: 8px 10px; }
+.enviar-todos { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.link-convite code { display: block; padding: 10px 12px; border-radius: 10px; background: var(--card-2); word-break: break-all; }
+@media (max-width: 1100px) { .fin-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .fin-cards { grid-template-columns: 1fr; } }

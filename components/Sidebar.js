@@ -11,7 +11,6 @@ const ITENS = [
   ['/gestao/programas', Radio, 'Programas'],
   ['/gestao/precos', Receipt, 'Tabela de preços'],
   ['/gestao/contratos', FileText, 'Contratos'],
-  ['/gestao/parcelas', Wallet, 'Parcelas / boletos'],
   ['/gestao/clientes', Users, 'Clientes'],
   ['/gestao/negociacoes', Timer, 'Negociações'],
   ['/gestao/vendedores', UserCog, 'Usuários'],

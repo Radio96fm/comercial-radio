@@ -52,7 +52,7 @@ export async function criarUsuario(_prev, fd) {
   const nome = txt(fd, 'nome');
   const email = (txt(fd, 'email') || '').toLowerCase();
   const senha = String(fd.get('senha') || '');
-  const papel = txt(fd, 'papel') === 'gestor' ? 'gestor' : 'vendedor';
+  const papel = ['gestor', 'financeiro'].includes(txt(fd, 'papel')) ? txt(fd, 'papel') : 'vendedor';
   if (!nome || !email) return { erro: 'Nome e e-mail são obrigatórios.' };
   if (senha.length < 8) return { erro: 'A senha precisa ter pelo menos 8 caracteres.' };
 
@@ -72,7 +72,7 @@ export async function criarUsuario(_prev, fd) {
 export async function atualizarUsuario(_prev, fd) {
   const { supabase, perfil } = await requireGestor();
   const id = txt(fd, 'id');
-  const papel = txt(fd, 'papel') === 'gestor' ? 'gestor' : 'vendedor';
+  const papel = ['gestor', 'financeiro'].includes(txt(fd, 'papel')) ? txt(fd, 'papel') : 'vendedor';
   if (id === perfil.id && papel !== 'gestor') return { erro: 'Você não pode tirar o seu próprio acesso de gestor.' };
   const comissao = Number(String(fd.get('comissao') ?? '18').replace(',', '.'));
   if (!Number.isFinite(comissao) || comissao < 0 || comissao > 100) return { erro: 'Comissão deve ser entre 0 e 100%.' };
@@ -380,4 +380,11 @@ export async function liberarVisita(fd) {
   const { supabase } = await requireGestor();
   await supabase.from('visitas_liberadas').upsert({ visita_id: fd.get('id') });
   revalidatePath('/gestao/negociacoes');
+}
+
+// link único de cadastro dos vendedores (gerar um novo invalida o anterior)
+export async function novoConvite() {
+  const { supabase } = await requireGestor();
+  await supabase.rpc('convite_vendedor', { p_novo: true });
+  revalidatePath('/gestao/vendedores');
 }

@@ -1,7 +1,9 @@
 import { requireGestor } from '@/lib/auth';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
-import { criarUsuario, atualizarUsuario, alternarAtivo, redefinirSenha } from '../actions';
+import { criarUsuario, atualizarUsuario, alternarAtivo, redefinirSenha, novoConvite } from '../actions';
+import { headers } from 'next/headers';
+import CopiarTexto from '@/components/CopiarTexto';
 
 export default async function Usuarios() {
   const { supabase, perfil } = await requireGestor();
@@ -9,12 +11,26 @@ export default async function Usuarios() {
     supabase.from('profiles').select('*').order('ativo', { ascending: false }).order('nome'),
     supabase.from('contratos').select('vendedor_id').in('status', ['pendente', 'ativo']),
   ]);
+  const { data: codigo } = await supabase.rpc('convite_vendedor', { p_novo: false });
+  const h = headers();
+  const linkConvite = `https://${h.get('x-forwarded-host') || h.get('host')}/cadastro/${codigo}`;
   const qtd = {};
   (contagem || []).forEach((c) => { qtd[c.vendedor_id] = (qtd[c.vendedor_id] || 0) + 1; });
 
   return (
     <>
       <div className="cabecalho"><h1>Usuários</h1></div>
+
+      <div className="card convite">
+        <h2 style={{ marginTop: 0 }}>Link de cadastro dos vendedores</h2>
+        <p className="muted">Mande este link no grupo da equipe. Cada vendedor abre, coloca o próprio e-mail, cria a senha e já entra no app.</p>
+        <div className="link-convite"><code>{linkConvite}</code></div>
+        <div className="acoes" style={{ marginTop: 10 }}>
+          <CopiarTexto texto={linkConvite} rotulo="Copiar link" className="btn" />
+          <a className="btn whats" href={`https://wa.me/?text=${encodeURIComponent(`Olá! Este é o link para você criar seu acesso ao sistema comercial da Rádio 96 FM e Rádio do Agro: ${linkConvite}`)}`} target="_blank" rel="noopener noreferrer">Mandar no WhatsApp</a>
+          <form action={novoConvite}><BotaoEnviar className="btn cinza" texto="Trocar link" enviando="..." confirmar="Gerar um link novo? O link antigo para de funcionar." /></form>
+        </div>
+      </div>
 
       <details className="card" open={!usuarios || usuarios.length <= 1}>
         <summary>Cadastrar vendedor ou gestor</summary>
@@ -32,7 +48,8 @@ export default async function Usuarios() {
               <label>Tipo de acesso</label>
               <select name="papel" defaultValue="vendedor">
                 <option value="vendedor">Vendedor (app no celular)</option>
-                <option value="gestor">Gestor (painel completo)</option>
+                <option value="gestor">Gestor comercial (painel)</option>
+                <option value="financeiro">Financeiro (comissões e boletos)</option>
               </select>
             </div>
           </div>
@@ -60,6 +77,7 @@ export default async function Usuarios() {
                   <select name="papel" defaultValue={u.papel}>
                     <option value="vendedor">Vendedor</option>
                     <option value="gestor">Gestor</option>
+                    <option value="financeiro">Financeiro</option>
                   </select>
                 </div>
                 <BotaoEnviar className="btn peq" texto="Salvar" />

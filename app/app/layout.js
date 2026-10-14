@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import BottomNav from '@/components/BottomNav';
 import AoVivo from '@/components/AoVivo';
@@ -10,6 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({ children }) {
   const { supabase, perfil } = await getSessao();
+  if (perfil.papel === 'financeiro') redirect('/financeiro');
   const [{ data: condicoes }, { data: abertas }] = await Promise.all([
     buscarCondicoesAtivas(supabase),
     supabase.from('visitas').select('id, iniciada_em, cliente:clientes(nome)')

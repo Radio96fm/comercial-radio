@@ -1068,3 +1068,96 @@ end $f$$q$;
 execute $q$revoke execute on function public.iniciar_visita(uuid, text) from public, anon$q$;
 execute $q$grant execute on function public.iniciar_visita(uuid, text) to authenticated$q$;
 end $do$;
+
+-- Papel financeiro, comissões pagas, convite de cadastro e trava de contrato
+alter type public.papel_usuario add value if not exists 'financeiro';
+do $do$ begin
+execute $q$create or replace function public.is_financeiro() returns boolean
+language sql stable security definer set search_path = public as $f$
+  select exists (select 1 from public.profiles where id = auth.uid() and ativo and papel::text = 'financeiro');
+$f$$q$;
+execute $q$revoke all on function public.is_financeiro() from public, anon$q$;
+execute $q$grant execute on function public.is_financeiro() to authenticated$q$;
+execute $q$create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $f$
+begin
+  insert into public.profiles (id, nome, email, telefone, papel, ativo)
+  values (
+    new.id,
+    coalesce(nullif(new.raw_user_meta_data->>'nome', ''), split_part(new.email, '@', 1)),
+    new.email,
+    new.raw_user_meta_data->>'telefone',
+    case when new.raw_app_meta_data->>'papel' in ('gestor', 'financeiro') then (new.raw_app_meta_data->>'papel')::papel_usuario
+         else 'vendedor'::papel_usuario end,
+    coalesce(new.raw_app_meta_data->>'papel' in ('gestor', 'vendedor', 'financeiro'), false)
+  )
+  on conflict (id) do nothing;
+  return new;
+end $f$$q$;
+execute $q$create or replace function public.sincronizar_papel() returns trigger
+language plpgsql security definer set search_path = public as $f$
+begin
+  if new.raw_app_meta_data->>'papel' in ('gestor', 'vendedor', 'financeiro')
+     and new.raw_app_meta_data->>'papel' is distinct from old.raw_app_meta_data->>'papel' then
+    update public.profiles
+       set papel = (new.raw_app_meta_data->>'papel')::papel_usuario,
+           ativo = case when old.raw_app_meta_data->>'papel' is null then true else ativo end
+     where id = new.id;
+  end if;
+  return new;
+end $f$$q$;
+execute $q$create policy clientes_fin on public.clientes for select to authenticated using (public.is_financeiro())$q$;
+execute $q$create policy visitas_fin on public.visitas for select to authenticated using (public.is_financeiro())$q$;
+execute $q$create policy parcelas_fin on public.parcelas for update to authenticated using (public.is_financeiro()) with check (public.is_financeiro())$q$;
+execute $q$create policy contratos_fin on public.contratos for update to authenticated using (public.is_financeiro()) with check (public.is_financeiro())$q$;
+execute $q$create table if not exists public.comissoes_pagas (
+  id          uuid primary key default gen_random_uuid(),
+  vendedor_id uuid not null references public.profiles(id) on delete cascade,
+  mes         text not null check (mes ~ '^\d{4}-\d{2}$'),
+  valor       numeric(12,2) not null check (valor >= 0),
+  pago_em     date not null default current_date,
+  observacao  text,
+  criado_por  uuid references public.profiles(id) on delete set null default auth.uid(),
+  created_at  timestamptz not null default now(),
+  unique (vendedor_id, mes))$q$;
+execute $q$alter table public.comissoes_pagas enable row level security$q$;
+execute $q$create policy cp_ver on public.comissoes_pagas for select to authenticated using (public.is_financeiro() or vendedor_id = auth.uid())$q$;
+execute $q$create policy cp_fin on public.comissoes_pagas for all to authenticated using (public.is_financeiro()) with check (public.is_financeiro())$q$;
+execute $q$create or replace function public.convite_vendedor(p_novo boolean default false) returns text
+language plpgsql security definer set search_path = public, privado, extensions as $f$
+declare v text;
+begin
+  if not public.is_gestor() then raise exception 'Apenas o gestor.'; end if;
+  select valor into v from privado.config where chave = 'convite_vendedor';
+  if v is null or p_novo then
+    v := encode(extensions.gen_random_bytes(12), 'hex');
+    insert into privado.config values ('convite_vendedor', v) on conflict (chave) do update set valor = excluded.valor;
+  end if;
+  return v;
+end $f$$q$;
+execute $q$revoke execute on function public.convite_vendedor(boolean) from public, anon$q$;
+execute $q$grant execute on function public.convite_vendedor(boolean) to authenticated$q$;
+execute $q$create or replace function public.convite_valido(p_codigo text) returns boolean
+language sql stable security definer set search_path = privado as $f$
+  select coalesce(length(p_codigo) >= 16 and p_codigo = (select valor from privado.config where chave = 'convite_vendedor'), false);
+$f$$q$;
+execute $q$revoke execute on function public.convite_valido(text) from public$q$;
+execute $q$grant execute on function public.convite_valido(text) to anon, authenticated$q$;
+execute $q$create or replace function public.contratos_travar() returns trigger
+language plpgsql security definer set search_path = public as $f$
+declare s record;
+begin
+  if public.is_gestor() or new.status not in ('pendente', 'ativo') then return new; end if;
+  select * into s from public.situacao_empresa(new.cliente_id);
+  if s.situacao = 'negociando' then
+    raise exception 'Este cliente já é atendido por % (em visita). Ele fica livre em % dia(s), no dia %.', s.dono_nome, s.dias, to_char(s.ate, 'DD/MM');
+  end if;
+  if s.situacao = 'contrato' then
+    raise exception 'Este cliente já é atendido por % (contrato ativo até %).', s.dono_nome, to_char(s.ate, 'DD/MM/YYYY');
+  end if;
+  return new;
+end $f$$q$;
+if not exists (select 1 from pg_trigger where tgname = 'contratos_travar') then
+  execute $q$create trigger contratos_travar before insert on public.contratos for each row execute function public.contratos_travar()$q$;
+end if;
+end $do$;

@@ -12,6 +12,7 @@ export default async function MeusDados({ searchParams }) {
     <>
       <Topo titulo="Meus dados" voltar={voltar || '/app'} />
       <main className="conteudo">
+        {searchParams?.bemvindo && <div className="alerta ok">Bem-vindo, {perfil.nome.split(' ')[0]}! Seu acesso foi criado. Falta só o seu CPF para sair nos contratos.</div>}
         <p className="muted" style={{ marginTop: 0 }}>Esses dados saem nos seus contratos, no campo "Nome da agência". Preencha uma vez só.</p>
         <FormAcao action={salvarMeusDados}>
           <input type="hidden" name="voltar" value={voltar} />
