@@ -192,6 +192,13 @@ revoke all on function public.is_gestor() from public, anon;
 grant execute on function public.usuario_ativo() to authenticated;
 grant execute on function public.is_gestor() to authenticated;
 
+-- A tela de primeiro acesso só abre enquanto não houver nenhum gestor
+create or replace function public.existe_gestor() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.profiles where papel = 'gestor');
+$$;
+grant execute on function public.existe_gestor() to anon, authenticated;
+
 -- ---------------------------------------------------------------------
 -- Novo login criado -> cria o perfil automaticamente.
 -- O papel vem de app_metadata (só o servidor consegue definir), nunca do
@@ -594,3 +601,23 @@ begin
     end loop;
   end if;
 end $$;
+
+-- ---------------------------------------------------------------------
+-- Segredo da função admin-usuarios (só o SHA-256 fica aqui; o valor
+-- original vai na variável ADMIN_PROXY_SECRET da Vercel).
+-- Depois de rodar, grave o hash:
+--   insert into privado.config values ('admin_proxy_sha256', '<sha256 do segredo>')
+--   on conflict (chave) do update set valor = excluded.valor;
+-- ---------------------------------------------------------------------
+create schema if not exists privado;
+revoke all on schema privado from public, anon, authenticated;
+create table if not exists privado.config (chave text primary key, valor text not null);
+revoke all on privado.config from public, anon, authenticated;
+grant usage on schema privado to service_role;
+grant select on privado.config to service_role;
+create or replace function public.admin_proxy_hash() returns text
+language sql stable security definer set search_path = privado as $$
+  select valor from privado.config where chave = 'admin_proxy_sha256';
+$$;
+revoke execute on function public.admin_proxy_hash() from public, anon, authenticated;
+grant execute on function public.admin_proxy_hash() to service_role;

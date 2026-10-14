@@ -20,10 +20,10 @@ Tecnologia: Next.js 14 (site) + Supabase (banco de dados, login e atualização 
 - Row Level Security (RLS) ligada em **todas** as tabelas. Sem login, nada é lido nem gravado.
 - O vendedor só altera o que é dele. Programas, usuários e modelos são exclusivos do gestor.
 - O papel (gestor/vendedor) fica em `app_metadata`, que só o servidor consegue definir.
-- A chave `SUPABASE_SERVICE_ROLE_KEY` é usada **somente no servidor**, sempre depois de conferir que quem pede é gestor.
+- A chave mestra do Supabase **nunca sai do Supabase**: criar/alterar logins passa pela função `admin-usuarios` (supabase/functions), chamada só pelo servidor com o segredo `ADMIN_PROXY_SECRET`, sempre depois de conferir que quem pede é gestor.
 - Checklist obrigatório na instalação:
   1. Supabase → Authentication → Sign In / Providers → **desligar "Allow new users to sign up"**.
-  2. Vercel → cadastrar `SUPABASE_SERVICE_ROLE_KEY` marcada como **Sensitive**.
+  2. Vercel → cadastrar `ADMIN_PROXY_SECRET` (o mesmo valor do segredo da função) marcada como **Sensitive**.
   3. Ativar verificação em duas etapas (2FA) nas contas GitHub, Supabase e Vercel.
 
 ## Instalação
@@ -33,7 +33,7 @@ Tecnologia: Next.js 14 (site) + Supabase (banco de dados, login e atualização 
 3. **GitHub**: suba esta pasta para um repositório **privado**.
 4. **Vercel**: *Add New → Project*, importe o repositório e cadastre as variáveis de `.env.example`:
    - `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase → Project Settings → API (URL e chave *anon/publishable*).
-   - `SUPABASE_SERVICE_ROLE_KEY`: chave *service_role/secret*, marcada como **Sensitive**.
+   - `ADMIN_PROXY_SECRET`: um segredo longo e aleatório, igual ao segredo `ADMIN_PROXY_SECRET` da função `admin-usuarios`, marcado como **Sensitive**.
 5. Faça o deploy e abra `https://SEU-SITE.vercel.app/primeiro-acesso` para criar o usuário do gestor. Essa página se bloqueia depois que existe um gestor.
 6. No painel, cadastre os vendedores em **Usuários**, ajuste **Programas** e o **Modelo de contrato**.
 

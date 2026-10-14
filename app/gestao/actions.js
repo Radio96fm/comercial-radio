@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { requireGestor } from '@/lib/auth';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { adminCriarUsuario, adminAtualizarUsuario } from '@/lib/supabase/admin';
 import { parseValor } from '@/lib/format';
 
 const txt = (fd, k) => {
@@ -53,8 +53,8 @@ export async function criarUsuario(_prev, fd) {
   if (!nome || !email) return { erro: 'Nome e e-mail são obrigatórios.' };
   if (senha.length < 8) return { erro: 'A senha precisa ter pelo menos 8 caracteres.' };
 
-  const admin = createAdminClient();
-  const { data: criado, error } = await admin.auth.admin.createUser({
+  // a função também grava o papel no perfil (o gatilho de criação roda antes do app_metadata ser gravado)
+  const { error } = await adminCriarUsuario({
     email,
     password: senha,
     email_confirm: true,
@@ -62,8 +62,6 @@ export async function criarUsuario(_prev, fd) {
     app_metadata: { papel },
   });
   if (error) return { erro: erroAmigavel(error) };
-  // garante o papel no perfil (o gatilho de criação roda antes do app_metadata ser gravado)
-  await admin.from('profiles').update({ papel }).eq('id', criado.user.id);
   revalidatePath('/gestao/vendedores');
   return { ok: `Usuário ${nome} criado. Passe para ele o e-mail e a senha para o primeiro acesso.` };
 }
@@ -74,13 +72,12 @@ export async function atualizarUsuario(_prev, fd) {
   const papel = txt(fd, 'papel') === 'gestor' ? 'gestor' : 'vendedor';
   if (id === perfil.id && papel !== 'gestor') return { erro: 'Você não pode tirar o seu próprio acesso de gestor.' };
 
-  const admin = createAdminClient();
   const { error } = await supabase
     .from('profiles')
     .update({ nome: txt(fd, 'nome'), telefone: txt(fd, 'telefone'), papel })
     .eq('id', id);
   if (error) return { erro: erroAmigavel(error) };
-  await admin.auth.admin.updateUserById(id, { app_metadata: { papel } });
+  await adminAtualizarUsuario(id, { app_metadata: { papel } });
   revalidatePath('/gestao/vendedores');
   return { ok: 'Usuário atualizado.' };
 }
@@ -90,10 +87,9 @@ export async function alternarAtivo(fd) {
   const id = txt(fd, 'id');
   const ativar = fd.get('ativar') === '1';
   if (id === perfil.id) return;
-  const admin = createAdminClient();
   await supabase.from('profiles').update({ ativo: ativar }).eq('id', id);
   // bloqueia/desbloqueia o login no Supabase Auth
-  await admin.auth.admin.updateUserById(id, { ban_duration: ativar ? 'none' : '876000h' });
+  await adminAtualizarUsuario(id, { ban_duration: ativar ? 'none' : '876000h' });
   revalidatePath('/gestao/vendedores');
 }
 
@@ -102,8 +98,7 @@ export async function redefinirSenha(_prev, fd) {
   const id = txt(fd, 'id');
   const senha = String(fd.get('senha') || '');
   if (senha.length < 8) return { erro: 'A nova senha precisa ter pelo menos 8 caracteres.' };
-  const admin = createAdminClient();
-  const { error } = await admin.auth.admin.updateUserById(id, { password: senha });
+  const { error } = await adminAtualizarUsuario(id, { password: senha });
   if (error) return { erro: erroAmigavel(error) };
   return { ok: 'Senha redefinida. Informe a nova senha ao usuário.' };
 }
