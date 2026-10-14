@@ -2,6 +2,11 @@
 const nextConfig = {
   poweredByHeader: false,
   eslint: { ignoreDuringBuilds: true },
+  // gera o PDF do contrato no servidor
+  experimental: {
+    serverComponentsExternalPackages: ['@react-pdf/renderer'],
+    outputFileTracingIncludes: { '/app/contratos/[id]/pdf': ['./public/logos/**'] },
+  },
   async headers() {
     return [
       {

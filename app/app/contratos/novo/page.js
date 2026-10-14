@@ -17,7 +17,7 @@ export default async function NovoContrato({ searchParams }) {
     supabase.from('tabela_precos').select('id, radio_id, tipo, duracao, modalidade, valor').eq('ativo', true).order('tipo').order('duracao').order('modalidade', { ascending: false }),
     supabase.from('radios').select('id, nome, cor').order('ordem'),
     supabase.from('contratos').select('programa_id, segmento_id, data_fim').in('status', ['pendente', 'ativo']).not('programa_id', 'is', null).gte('data_fim', hoje),
-    isGestor ? supabase.from('profiles').select('id, nome, documento').eq('ativo', true).order('nome') : Promise.resolve({ data: [] }),
+    isGestor ? supabase.from('profiles').select('id, nome, documento, telefone').eq('ativo', true).order('nome') : Promise.resolve({ data: [] }),
     supabase.from('modelos_contrato').select('id').eq('ativo', true).limit(1).maybeSingle(),
   ]);
 
@@ -35,7 +35,7 @@ export default async function NovoContrato({ searchParams }) {
 
   return (
     <>
-      <Topo titulo={daTabela ? 'Contrato do plano' : 'Novo contrato'} voltar={daTabela ? `/app/radio/${param('radio')}/montar` : programaInicial ? `/app/programa/${programaInicial}` : '/app/contratos'} />
+      <Topo titulo="Fechar contrato" voltar={daTabela ? `/app/radio/${param('radio')}/montar` : programaInicial ? `/app/programa/${programaInicial}` : '/app/contratos'} />
       <main className="conteudo">
         {!modelo && (
           <div className="alerta aviso">Nenhum modelo de contrato ativo. O contrato será criado, mas sem o texto. Avise o gestor.</div>
@@ -47,7 +47,7 @@ export default async function NovoContrato({ searchParams }) {
           precos={precos || []}
           radios={radios || []}
           ocupados={ocupados || []}
-          vendedores={isGestor ? vendedores || [] : [{ id: perfil.id, nome: perfil.nome, documento: perfil.documento }]}
+          vendedores={isGestor ? vendedores || [] : [{ id: perfil.id, nome: perfil.nome, documento: perfil.documento, telefone: perfil.telefone }]}
           isGestor={isGestor}
           meuId={perfil.id}
           hoje={hoje}
@@ -60,6 +60,7 @@ export default async function NovoContrato({ searchParams }) {
             visita: typeof searchParams?.visita === 'string' ? searchParams.visita : '',
           }}
           linkNovoCliente={`/app/clientes/novo?voltar=${encodeURIComponent(voltarCliente)}`}
+          linkMeusDados={`/app/perfil?voltar=${encodeURIComponent(voltarCliente + (param('cliente') ? `&cliente=${param('cliente')}` : ''))}`}
         />
       </main>
     </>

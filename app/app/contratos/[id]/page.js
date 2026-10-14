@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
 import BotaoEnviar from '@/components/BotaoEnviar';
-import BotaoImprimir from '@/components/BotaoImprimir';
+import AbrirPdf from '@/components/AbrirPdf';
+import { FileDown } from 'lucide-react';
 import DocumentoContrato from '@/components/DocumentoContrato';
 import { mudarStatusContrato } from '../../actions';
 import { data, moeda, linkWhatsApp, STATUS_CONTRATO, STATUS_PARCELA } from '@/lib/format';
@@ -42,7 +43,10 @@ export default async function ContratoPage({ params, searchParams }) {
     <>
       <Topo titulo={`Contrato nº ${c.numero}`} voltar="/app/contratos" />
       <main className="conteudo">
-        {searchParams?.novo && <div className="alerta ok nao-imprimir">Contrato criado! A vaga já está reservada.</div>}
+        {searchParams?.novo && (
+          <div className="alerta ok nao-imprimir">Contrato criado! O PDF já está sendo baixado. Se não abrir, toque em “Baixar contrato em PDF”.</div>
+        )}
+        {searchParams?.novo && <AbrirPdf href={`/app/contratos/${c.id}/pdf?baixar=1`} />}
         {searchParams?.erro && <div className="alerta erro nao-imprimir">{searchParams.erro}</div>}
 
         <div className="card nao-imprimir">
@@ -76,8 +80,11 @@ export default async function ContratoPage({ params, searchParams }) {
           </div>
         )}
 
+        <a className="btn grande nao-imprimir" href={`/app/contratos/${c.id}/pdf?baixar=1`} style={{ marginBottom: 10 }}>
+          <FileDown className="ico" strokeWidth={2.4} /> Baixar contrato em PDF
+        </a>
         <div className="acoes nao-imprimir" style={{ marginBottom: 14 }}>
-          <BotaoImprimir />
+          <a className="btn sec" href={`/app/contratos/${c.id}/pdf`} target="_blank" rel="noopener noreferrer">Ver PDF</a>
           <a className="btn whats" href={linkWhatsApp(c.cliente?.telefone, msgWhats)} target="_blank" rel="noopener noreferrer">Enviar no WhatsApp</a>
         </div>
 
@@ -114,7 +121,7 @@ export default async function ContratoPage({ params, searchParams }) {
           Emissão automática de boletos: será ativada quando a integração com o banco for configurada. Por enquanto, o financeiro emite a partir desta lista.
         </div>
 
-        <div className="secao-titulo nao-imprimir"><h2>Contrato</h2><span className="muted">Imprimir ou salvar em PDF no botão acima</span></div>
+        <div className="secao-titulo nao-imprimir"><h2>Contrato</h2><span className="muted">Prévia</span></div>
         <DocumentoContrato c={c} itens={itens || []} parcelas={parcelas || []} />
       </main>
     </>

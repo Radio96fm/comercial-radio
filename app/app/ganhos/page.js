@@ -106,6 +106,7 @@ export default async function GanhosPage() {
             ))}
           </div>
         )}
+        <Link href="/app/contratos" className="btn cinza" style={{ width: '100%', marginTop: 14 }}>Ver todos os meus contratos</Link>
         <p className="muted" style={{ marginTop: 12, fontSize: '.85rem' }}>Você recebe {pctTxt}% de tudo o que vende. A conta é feita pelas parcelas que vencem em cada mês.</p>
       </main>
     </>

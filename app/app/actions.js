@@ -144,7 +144,7 @@ export async function criarContrato(_prev, fd) {
   const plano_id = programa_id ? txt(fd, 'plano_id') : null;
   const data_inicio = txt(fd, 'data_inicio');
   const meses = parseInt(fd.get('meses'), 10);
-  const dia_vencimento = parseInt(fd.get('dia_vencimento'), 10) || 10;
+  const primeiro_vencimento = txt(fd, 'primeiro_vencimento');
   const vendedor_id = isGestor && txt(fd, 'vendedor_id') ? txt(fd, 'vendedor_id') : perfil.id;
   let pedidos = [];
   try {
@@ -159,7 +159,8 @@ export async function criarContrato(_prev, fd) {
   if (!programa_id && !pedidos.length) return { erro: 'Escolha um programa ou adicione itens avulsos ao pacote.' };
   if (!data_inicio) return { erro: 'Informe a data de início.' };
   if (![1, 3, 6, 12].includes(meses)) return { erro: 'Escolha o período: 1, 3, 6 ou 12 meses.' };
-  if (dia_vencimento < 1 || dia_vencimento > 28) return { erro: 'Dia de vencimento deve ser entre 1 e 28.' };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(primeiro_vencimento || '')) return { erro: 'Informe a data do primeiro vencimento.' };
+  const dia_vencimento = Math.min(28, Number(primeiro_vencimento.slice(8, 10)));
 
   const [{ data: cliente }, { data: programa }, { data: plano }, { data: precos }, { data: modelo }] = await Promise.all([
     supabase.from('clientes').select('*, segmento:segmentos(id, nome)').eq('id', cliente_id).single(),
@@ -189,8 +190,8 @@ export async function criarContrato(_prev, fd) {
   // valor de tabela; o vendedor pode negociar o valor final
   const valorPrograma = programa ? Number(plano ? plano.valor : programa.valor_cota) : 0;
   const valorTabela = Math.round((valorPrograma + itens.reduce((s, i) => s + i.quantidade * i.valor_unitario, 0)) * 100) / 100;
-  const informado = parseValor(fd.get('valor_mensal'));
-  const valor_mensal = Number.isFinite(informado) && informado >= 0 && String(fd.get('valor_mensal') || '').trim() !== '' ? informado : valorTabela;
+  // valor sempre o da tabela (o vendedor não altera)
+  const valor_mensal = valorTabela;
 
   // o que o cliente está comprando (vai no texto do contrato)
   const partes = [];
@@ -199,7 +200,11 @@ export async function criarContrato(_prev, fd) {
     partes.push(`Patrocínio do programa "${programa.nome}" (${desc}).`);
   }
   for (const i of itens) partes.push(`${i.quantidade} por mês: ${i.descricao}.`);
-  if (valor_mensal < valorTabela) partes.push(`Valor de tabela ${moeda(valorTabela)}/mês; valor negociado ${moeda(valor_mensal)}/mês.`);
+
+  const vendedor = vendedor_id === perfil.id
+    ? perfil
+    : (await supabase.from('profiles').select('id, nome, documento, telefone').eq('id', vendedor_id).single()).data;
+  if (!vendedor) return { erro: 'Vendedor não encontrado.' };
 
   const data_fim = somarDias(somarMeses(data_inicio, meses), -1);
   const novo = {
@@ -218,12 +223,12 @@ export async function criarContrato(_prev, fd) {
     dia_vencimento,
     descricao_produto: partes.join('\n'),
     observacoes: txt(fd, 'observacoes'),
-    // "Nome da agência" do contrato: por padrão, quem vendeu
-    agencia_nome: txt(fd, 'agencia_nome'),
-    agencia_documento: txt(fd, 'agencia_documento'),
-    agencia_contato: txt(fd, 'agencia_contato'),
-    campanha: txt(fd, 'campanha'),
-    produto: txt(fd, 'produto'),
+    // "Nome da agência" do contrato = o vendedor (dados de "Meus dados")
+    agencia_nome: vendedor.nome,
+    agencia_documento: vendedor.documento,
+    agencia_contato: vendedor.telefone,
+    campanha: 'Institucional',
+    produto: 'Institucional',
     numero_pi: txt(fd, 'numero_pi'),
     autorizacao: txt(fd, 'autorizacao'),
     status: 'pendente',
@@ -238,12 +243,7 @@ export async function criarContrato(_prev, fd) {
   }
 
   // gera o texto do contrato a partir do modelo (fica "congelado" no contrato)
-  let vendedorNome = perfil.nome;
-  if (vendedor_id !== perfil.id) {
-    const { data: v } = await supabase.from('profiles').select('nome').eq('id', vendedor_id).single();
-    vendedorNome = v?.nome || '';
-  }
-  if (!criado.agencia_nome) await supabase.from('contratos').update({ agencia_nome: vendedorNome }).eq('id', criado.id);
+  const vendedorNome = vendedor.nome;
   const texto = modelo
     ? preencherModelo(
         modelo.conteudo,
@@ -252,12 +252,10 @@ export async function criarContrato(_prev, fd) {
     : null;
   if (texto) await supabase.from('contratos').update({ conteudo_gerado: texto }).eq('id', criado.id);
 
-  // parcelas mensais
+  // parcelas mensais a partir do primeiro vencimento escolhido
   const parcelas = [];
-  const [y, m] = data_inicio.split('-').map(Number);
   for (let i = 0; i < meses; i++) {
-    const dt = new Date(Date.UTC(y, m - 1 + i, dia_vencimento));
-    parcelas.push({ contrato_id: criado.id, numero: i + 1, vencimento: dt.toISOString().slice(0, 10), valor: valor_mensal });
+    parcelas.push({ contrato_id: criado.id, numero: i + 1, vencimento: somarMeses(primeiro_vencimento, i), valor: valor_mensal });
   }
   await supabase.from('parcelas').insert(parcelas);
 
@@ -272,4 +270,17 @@ export async function mudarStatusContrato(fd) {
   if (error) redirect(`/app/contratos/${id}?erro=${encodeURIComponent(traduzErro(error))}`);
   revalidatePath(`/app/contratos/${id}`);
   redirect(`/app/contratos/${id}`);
+}
+
+// ---------------------------------------------------------------- meus dados
+export async function salvarMeusDados(_prev, fd) {
+  const { supabase } = await getSessao();
+  const nome = txt(fd, 'nome');
+  if (!nome || nome.split(/\s+/).length < 2) return { erro: 'Escreva seu nome completo (nome e sobrenome).' };
+  const { error } = await supabase.rpc('atualizar_meu_perfil', { p_nome: nome, p_documento: txt(fd, 'documento'), p_telefone: txt(fd, 'telefone') });
+  if (error) return { erro: traduzErro(error) };
+  revalidatePath('/app', 'layout');
+  const voltar = txt(fd, 'voltar');
+  if (voltar && voltar.startsWith('/app')) redirect(voltar);
+  return { ok: 'Seus dados foram salvos. Eles vão aparecer nos seus contratos.' };
 }

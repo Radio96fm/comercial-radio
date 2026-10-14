@@ -755,3 +755,18 @@ alter table public.contratos add column if not exists autorizacao text;
 alter table public.contratos add column if not exists numero_pi text;
 alter table public.contratos add column if not exists campanha text;
 alter table public.contratos add column if not exists produto text;
+
+-- O próprio vendedor atualiza nome completo, CPF e telefone (vão para o contrato)
+create or replace function public.atualizar_meu_perfil(p_nome text, p_documento text, p_telefone text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null or not public.usuario_ativo() then raise exception 'Sem permissão'; end if;
+  if coalesce(trim(p_nome), '') = '' then raise exception 'Informe seu nome completo'; end if;
+  update public.profiles
+     set nome = left(trim(p_nome), 120),
+         documento = nullif(left(trim(coalesce(p_documento, '')), 30), ''),
+         telefone = nullif(left(trim(coalesce(p_telefone, '')), 30), '')
+   where id = auth.uid();
+end $$;
+revoke execute on function public.atualizar_meu_perfil(text, text, text) from public, anon;
+grant execute on function public.atualizar_meu_perfil(text, text, text) to authenticated;

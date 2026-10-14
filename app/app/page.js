@@ -32,13 +32,19 @@ export default async function HomeVendedor() {
     <>
       <main className="conteudo">
         <div className="ola">
-          <span className="avatar">{primeiroNome[0]}</span>
-          <div className="txt"><small>Bom trabalho,</small><b>{primeiroNome}</b></div>
+          <Link href="/app/perfil" className="avatar" aria-label="Meus dados">{primeiroNome[0]}</Link>
+          <Link href="/app/perfil" className="txt"><small>Bom trabalho,</small><b>{primeiroNome}</b></Link>
           {isGestor && <Link href="/gestao" className="btn peq cinza">Painel</Link>}
           <form action="/sair" method="post">
             <button className="btn peq cinza" aria-label="Sair"><LogOut className="ico" /></button>
           </form>
         </div>
+
+        {!perfil.documento && (
+          <Link href="/app/perfil" className="alerta aviso" style={{ display: 'block' }}>
+            Preencha seu <b>nome completo, CPF e telefone</b> em Meus dados. Eles saem nos seus contratos. Toque aqui ›
+          </Link>
+        )}
 
         <p className="rotulo-secao">Escolha a rádio</p>
         {(radios || []).map((r) => {
