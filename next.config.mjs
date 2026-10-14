@@ -5,7 +5,12 @@ const nextConfig = {
   // gera o PDF do contrato no servidor
   experimental: {
     serverComponentsExternalPackages: ['@react-pdf/renderer'],
-    outputFileTracingIncludes: { '/app/contratos/[id]/pdf': ['./public/logos/**'] },
+    // o PDF é gerado no download e também ao enviar para assinatura (ação da página do contrato);
+    // as fontes do pdfkit são carregadas dinamicamente e precisam ir junto
+    outputFileTracingIncludes: {
+      '/app/contratos/[id]/pdf': ['./public/logos/**', './node_modules/pdfkit/js/**'],
+      '/app/contratos/[id]': ['./public/logos/**', './node_modules/pdfkit/js/**'],
+    },
   },
   async headers() {
     return [

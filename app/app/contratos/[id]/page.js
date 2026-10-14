@@ -5,6 +5,8 @@ import BotaoEnviar from '@/components/BotaoEnviar';
 import AbrirPdf from '@/components/AbrirPdf';
 import { FileDown, PenTool, CheckCircle2, Clock3 } from 'lucide-react';
 import DocumentoContrato from '@/components/DocumentoContrato';
+import CopiarTexto from '@/components/CopiarTexto';
+import { mensagemContrato } from '@/lib/mensagemContrato';
 import { mudarStatusContrato, enviarParaAssinatura } from '../../actions';
 import { configAutentique, situacaoDocumento, marcarAssinado } from '@/lib/autentique';
 import { SELECT_CONTRATO } from '@/lib/pdfGerar';
@@ -38,10 +40,8 @@ export default async function ContratoPage({ params, searchParams }) {
 
   const dono = c.vendedor_id === perfil.id;
   const podeMudar = isGestor || (dono && c.status === 'pendente');
-  const msgWhats =
-    `Olá${c.cliente?.contato_nome ? ' ' + c.cliente.contato_nome : ''}! Segue o resumo do contrato nº ${c.numero} com a ${c.radio?.nome}:\n` +
-    `• ${c.programa ? `Programa: ${c.programa.nome}` : 'Pacote de inserções avulsas'}\n• Período: ${data(c.data_inicio)} a ${data(c.data_fim)}\n` +
-    `• Valor: ${moeda(c.valor_mensal)}/mês (${c.meses}x)\n\nQualquer dúvida, estou à disposição. ${c.vendedor?.nome}`;
+  const msgWhats = mensagemContrato(c, { parcelas: parcelas || [] });
+  const msgAssinar = c.assinatura_link ? mensagemContrato(c, { parcelas: parcelas || [], link: c.assinatura_link }) : null;
 
   const Status = ({ status, texto, classe, confirmar }) => (
     <form action={mudarStatusContrato}>
@@ -110,8 +110,9 @@ export default async function ContratoPage({ params, searchParams }) {
               {assinatura?.recusado && <div className="alerta erro" style={{ margin: '10px 0 0' }}>O cliente recusou a assinatura. Fale com ele e, se precisar, cancele e crie um novo contrato.</div>}
               {c.assinatura_link && (
                 <div className="acoes" style={{ marginTop: 12 }}>
-                  <a className="btn whats" href={linkWhatsApp(c.cliente?.telefone, `Olá${c.cliente?.contato_nome ? ' ' + c.cliente.contato_nome : ''}! Segue o contrato nº ${c.numero} da ${c.radio?.nome} para assinar pelo celular, é rapidinho: ${c.assinatura_link}`)} target="_blank" rel="noopener noreferrer">Mandar link no WhatsApp</a>
-                  <a className="btn sec" href={c.assinatura_link} target="_blank" rel="noopener noreferrer">Abrir link</a>
+                  <a className="btn whats" href={linkWhatsApp(c.cliente?.telefone, msgAssinar)} target="_blank" rel="noopener noreferrer">Mandar no WhatsApp</a>
+                  <CopiarTexto texto={msgAssinar} rotulo="Copiar mensagem com link" />
+                  <CopiarTexto texto={c.assinatura_link} rotulo="Copiar só o link" className="btn cinza" />
                 </div>
               )}
               <p className="muted" style={{ margin: '10px 0 0', fontSize: '.88rem' }}>Quando o cliente assinar, o contrato fica ativo sozinho.</p>
@@ -132,7 +133,7 @@ export default async function ContratoPage({ params, searchParams }) {
         </a>
         <div className="acoes nao-imprimir" style={{ marginBottom: 14 }}>
           <a className="btn sec" href={`/app/contratos/${c.id}/pdf`} target="_blank" rel="noopener noreferrer">Ver PDF</a>
-          <a className="btn whats" href={linkWhatsApp(c.cliente?.telefone, msgWhats)} target="_blank" rel="noopener noreferrer">Enviar no WhatsApp</a>
+          {!msgAssinar && <a className="btn whats" href={linkWhatsApp(c.cliente?.telefone, msgWhats)} target="_blank" rel="noopener noreferrer">Resumo no WhatsApp</a>}
         </div>
 
         {podeMudar && (

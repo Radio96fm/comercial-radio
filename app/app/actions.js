@@ -2,6 +2,7 @@
 import { valorNoPeriodo } from '@/lib/periodo';
 import { configAutentique, enviarDocumento } from '@/lib/autentique';
 import { gerarPdfContrato, nomeArquivo, SELECT_CONTRATO } from '@/lib/pdfGerar';
+import { mensagemContrato } from '@/lib/mensagemContrato';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getSessao } from '@/lib/auth';
@@ -304,10 +305,11 @@ export async function enviarParaAssinatura(fd) {
     const cfg = await configAutentique();
     if (!cfg?.token) throw new Error('A assinatura digital ainda não foi ligada. Peça ao gestor para colar a chave da Autentique no painel (Modelo de contrato).');
     const pdf = await gerarPdfContrato(supabase, c);
+    const { data: parcelasMsg } = await supabase.from('parcelas').select('vencimento').eq('contrato_id', c.id).order('numero').limit(1);
     resultado = await enviarDocumento({
       token: cfg.token,
       nome: nomeArquivo(c),
-      mensagem: `Contrato nº ${c.numero} com a ${c.radio?.nome}. Qualquer dúvida, fale com ${c.vendedor?.nome}.`,
+      mensagem: mensagemContrato(c, { parcelas: parcelasMsg || [], emojis: false }).replace(/\*/g, ''),
       pdf,
       cliente: { nome: c.cliente?.contato_nome || c.cliente?.nome, email: c.cliente?.email || null },
     });
