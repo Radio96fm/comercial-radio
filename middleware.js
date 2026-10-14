@@ -23,8 +23,10 @@ export async function middleware(request) {
     }
   );
 
-  // renova a sessão e confere o login no servidor do Supabase
-  const { data: { user } } = await supabase.auth.getUser();
+  // Só lê/renova a sessão do cookie (sem ida ao servidor a cada clique).
+  // A conferência de verdade do login acontece nas telas (getSessao -> getUser).
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   const path = request.nextUrl.pathname;
   const publica = PUBLICAS.some((p) => path.startsWith(p));

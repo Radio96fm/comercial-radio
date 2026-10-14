@@ -12,7 +12,7 @@ export default async function ProgramaPage({ params }) {
 
   const { data: contratos } = await supabase
     .from('contratos')
-    .select('id, numero, data_inicio, data_fim, status, vendedor_id, cliente:clientes(nome), segmento:segmentos(id, nome), vendedor:profiles(nome)')
+    .select('id, numero, data_inicio, data_fim, status, vendedor_id, cliente_nome, segmento:segmentos(id, nome), vendedor:profiles(nome)')
     .eq('programa_id', p.id)
     .in('status', ['pendente', 'ativo'])
     .gte('data_fim', hojeISO())
@@ -28,7 +28,7 @@ export default async function ProgramaPage({ params }) {
       <span className="icone-redondo"><Building2 size={20} /></span>
       <div className="info">
         <div className="seg">{c.segmento?.nome}</div>
-        <div className="nome">{c.cliente?.nome}</div>
+        <div className="nome">{c.cliente_nome}</div>
         <div className="det">
           {c.data_inicio > hoje ? `Começa ${data(c.data_inicio)} · ` : ''}até {data(c.data_fim)}
           {' · '}{c.vendedor_id === perfil.id ? 'você' : c.vendedor?.nome}

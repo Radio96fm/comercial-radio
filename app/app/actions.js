@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getSessao } from '@/lib/auth';
 import { dadosDoContrato, preencherModelo } from '@/lib/contrato';
 import { somarMeses, somarDias, parseValor } from '@/lib/format';
+import { OUTRO } from '@/lib/segmento';
 
 const txt = (fd, k) => {
   const v = String(fd.get(k) ?? '').trim();
@@ -21,19 +22,24 @@ function traduzErro(error) {
 // ---------------------------------------------------------------- clientes
 async function criarClienteInterno(supabase, fd, prefixo = '') {
   const nome = txt(fd, prefixo + 'nome');
-  const segmento_id = txt(fd, prefixo + 'segmento_id');
+  let segmento_id = txt(fd, prefixo + 'segmento_id');
   if (!nome) return { erro: 'Informe o nome do cliente.' };
   if (!segmento_id) return { erro: 'Escolha o segmento do cliente.' };
 
-  // evita dois vendedores atendendo o mesmo cliente
-  const { data: existentes } = await supabase
-    .from('clientes')
-    .select('id, nome, vendedor:profiles!clientes_vendedor_id_fkey(nome)')
-    .ilike('nome', nome.replace(/[%_]/g, ''))
-    .limit(1);
+  // evita dois vendedores atendendo o mesmo cliente (confere em todas as carteiras)
+  const { data: existentes } = await supabase.rpc('cliente_existente', { p_nome: nome });
   if (existentes?.length) {
     const e = existentes[0];
-    return { erro: `O cliente "${e.nome}" já está cadastrado${e.vendedor?.nome ? ` na carteira de ${e.vendedor.nome}` : ''}. Procure-o na lista.` };
+    return { erro: `O cliente "${e.nome}" já está cadastrado${e.vendedor_nome ? ` na carteira de ${e.vendedor_nome}` : ''}.` };
+  }
+
+  // "Outro": segmento digitado à mão
+  if (segmento_id === OUTRO) {
+    const novo = txt(fd, prefixo + 'segmento_novo');
+    if (!novo) return { erro: 'Escreva qual é o segmento do cliente.' };
+    const { data: id, error } = await supabase.rpc('segmento_garantir', { p_nome: novo });
+    if (error) return { erro: traduzErro(error) };
+    segmento_id = id;
   }
 
   const { data, error } = await supabase
@@ -72,6 +78,12 @@ export async function atualizarCliente(_prev, fd) {
     campos[k] = txt(fd, k);
   }
   if (!campos.nome || !campos.segmento_id) return { erro: 'Nome e segmento são obrigatórios.' };
+  if (campos.segmento_id === OUTRO) {
+    if (!txt(fd, 'segmento_novo')) return { erro: 'Escreva qual é o segmento do cliente.' };
+    const { data: seg, error: e } = await supabase.rpc('segmento_garantir', { p_nome: txt(fd, 'segmento_novo') });
+    if (e) return { erro: traduzErro(e) };
+    campos.segmento_id = seg;
+  }
   const { data, error } = await supabase.from('clientes').update(campos).eq('id', id).select('id');
   if (error) return { erro: traduzErro(error) };
   if (!data?.length) return { erro: 'Somente o vendedor responsável ou o gestor pode alterar este cliente.' };

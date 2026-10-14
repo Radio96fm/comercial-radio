@@ -539,17 +539,19 @@ create policy programas_write  on public.programas for all to authenticated usin
 create policy modelos_select on public.modelos_contrato for select to authenticated using (public.usuario_ativo());
 create policy modelos_write  on public.modelos_contrato for all to authenticated using (public.is_gestor()) with check (public.is_gestor());
 
--- CLIENTES: todos veem (para evitar dois vendedores no mesmo cliente);
+-- CLIENTES: vendedor vê só a própria carteira (gestor vê tudo);
 -- qualquer vendedor cadastra; altera o responsável ou o gestor; só gestor exclui
-create policy clientes_select on public.clientes for select to authenticated using (public.usuario_ativo());
+create policy clientes_select on public.clientes for select to authenticated
+  using (public.is_gestor() or (public.usuario_ativo() and vendedor_id = auth.uid()));
 create policy clientes_insert on public.clientes for insert to authenticated with check (public.usuario_ativo());
 create policy clientes_update on public.clientes for update to authenticated
   using (public.is_gestor() or (public.usuario_ativo() and vendedor_id = auth.uid()))
   with check (public.is_gestor() or (public.usuario_ativo() and vendedor_id = auth.uid()));
 create policy clientes_delete on public.clientes for delete to authenticated using (public.is_gestor());
 
--- VISITAS: todos veem quem está visitando quem; cada um registra/altera as suas
-create policy visitas_select on public.visitas for select to authenticated using (public.usuario_ativo());
+-- VISITAS: cada vendedor vê, registra e altera as suas; gestor vê todas
+create policy visitas_select on public.visitas for select to authenticated
+  using (public.is_gestor() or (public.usuario_ativo() and vendedor_id = auth.uid()));
 create policy visitas_insert on public.visitas for insert to authenticated
   with check (public.usuario_ativo() and (vendedor_id = auth.uid() or public.is_gestor()));
 create policy visitas_update on public.visitas for update to authenticated
@@ -621,3 +623,42 @@ language sql stable security definer set search_path = privado as $$
 $$;
 revoke execute on function public.admin_proxy_hash() from public, anon, authenticated;
 grant execute on function public.admin_proxy_hash() to service_role;
+
+-- ---------------------------------------------------------------------
+-- Carteira por vendedor: funções que mostram só o necessário de outras carteiras
+-- ---------------------------------------------------------------------
+-- Nome do cliente de um contrato (patrocinadores de um programa, visíveis a todos)
+create or replace function public.cliente_nome(c public.contratos) returns text
+language sql stable security definer set search_path = public as $$
+  select nome from public.clientes where id = c.cliente_id and public.usuario_ativo();
+$$;
+revoke execute on function public.cliente_nome(public.contratos) from public, anon;
+grant execute on function public.cliente_nome(public.contratos) to authenticated;
+
+-- Já existe cliente com esse nome? (em qualquer carteira) -> de quem é
+create or replace function public.cliente_existente(p_nome text)
+returns table (nome text, vendedor_nome text)
+language sql stable security definer set search_path = public as $$
+  select c.nome, p.nome
+    from public.clientes c left join public.profiles p on p.id = c.vendedor_id
+   where public.usuario_ativo() and lower(trim(c.nome)) = lower(trim(p_nome))
+   limit 1;
+$$;
+revoke execute on function public.cliente_existente(text) from public, anon;
+grant execute on function public.cliente_existente(text) to authenticated;
+
+-- Segmento digitado à mão ("Outro"): usa o existente com o mesmo nome ou cria
+create or replace function public.segmento_garantir(p_nome text) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare v_id uuid; v_nome text := initcap(trim(regexp_replace(p_nome, '\s+', ' ', 'g')));
+begin
+  if not public.usuario_ativo() then raise exception 'Sem permissão.'; end if;
+  if v_nome = '' then raise exception 'Informe o segmento.'; end if;
+  select id into v_id from public.segmentos where lower(nome) = lower(v_nome);
+  if v_id is null then
+    insert into public.segmentos (nome) values (v_nome) returning id into v_id;
+  end if;
+  return v_id;
+end $$;
+revoke execute on function public.segmento_garantir(text) from public, anon;
+grant execute on function public.segmento_garantir(text) to authenticated;

@@ -164,3 +164,66 @@ export async function mudarStatusParcela(fd) {
   await supabase.from('parcelas').update(upd).eq('id', txt(fd, 'id'));
   revalidatePath('/gestao/parcelas');
 }
+
+// ------------------------------------------------------------------ importação de clientes
+const norm = (s) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+// Recebe as linhas já lidas da planilha (no navegador), em lotes.
+// Pula clientes sem nome e os que já existem (mesmo nome); cria segmentos novos.
+export async function importarClientes(linhas) {
+  const { supabase } = await requireGestor();
+  if (!Array.isArray(linhas) || !linhas.length) return { erro: 'Nenhuma linha para importar.' };
+  if (linhas.length > 1000) return { erro: 'Envie no máximo 1000 linhas por vez.' };
+
+  const [{ data: segmentos }, { data: perfis }, { data: existentes }] = await Promise.all([
+    supabase.from('segmentos').select('id, nome'),
+    supabase.from('profiles').select('id, nome, email'),
+    supabase.from('clientes').select('nome').limit(100000),
+  ]);
+  const segPorNome = new Map((segmentos || []).map((s) => [norm(s.nome), s.id]));
+  const jaTem = new Set((existentes || []).map((c) => norm(c.nome)));
+  const acharVendedor = (v) => {
+    const n = norm(v);
+    if (!n) return null;
+    const p = (perfis || []).find((x) => norm(x.email) === n || norm(x.nome) === n)
+      || (perfis || []).find((x) => norm(x.nome).split(' ')[0] === n);
+    return p?.id || null;
+  };
+
+  let semNome = 0, duplicados = 0, segmentosCriados = 0;
+  const vendedoresNaoAchados = new Set();
+  const novos = [];
+  for (const l of linhas) {
+    const nome = String(l?.nome ?? '').trim().slice(0, 200);
+    if (!nome) { semNome++; continue; }
+    if (jaTem.has(norm(nome))) { duplicados++; continue; }
+    jaTem.add(norm(nome));
+
+    const segNome = String(l.segmento ?? '').trim() || 'Outros';
+    let segmento_id = segPorNome.get(norm(segNome));
+    if (!segmento_id) {
+      const { data: s, error } = await supabase.from('segmentos').insert({ nome: segNome.slice(0, 120) }).select('id').single();
+      if (error) return { erro: erroAmigavel(error) };
+      segmento_id = s.id;
+      segPorNome.set(norm(segNome), s.id);
+      segmentosCriados++;
+    }
+    const vendedor_id = acharVendedor(l.vendedor);
+    if (l.vendedor && !vendedor_id) vendedoresNaoAchados.add(String(l.vendedor).trim());
+
+    const campo = (k) => (String(l[k] ?? '').trim() || null);
+    novos.push({
+      nome, segmento_id, vendedor_id,
+      razao_social: campo('razao_social'), documento: campo('documento'), contato_nome: campo('contato_nome'),
+      telefone: campo('telefone'), email: campo('email'), endereco: campo('endereco'),
+      cidade: campo('cidade'), observacoes: campo('observacoes'),
+    });
+  }
+
+  if (novos.length) {
+    const { error } = await supabase.from('clientes').insert(novos);
+    if (error) return { erro: erroAmigavel(error) };
+  }
+  revalidatePath('/gestao/clientes');
+  return { importados: novos.length, duplicados, semNome, segmentosCriados, vendedoresNaoAchados: [...vendedoresNaoAchados] };
+}

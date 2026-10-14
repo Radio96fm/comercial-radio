@@ -1,26 +1,26 @@
 import Link from 'next/link';
-import { Radio, Wallet, PenLine, Car, Hourglass, History } from 'lucide-react';
+import { Radio, Users, PenLine, Car, Hourglass, History } from 'lucide-react';
 import { requireGestor } from '@/lib/auth';
-import { data, dataHora, moeda, tempoDesde, horario, hojeISO, somarDias, statusPrograma } from '@/lib/format';
+import { data, dataHora, tempoDesde, horario, hojeISO, somarDias, statusPrograma } from '@/lib/format';
 
 export default async function Dashboard() {
   const { supabase } = await requireGestor();
   const hoje = hojeISO();
   const em30 = somarDias(hoje, 30);
 
-  const [{ data: programas }, { data: vencendo }, { data: visitas }, { data: pendentes }, { data: ativos }, { data: atividades }] = await Promise.all([
+  const [{ data: programas }, { data: vencendo }, { data: visitas }, { data: pendentes }, { count: totalClientes }, { count: totalVendedores }, { data: atividades }] = await Promise.all([
     supabase.from('programas_ocupacao').select('*').eq('ativo', true).order('radio_nome').order('horario_inicio'),
     supabase.from('contratos').select('id, numero, data_fim, cliente:clientes(nome), programa:programas(nome), vendedor:profiles(nome)')
       .in('status', ['ativo', 'pendente']).gte('data_fim', hoje).lte('data_fim', em30).order('data_fim'),
     supabase.from('visitas').select('id, iniciada_em, cliente:clientes(nome), vendedor:profiles(nome)').eq('status', 'em_andamento').order('iniciada_em', { ascending: false }),
     supabase.from('contratos').select('id', { count: 'exact' }).eq('status', 'pendente'),
-    supabase.from('contratos').select('valor_mensal').eq('status', 'ativo').lte('data_inicio', hoje).gte('data_fim', hoje),
+    supabase.from('clientes').select('id', { count: 'exact', head: true }),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('papel', 'vendedor').eq('ativo', true),
     supabase.from('atividades').select('id, descricao, created_at, usuario:profiles(nome)').order('created_at', { ascending: false }).limit(6),
   ]);
 
   const totalCotas = (programas || []).reduce((s, p) => s + p.cotas_total, 0);
   const ocupadas = (programas || []).reduce((s, p) => s + p.cotas_ocupadas, 0);
-  const receita = (ativos || []).reduce((s, c) => s + Number(c.valor_mensal), 0);
 
   const porRadio = {};
   (programas || []).forEach((p) => {
@@ -39,9 +39,9 @@ export default async function Dashboard() {
           <div className="barra"><span style={{ width: `${totalCotas ? (ocupadas / totalCotas) * 100 : 0}%` }} /></div>
         </div>
         <div className="kpi">
-          <div className="kpi-topo">Receita mensal<Wallet className="ico" /></div>
-          <div className="valor">{moeda(receita)}</div>
-          <div className="rotulo">contratos ativos hoje</div>
+          <div className="kpi-topo">Clientes na base<Users className="ico" /></div>
+          <div className="valor">{totalClientes || 0}</div>
+          <div className="rotulo">{totalVendedores || 0} vendedores ativos</div>
         </div>
         <div className="kpi">
           <div className="kpi-topo">Aguardando assinatura<PenLine className="ico" /></div>

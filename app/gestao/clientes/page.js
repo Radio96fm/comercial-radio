@@ -22,7 +22,10 @@ export default async function ClientesGestao({ searchParams }) {
     <>
       <div className="cabecalho">
         <h1>Clientes</h1>
-        <Link className="btn" href="/app/clientes/novo">Novo cliente</Link>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link className="btn sec" href="/gestao/clientes/importar">Importar planilha</Link>
+          <Link className="btn" href="/app/clientes/novo">Novo cliente</Link>
+        </div>
       </div>
       <form method="get" className="card" style={{ display: 'flex', gap: 10 }}>
         <input name="q" defaultValue={busca} placeholder="Buscar cliente pelo nome" />

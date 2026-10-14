@@ -317,21 +317,35 @@ code { background: var(--card-2); border: 1px solid var(--line-2); padding: 2px 
   .contrato-texto { padding: 0; font-size: 11.5pt; }
 }
 
-/* ---------- Lista compacta de programas (tela da rádio) ---------- */
-.grade-programas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.prog-mini {
-  display: flex; flex-direction: column; gap: 6px; min-height: 128px;
-  background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; color: inherit;
-  border-top: 4px solid var(--st, var(--line-2));
+/* ---------- Programas da rádio: um botão largo por linha ---------- */
+.lista-programas { display: flex; flex-direction: column; gap: 12px; }
+.prog-linha {
+  --cor: var(--cor96);
+  position: relative; overflow: hidden; display: block; color: #fff;
+  border-radius: 22px; padding: 18px 18px 16px;
+  background:
+    radial-gradient(110% 140% at 100% 0%, color-mix(in srgb, var(--cor) 38%, transparent) 0%, transparent 60%),
+    linear-gradient(160deg, color-mix(in srgb, var(--cor) 16%, #111) 0%, #121212 100%);
+  border: 1px solid color-mix(in srgb, var(--cor) 30%, #262626);
 }
-.prog-mini .nome { font-family: var(--font-display); font-weight: 700; font-size: 1.08rem; line-height: 1.15; letter-spacing: -.01em; }
-.prog-mini .resumo { color: var(--muted); font-size: .82rem; line-height: 1.3; }
-.prog-mini .resumo.desc { color: #cfcfcf; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.prog-mini .rodape-p { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.prog-mini .vagas { font-weight: 700; font-size: .92rem; display: flex; align-items: center; gap: 6px; }
-.prog-mini .mini-blocos { display: flex; gap: 3px; }
-.prog-mini .mini-blocos i { width: 8px; height: 14px; border-radius: 3px; background: var(--card-2); border: 1px solid var(--line-2); }
-.prog-mini .mini-blocos i.cheia { background: var(--st); border-color: var(--st); }
+.prog-linha:active { transform: scale(.99); }
+.prog-linha .topo-p { display: flex; align-items: flex-start; gap: 12px; }
+.prog-linha .nome { flex: 1; font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
+.prog-linha .seta {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+  background: #fff; color: #0a0a0a; flex: none;
+}
+.prog-linha .desc { color: #d4d4d4; font-size: .95rem; line-height: 1.35; margin-top: 6px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.prog-linha .numeros { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 22px; margin-top: 14px; }
+.prog-linha .numeros div { display: flex; flex-direction: column; }
+.prog-linha .numeros b { font-family: var(--font-display); font-size: 1.35rem; line-height: 1; font-weight: 700; }
+.prog-linha .numeros span { font-size: .85rem; opacity: .75; margin-top: 4px; }
+.prog-linha .situacao { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.prog-linha .vagas { font-weight: 700; font-size: .95rem; display: flex; align-items: center; gap: 6px; }
+.prog-linha .mini-blocos { display: flex; gap: 3px; }
+.prog-linha .mini-blocos i { width: 9px; height: 15px; border-radius: 3px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); }
+.prog-linha .mini-blocos i.cheia { background: var(--st); border-color: var(--st); }
 .cabeca-radio { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
 .cabeca-radio img { width: 54px; height: 54px; object-fit: contain; }
 .cabeca-radio .t b { display: block; font-family: var(--font-display); font-size: 1.5rem; letter-spacing: -.02em; }
@@ -340,3 +354,11 @@ code { background: var(--card-2); border: 1px solid var(--line-2); padding: 2px 
 .patrocinador .seg { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--vermelho); }
 .rodape-acao { position: sticky; bottom: 104px; margin-top: 22px; }
 .rodape-acao::after { content: ''; display: block; height: 4px; }
+
+/* ---------- Carregando (esqueleto entre telas) ---------- */
+.carregando { padding: 20px 16px; display: grid; gap: 12px; }
+.sk { border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--card) 0%, var(--card-2) 50%, var(--card) 100%); background-size: 200% 100%; animation: sk 1.1s ease-in-out infinite; }
+.sk-titulo { height: 30px; width: 55%; margin-bottom: 6px; }
+.sk-bloco { height: 78px; }
+@keyframes sk { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
