@@ -11,7 +11,7 @@ export async function POST(request) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ erro: 'Entre de novo no sistema.' }, { status: 401 });
-  const { data: perfil } = await supabase.from('profiles').select('id, nome, ativo').eq('id', user.id).maybeSingle();
+  const { data: perfil } = await supabase.from('profiles').select('id, nome, ativo, papel, comissao').eq('id', user.id).maybeSingle();
   if (!perfil?.ativo) return NextResponse.json({ erro: 'Usuário desativado.' }, { status: 403 });
 
   const { mensagens } = await request.json().catch(() => ({}));
@@ -25,7 +25,7 @@ export async function POST(request) {
   }
 
   try {
-    const [cfg, foto] = await Promise.all([configIA(), fotoDoSistema(supabase, perfil)]);
+    const [cfg, foto] = await Promise.all([configIA(), fotoDoSistema(supabase, perfil, perfil.papel === 'gestor')]);
     const texto = await gerar({ cfg, sistema: REGRAS_DUVIDAS, contexto: `# DADOS DO SISTEMA (agora)\n${foto}`, mensagens: conversa, maxTokens: 1500 });
     return NextResponse.json({ texto });
   } catch (e) {

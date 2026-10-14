@@ -2,11 +2,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut, Sparkles,
+  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, MessageCircleQuestion,
 } from 'lucide-react';
 
 const ITENS = [
   ['/gestao', LayoutDashboard, 'Visão geral', true],
+  ['/gestao/perguntar', MessageCircleQuestion, 'Perguntar à IA'],
   ['/gestao/programas', Radio, 'Programas'],
   ['/gestao/precos', Receipt, 'Tabela de preços'],
   ['/gestao/contratos', FileText, 'Contratos'],

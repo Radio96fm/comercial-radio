@@ -20,7 +20,7 @@ function Texto({ t }) {
   ));
 }
 
-export default function Duvidas() {
+export default function Duvidas({ sugestoes = SUGESTOES }) {
   const [mensagens, setMensagens] = useState([]);
   const [texto, setTexto] = useState('');
   const [pensando, setPensando] = useState(false);
@@ -58,7 +58,7 @@ export default function Duvidas() {
         <div className="bolha ia">Oi! Pergunte sobre <b>vagas, programas, preços e condições</b>. Eu olho o sistema agora e te respondo. Pode escrever ou tocar em Falar.</div>
         {!mensagens.length && (
           <div className="atalhos">
-            {SUGESTOES.map((s) => <button key={s} type="button" className="btn peq sec" onClick={() => enviar(s)}>{s}</button>)}
+            {sugestoes.map((s) => <button key={s} type="button" className="btn peq sec" onClick={() => enviar(s)}>{s}</button>)}
           </div>
         )}
         {mensagens.map((m, i) => (
