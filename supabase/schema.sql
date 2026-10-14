@@ -200,14 +200,18 @@ grant execute on function public.is_gestor() to authenticated;
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles (id, nome, email, telefone, papel)
+  -- Login sem papel definido pelo servidor (ex.: alguém tentando se cadastrar
+  -- sozinho) nasce DESATIVADO e não enxerga nada. Quem é criado pelo painel
+  -- recebe o papel logo em seguida e é ativado pelo gatilho sincronizar_papel.
+  insert into public.profiles (id, nome, email, telefone, papel, ativo)
   values (
     new.id,
     coalesce(nullif(new.raw_user_meta_data->>'nome', ''), split_part(new.email, '@', 1)),
     new.email,
     new.raw_user_meta_data->>'telefone',
     case when new.raw_app_meta_data->>'papel' = 'gestor' then 'gestor'::papel_usuario
-         else 'vendedor'::papel_usuario end
+         else 'vendedor'::papel_usuario end,
+    coalesce(new.raw_app_meta_data->>'papel' in ('gestor', 'vendedor'), false)
   )
   on conflict (id) do nothing;
   return new;
@@ -227,7 +231,9 @@ begin
   if new.raw_app_meta_data->>'papel' in ('gestor', 'vendedor')
      and new.raw_app_meta_data->>'papel' is distinct from old.raw_app_meta_data->>'papel' then
     update public.profiles
-       set papel = (new.raw_app_meta_data->>'papel')::papel_usuario
+       set papel = (new.raw_app_meta_data->>'papel')::papel_usuario,
+           -- primeira vez que o servidor define o papel = usuário criado pelo painel: ativa
+           ativo = case when old.raw_app_meta_data->>'papel' is null then true else ativo end
      where id = new.id;
   end if;
   return new;
