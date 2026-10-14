@@ -4,15 +4,17 @@ import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import { salvarPrograma, salvarPlano, excluirPlano } from '../actions';
 import { horario, moeda, hora, valorParaCampo } from '@/lib/format';
+import { CartoesRadio, AbasRadio, FaixaRadio } from '@/components/gestao/RadiosGestao';
+import { Clock, Mic, Plus } from 'lucide-react';
 
-function CamposPrograma({ radios, p = {} }) {
+function CamposPrograma({ radios, p = {}, radioPadrao }) {
   return (
     <>
       {p.id && <input type="hidden" name="id" value={p.id} />}
       <div className="form-grid">
         <div className="campo">
           <label>Rádio *</label>
-          <select name="radio_id" defaultValue={p.radio_id || radios[0]?.id} required>
+          <select name="radio_id" defaultValue={p.radio_id || radioPadrao || radios[0]?.id} required>
             {radios.map((r) => <option key={r.id} value={r.id}>{r.nome}</option>)}
           </select>
         </div>
@@ -37,21 +39,49 @@ function CamposPrograma({ radios, p = {} }) {
 
 export default async function ProgramasGestao({ searchParams }) {
   const { supabase } = await requireGestor();
-  const [{ data: radios }, { data: programas }] = await Promise.all([
-    supabase.from('radios').select('id, nome, cor').order('ordem'),
-    supabase.from('programas_ocupacao').select('*').order('radio_nome').order('horario_inicio'),
+  const [{ data: radios }, { data: programas }, { data: planos }] = await Promise.all([
+    supabase.from('radios').select('id, nome, cor, slogan').order('ordem'),
+    supabase.from('programas_ocupacao').select('*').order('horario_inicio', { nullsFirst: false }),
+    supabase.from('programa_planos').select('*').order('ordem'),
   ]);
   const editando = (programas || []).find((p) => p.id === searchParams?.editar);
-  const { data: planos } = await supabase.from('programa_planos').select('*').order('ordem');
+  const radio = (radios || []).find((r) => r.id === (editando?.radio_id || searchParams?.radio));
   const planosDe = (id) => (planos || []).filter((x) => x.programa_id === id);
+  const progsDe = (id) => (programas || []).filter((p) => p.radio_id === id);
 
+  // 1) primeiro escolhe a rádio
+  if (!radio) {
+    return (
+      <>
+        <div className="cabecalho"><h1>Programas</h1></div>
+        <p className="muted" style={{ marginTop: -10, marginBottom: 18 }}>Escolha a rádio para ver e editar os programas dela.</p>
+        <CartoesRadio
+          radios={radios || []}
+          href={(r) => `/gestao/programas?radio=${r.id}`}
+          numeros={(r) => {
+            const ps = progsDe(r.id);
+            return [
+              [ps.length, 'programas'],
+              [`${ps.reduce((t, p) => t + p.cotas_ocupadas, 0)}/${ps.reduce((t, p) => t + p.cotas_total, 0)}`, 'cotas ocupadas'],
+              [ps.reduce((t, p) => t + planosDe(p.id).length, 0), 'planos de venda'],
+            ];
+          }}
+        />
+      </>
+    );
+  }
+
+  const lista = progsDe(radio.id);
   return (
     <>
-      <div className="cabecalho"><h1>Programas</h1></div>
+      <div className="cabecalho">
+        <h1>Programas</h1>
+        <AbasRadio radios={radios || []} atual={radio.id} href={(r) => `/gestao/programas?radio=${r.id}`} />
+      </div>
 
       {editando ? (
         <div className="card">
-          <div className="cabecalho"><h2>Editar: {editando.nome}</h2><Link href="/gestao/programas">Fechar</Link></div>
+          <div className="cabecalho"><h2>Editar: {editando.nome}</h2><Link href={`/gestao/programas?radio=${radio.id}`} className="btn peq cinza">Fechar</Link></div>
           <FormAcao action={salvarPrograma}>
             <CamposPrograma radios={radios || []} p={editando} />
             <BotaoEnviar className="btn" texto="Salvar alterações" />
@@ -92,36 +122,49 @@ export default async function ProgramasGestao({ searchParams }) {
           </details>
         </div>
       ) : (
-        <details className="card">
-          <summary>Cadastrar novo programa</summary>
-          <FormAcao action={salvarPrograma} limparAoSalvar>
-            <CamposPrograma radios={radios || []} />
-            <BotaoEnviar className="btn" texto="Cadastrar programa" />
-          </FormAcao>
-        </details>
+        <>
+          <FaixaRadio radio={radio}>
+            <span><b>{lista.length}</b> programas</span>
+            <span><b>{lista.reduce((t, p) => t + p.cotas_livres, 0)}</b> cotas livres</span>
+          </FaixaRadio>
+          <details className="card novo-programa">
+            <summary><Plus className="ico" /> Cadastrar novo programa na {radio.nome}</summary>
+            <FormAcao action={salvarPrograma} limparAoSalvar>
+              <CamposPrograma radios={radios || []} radioPadrao={radio.id} />
+              <BotaoEnviar className="btn" texto="Cadastrar programa" />
+            </FormAcao>
+          </details>
+          {!lista.length && <div className="vazio">Nenhum programa nesta rádio ainda.</div>}
+          <div className="grade-programas" style={{ '--cor': radio.cor }}>
+            {lista.map((p) => {
+              const pls = planosDe(p.id);
+              const pct = p.cotas_total ? (p.cotas_ocupadas / p.cotas_total) * 100 : 0;
+              return (
+                <Link key={p.id} href={`/gestao/programas?editar=${p.id}`} className={`prog-card-g ${p.ativo ? '' : 'inativo'}`}>
+                  <div className="topo">
+                    <b>{p.nome}</b>
+                    {!p.ativo && <span className="badge b-cinza">inativo</span>}
+                  </div>
+                  {p.apresentador && <div className="det"><Mic className="ico" />{p.apresentador}</div>}
+                  <div className="det"><Clock className="ico" />{p.dias}{horario(p) ? ` · ${horario(p)}` : ''}</div>
+                  <div className="cotas">
+                    <span>{p.cotas_ocupadas} de {p.cotas_total} cotas</span>
+                    <div className="barra"><span style={{ width: `${pct}%` }} /></div>
+                  </div>
+                  <div className="rodape">
+                    <span className="preco">
+                      {pls.length > 1
+                        ? <>{pls.length} planos · a partir de <b>{moeda(Math.min(...pls.map((x) => Number(x.valor))))}</b></>
+                        : <b>{moeda(pls[0]?.valor ?? p.valor_cota)}<small>/mês</small></b>}
+                    </span>
+                    <span className="editar">Editar ›</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </>
       )}
-
-      <div className="tabela">
-        <table>
-          <thead><tr><th>Rádio</th><th>Programa</th><th>Horário</th><th>Cotas</th><th>Planos</th><th></th></tr></thead>
-          <tbody>
-            {(programas || []).map((p) => (
-              <tr key={p.id} style={p.ativo ? undefined : { opacity: 0.5 }}>
-                <td><span className="badge" style={{ background: `color-mix(in srgb, ${p.radio_cor} 20%, transparent)`, color: p.radio_cor }}>{p.radio_nome}</span></td>
-                <td><b>{p.nome}</b>{!p.ativo && ' (inativo)'}<br /><small>{p.apresentador}</small></td>
-                <td>{p.dias}<br /><small>{horario(p)}</small></td>
-                <td>{p.cotas_ocupadas}/{p.cotas_total}</td>
-                <td>
-                  {planosDe(p.id).length > 1
-                    ? <>{planosDe(p.id).length} planos<br /><small>a partir de {moeda(Math.min(...planosDe(p.id).map((x) => Number(x.valor))))}</small></>
-                    : moeda(planosDe(p.id)[0]?.valor ?? p.valor_cota)}
-                </td>
-                <td><Link className="btn peq sec" href={`/gestao/programas?editar=${p.id}`}>Editar</Link></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </>
   );
 }

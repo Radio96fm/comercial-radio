@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Radio, Users, PenLine, Car, Hourglass, History } from 'lucide-react';
 import { requireGestor } from '@/lib/auth';
+import { FaixaRadio } from '@/components/gestao/RadiosGestao';
 import { data, dataHora, tempoDesde, horario, hojeISO, somarDias, statusPrograma } from '@/lib/format';
 
 export default async function Dashboard() {
@@ -8,8 +9,9 @@ export default async function Dashboard() {
   const hoje = hojeISO();
   const em30 = somarDias(hoje, 30);
 
-  const [{ data: programas }, { data: vencendo }, { data: visitas }, { data: pendentes }, { count: totalClientes }, { count: totalVendedores }, { data: atividades }] = await Promise.all([
-    supabase.from('programas_ocupacao').select('*').eq('ativo', true).order('radio_nome').order('horario_inicio'),
+  const [{ data: radios }, { data: programas }, { data: vencendo }, { data: visitas }, { data: pendentes }, { count: totalClientes }, { count: totalVendedores }, { data: atividades }] = await Promise.all([
+    supabase.from('radios').select('id, nome, cor, slogan').order('ordem'),
+    supabase.from('programas_ocupacao').select('*').eq('ativo', true).order('horario_inicio', { nullsFirst: false }),
     supabase.from('contratos').select('id, numero, data_fim, cliente:clientes(nome), programa:programas(nome), vendedor:profiles(nome)')
       .in('status', ['ativo', 'pendente']).gte('data_fim', hoje).lte('data_fim', em30).order('data_fim'),
     supabase.from('visitas').select('id, iniciada_em, cliente:clientes(nome), vendedor:profiles(nome)').eq('status', 'em_andamento').order('iniciada_em', { ascending: false }),
@@ -22,15 +24,9 @@ export default async function Dashboard() {
   const totalCotas = (programas || []).reduce((s, p) => s + p.cotas_total, 0);
   const ocupadas = (programas || []).reduce((s, p) => s + p.cotas_ocupadas, 0);
 
-  const porRadio = {};
-  (programas || []).forEach((p) => {
-    porRadio[p.radio_nome] = porRadio[p.radio_nome] || { cor: p.radio_cor, itens: [] };
-    porRadio[p.radio_nome].itens.push(p);
-  });
-
   return (
     <>
-      <div className="cabecalho"><h1>Visão geral</h1><span className="ao-vivo">Ao vivo</span></div>
+      <div className="cabecalho"><h1>Visão geral</h1></div>
 
       <div className="kpis">
         <div className="kpi destaque">
@@ -55,23 +51,26 @@ export default async function Dashboard() {
         </div>
       </div>
 
-      {Object.entries(porRadio).map(([radio, g]) => (
-        <div key={radio} style={{ marginBottom: 18 }}>
-          <div className="radio-titulo"><span className="ponto" style={{ background: g.cor }} /><h2>{radio}</h2></div>
+      {(radios || []).map((r) => ({ r, itens: (programas || []).filter((p) => p.radio_id === r.id) })).map(({ r, itens }) => (
+        <div key={r.id} style={{ marginBottom: 22 }}>
+          <FaixaRadio radio={r}>
+            <span><b>{itens.reduce((t, p) => t + p.cotas_ocupadas, 0)}/{itens.reduce((t, p) => t + p.cotas_total, 0)}</b> cotas ocupadas</span>
+            <Link href={`/gestao/programas?radio=${r.id}`} className="btn peq">Gerenciar ›</Link>
+          </FaixaRadio>
           <div className="tabela">
             <table>
               <thead><tr><th>Programa</th><th>Horário</th><th>Ocupação</th><th>Situação</th></tr></thead>
               <tbody>
-                {g.itens.map((p) => {
+                {itens.map((p) => {
                   const st = statusPrograma(p.cotas_livres, p.cotas_total);
                   const pct = p.cotas_total ? (p.cotas_ocupadas / p.cotas_total) * 100 : 100;
                   return (
                     <tr key={p.id}>
-                      <td><Link href={`/app/programa/${p.id}`}><b>{p.nome}</b></Link></td>
+                      <td><Link href={`/gestao/programas?editar=${p.id}`} className="link-forte"><b>{p.nome}</b></Link></td>
                       <td>{p.dias}<br /><small>{horario(p)}</small></td>
                       <td style={{ minWidth: 140 }}>
                         {p.cotas_ocupadas} de {p.cotas_total}
-                        <div className="barra" style={{ marginTop: 4 }}><span style={{ width: `${pct}%`, background: st.cor === 'vermelho' ? 'var(--vermelho)' : undefined }} /></div>
+                        <div className="barra" style={{ marginTop: 4 }}><span style={{ width: `${pct}%`, background: st.cor === 'vermelho' ? 'var(--vermelho)' : r.cor }} /></div>
                       </td>
                       <td><span className={`badge b-${st.cor}`}>{st.texto}</span></td>
                     </tr>

@@ -1,6 +1,7 @@
 import { requireGestor } from '@/lib/auth';
 import Sidebar from '@/components/Sidebar';
 import AoVivo from '@/components/AoVivo';
+import BotaoTema from '@/components/BotaoTema';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,7 +10,13 @@ export default async function GestaoLayout({ children }) {
   return (
     <div className="gestao">
       <Sidebar nome={perfil.nome} />
-      <main className="gestao-main">{children}</main>
+      <main className="gestao-main">
+        <div className="gestao-topo">
+          <span className="ao-vivo" title="A tela se atualiza sozinha quando um vendedor faz algo (visita, cliente, contrato)">Atualiza sozinho</span>
+          <BotaoTema comTexto className="btn peq cinza" />
+        </div>
+        {children}
+      </main>
       <AoVivo />
     </div>
   );

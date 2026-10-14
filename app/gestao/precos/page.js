@@ -4,17 +4,23 @@ import BotaoEnviar from '@/components/BotaoEnviar';
 import { salvarPreco, excluirPreco } from '../actions';
 import { valorParaCampo } from '@/lib/format';
 import { nomeItem, MODALIDADE } from '@/lib/pacote';
+import { AbasRadio, FaixaRadio } from '@/components/gestao/RadiosGestao';
 
-export default async function TabelaPrecos() {
+export default async function TabelaPrecos({ searchParams }) {
   const { supabase } = await requireGestor();
   const [{ data: radios }, { data: precos }] = await Promise.all([
-    supabase.from('radios').select('id, nome, cor').order('ordem'),
+    supabase.from('radios').select('id, nome, cor, slogan').order('ordem'),
     supabase.from('tabela_precos').select('*').order('tipo').order('duracao').order('modalidade', { ascending: false }),
   ]);
+  const radio = (radios || []).find((r) => r.id === searchParams?.radio) || radios?.[0];
+  const doRadio = (radios || []).filter((r) => r.id === radio?.id);
 
   return (
     <>
-      <div className="cabecalho"><h1>Tabela de preços</h1></div>
+      <div className="cabecalho">
+        <h1>Tabela de preços</h1>
+        <AbasRadio radios={radios || []} atual={radio?.id} href={(r) => `/gestao/precos?radio=${r.id}`} />
+      </div>
       <p className="muted">Valor por unidade (uma inserção ou um testemunhal). É o que o vendedor usa para montar pacotes avulsos; o total aparece na hora para ele.</p>
 
       <details className="card">
@@ -22,7 +28,7 @@ export default async function TabelaPrecos() {
         <FormAcao action={salvarPreco} limparAoSalvar>
           <div className="form-grid">
             <div className="campo"><label>Rádio</label>
-              <select name="radio_id">{(radios || []).map((r) => <option key={r.id} value={r.id}>{r.nome}</option>)}</select>
+              <select name="radio_id" defaultValue={radio?.id}>{(radios || []).map((r) => <option key={r.id} value={r.id}>{r.nome}</option>)}</select>
             </div>
             <div className="campo"><label>Tipo</label>
               <select name="tipo"><option value="insercao">Inserção</option><option value="testemunhal">Testemunhal</option></select>
@@ -37,11 +43,11 @@ export default async function TabelaPrecos() {
         </FormAcao>
       </details>
 
-      {(radios || []).map((r) => {
+      {doRadio.map((r) => {
         const itens = (precos || []).filter((p) => p.radio_id === r.id);
         return (
           <div key={r.id} style={{ marginBottom: 18 }}>
-            <div className="radio-titulo"><span className="ponto" style={{ background: r.cor }} /><h2>{r.nome}</h2></div>
+            <FaixaRadio radio={r}><span><b>{itens.length}</b> itens na tabela</span></FaixaRadio>
             <div className="tabela">
               <table>
                 <thead><tr><th>Item</th><th>Horário</th><th>Valor (R$)</th><th></th></tr></thead>

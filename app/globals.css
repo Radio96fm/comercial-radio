@@ -692,3 +692,101 @@ details.acordeao .tabela-kit { background: transparent; border: 0; padding: 0; m
 [data-theme="light"] .bottomnav a.destaque.ativo .anel { background: linear-gradient(135deg, #22c55e, #f59e0b) padding-box, conic-gradient(from 200deg, #22c55e, #f59e0b, #22c55e) border-box; }
 [data-theme="light"] .bottomnav a.destaque.ativo .anel .ico { color: #fff; }
 .tema-lateral { width: 100%; margin-top: 10px; }
+
+/* =====================================================================
+   Painel do gestor com a identidade das rádios
+   ===================================================================== */
+.sidebar { position: sticky; }
+.sidebar::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: linear-gradient(90deg, var(--cor96), #f4b400 50%, var(--agro) 75%, var(--agro-2)); }
+.sidebar .logo-jc { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px 8px 16px; text-align: center; }
+.sidebar .logo-jc img { height: 62px; width: auto; filter: brightness(0) invert(1); }
+.sidebar .logo-jc b { display: block; color: var(--text); font-family: var(--font-display); font-size: 1.05rem; letter-spacing: -.01em; }
+.sidebar .logo-jc small { font-size: .85rem; }
+.sidebar .emissoras-mini { display: flex; justify-content: center; gap: 14px; padding: 10px 0 16px; margin: 0 8px 12px; border-bottom: 1px solid var(--line); }
+.sidebar .emissoras-mini img { height: 30px; width: auto; }
+.sidebar a { position: relative; transition: background .15s, color .15s; }
+.sidebar a:hover { background: var(--card-2); color: var(--text); }
+.sidebar a.ativo { background: linear-gradient(90deg, color-mix(in srgb, var(--cor96) 22%, transparent), color-mix(in srgb, var(--cor96) 6%, transparent)); color: var(--text); }
+.sidebar a.ativo::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 4px; border-radius: 4px; background: var(--cor96); }
+.sidebar a.ativo .ico { color: var(--cor96); }
+[data-theme="light"] .sidebar .logo-jc img { filter: brightness(0); opacity: .85; }
+
+.gestao-topo { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin: -10px 0 6px; }
+.gestao-topo .ao-vivo { font-size: .85rem; cursor: help; }
+.gestao-main .cabecalho h1 { position: relative; padding-bottom: 8px; }
+.gestao-main .cabecalho h1::after { content: ''; position: absolute; left: 0; bottom: 0; width: 44px; height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--cor96), var(--agro)); }
+
+/* KPIs: a principal na cor da 96, ícones em círculos */
+.kpi { position: relative; overflow: hidden; }
+.kpi .kpi-topo .ico { width: 34px; height: 34px; padding: 7px; border-radius: 50%; background: var(--card-2); color: var(--text); }
+.kpi.destaque { background: linear-gradient(140deg, #f08a3c 0%, var(--cor96) 45%, #c2410c 100%); color: #fff; border-color: transparent; box-shadow: 0 14px 30px color-mix(in srgb, var(--cor96) 30%, transparent); }
+.kpi.destaque .kpi-topo, .kpi.destaque .rotulo { color: rgba(255, 255, 255, .85); }
+.kpi.destaque .kpi-topo .ico { background: rgba(255, 255, 255, .2); color: #fff; }
+.kpi.destaque .barra { background: rgba(255, 255, 255, .25); }
+.kpi.destaque .barra > span { background: #fff; }
+[data-theme="light"] .kpi.destaque .kpi-topo, [data-theme="light"] .kpi.destaque .rotulo { color: rgba(255, 255, 255, .88); }
+[data-theme="light"] .kpi.destaque .barra { background: rgba(255, 255, 255, .25); }
+[data-theme="light"] .kpi.destaque .barra > span { background: #fff; }
+
+/* escolher a rádio */
+.radios-gestao { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.radios-gestao .radio-btn { min-height: 190px; padding: 26px 24px; margin: 0; transition: transform .15s, box-shadow .15s; }
+.radios-gestao .radio-btn:hover { transform: translateY(-3px); box-shadow: 0 18px 40px color-mix(in srgb, var(--cor) 35%, transparent); }
+.radios-gestao .radio-btn .logo-r { width: 76px; height: 76px; }
+.radios-gestao .radio-btn .nome { font-size: 2rem; }
+.radios-gestao .radio-btn .numeros { margin-top: 26px; gap: 30px; }
+.radios-gestao .radio-btn .numeros b { font-family: var(--font-display); font-size: 1.7rem; }
+.radios-gestao .radio-btn .numeros span { opacity: .85; font-size: .9rem; }
+
+.abas-radio { display: inline-flex; gap: 6px; padding: 5px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; }
+.abas-radio a { display: inline-flex; align-items: center; gap: 8px; padding: 7px 16px 7px 8px; border-radius: 999px; color: var(--muted); font-weight: 700; font-size: .95rem; }
+.abas-radio a img { height: 26px; width: 26px; object-fit: contain; }
+.abas-radio a:hover { color: var(--text); }
+.abas-radio a.ativa { background: var(--cor); color: #fff; box-shadow: 0 6px 16px color-mix(in srgb, var(--cor) 35%, transparent); }
+
+.faixa-radio-g {
+  display: flex; align-items: center; gap: 16px; padding: 16px 20px; margin-bottom: 14px; border-radius: var(--radius); color: #fff;
+  background: radial-gradient(80% 140% at 100% 0%, color-mix(in srgb, var(--cor2) 55%, transparent), transparent 60%), linear-gradient(120deg, var(--cor), color-mix(in srgb, var(--cor) 70%, #111));
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--cor) 22%, transparent);
+}
+.faixa-radio-g img { height: 48px; width: 48px; object-fit: contain; filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .3)); }
+.faixa-radio-g .t { display: flex; flex-direction: column; }
+.faixa-radio-g .t b { font-family: var(--font-display); font-size: 1.45rem; letter-spacing: -.02em; line-height: 1.1; }
+.faixa-radio-g .t small { opacity: .85; }
+.faixa-radio-g .extra { margin-left: auto; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: flex-end; }
+.faixa-radio-g .extra b { font-family: var(--font-display); font-size: 1.2rem; }
+.faixa-radio-g .btn { background: #fff; color: #111; border-color: transparent; }
+
+/* programas da rádio em cartões */
+details.novo-programa > summary { display: flex; align-items: center; gap: 8px; color: var(--text); }
+.grade-programas { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.prog-card-g {
+  display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: var(--radius); color: var(--text);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--cor) 10%, var(--card)) 0%, var(--card) 60%);
+  border: 1px solid color-mix(in srgb, var(--cor) 25%, var(--line)); border-top: 4px solid var(--cor);
+  transition: transform .15s, box-shadow .15s;
+}
+.prog-card-g:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0, 0, 0, .18); }
+.prog-card-g.inativo { opacity: .55; }
+.prog-card-g .topo { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.prog-card-g .topo b { font-family: var(--font-display); font-size: 1.25rem; letter-spacing: -.02em; line-height: 1.2; }
+.prog-card-g .det { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .92rem; }
+.prog-card-g .det .ico { width: 16px; height: 16px; flex: none; }
+.prog-card-g .cotas { margin-top: 8px; font-size: .88rem; color: var(--muted); }
+.prog-card-g .cotas .barra { height: 8px; margin-top: 4px; }
+.prog-card-g .cotas .barra > span { background: var(--cor); }
+.prog-card-g .rodape { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.prog-card-g .preco { color: var(--muted); font-size: .9rem; }
+.prog-card-g .preco b { color: var(--text); font-size: 1.05rem; }
+.prog-card-g .preco small { color: var(--muted); font-weight: 500; }
+.prog-card-g .editar { color: var(--cor); font-weight: 800; }
+.link-forte { color: var(--text); }
+.link-forte:hover { text-decoration: underline; }
+@media (max-width: 860px) {
+  .sidebar::before { display: none; }
+  .sidebar .logo-jc { flex-direction: row; text-align: left; width: 100%; padding: 0 0 6px; }
+  .sidebar .logo-jc img { height: 40px; }
+  .sidebar .emissoras-mini { display: none; }
+  .faixa-radio-g { flex-wrap: wrap; }
+  .faixa-radio-g .extra { margin-left: 0; width: 100%; justify-content: flex-start; }
+}
