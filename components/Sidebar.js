@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import BotaoTema from '@/components/BotaoTema';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut,
@@ -34,6 +35,7 @@ export default function Sidebar({ nome }) {
       <div className="rodape">
         <div className="sep" />
         <Link href="/app"><Smartphone className="ico" />Abrir app do vendedor</Link>
+        <BotaoTema comTexto className="btn peq cinza tema-lateral" />
         <form action="/sair" method="post">
           <button className="btn peq cinza" style={{ margin: '10px 0 0', width: '100%' }}><LogOut className="ico" />Sair</button>
         </form>

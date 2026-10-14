@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getSessao } from '@/lib/auth';
 import { ArrowUpRight, Car, ChevronRight, LogOut } from 'lucide-react';
 import { tempoDesde } from '@/lib/format';
+import BotaoTema from '@/components/BotaoTema';
 import { marcaDaRadio } from '@/lib/marca';
 
 export default async function HomeVendedor() {
@@ -34,6 +35,7 @@ export default async function HomeVendedor() {
         <div className="ola">
           <Link href="/app/perfil" className="avatar" aria-label="Meus dados">{primeiroNome[0]}</Link>
           <Link href="/app/perfil" className="txt"><small>Bom trabalho,</small><b>{primeiroNome}</b></Link>
+          <BotaoTema />
           {isGestor && <Link href="/gestao" className="btn peq cinza">Painel</Link>}
           <form action="/sair" method="post">
             <button className="btn peq cinza" aria-label="Sair"><LogOut className="ico" /></button>

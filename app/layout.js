@@ -19,7 +19,15 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" data-theme="dark" suppressHydrationWarning>
+      <head>
+        {/* aplica o tema salvo antes de desenhar a tela (sem "piscar") */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "try{if(localStorage.getItem('tema')==='claro'){document.documentElement.dataset.theme='light';var m=document.querySelector('meta[name=\"theme-color\"]');m&&m.setAttribute('content','#f4f2ee')}}catch(e){}",
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

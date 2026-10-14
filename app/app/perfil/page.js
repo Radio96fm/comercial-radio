@@ -3,6 +3,7 @@ import Topo from '@/components/Topo';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import { salvarMeusDados } from '../actions';
+import BotaoTema from '@/components/BotaoTema';
 
 export default async function MeusDados({ searchParams }) {
   const { perfil } = await getSessao();
@@ -20,6 +21,8 @@ export default async function MeusDados({ searchParams }) {
           <div className="campo"><label>E-mail de acesso</label><input value={perfil.email} disabled /></div>
           <BotaoEnviar className="btn grande" texto="Salvar meus dados" enviando="Salvando..." />
         </FormAcao>
+        <div className="secao-titulo"><h2>Aparência</h2></div>
+        <BotaoTema comTexto className="btn cinza" />
       </main>
     </>
   );
