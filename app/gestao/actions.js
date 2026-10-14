@@ -343,12 +343,15 @@ export async function salvarIA(_prev, fd) {
   const { data: situacao } = await supabase.rpc('ia_situacao');
   if (!token && !(situacao?.chaves || []).includes(provedor)) return { erro: `Cole a chave do ${PROVEDORES[provedor].nome}.` };
   let modelo = '';
+  let aviso = '';
   if (token) {
     try {
       modelo = await escolherModelo(provedor, token);
       await gerar({ cfg: { provedor, modelo, token }, sistema: 'Responda apenas: OK', mensagens: [{ papel: 'vendedor', texto: 'Teste' }], maxTokens: 20 });
     } catch (e) {
-      return { erro: `A chave não funcionou: ${e.message}` };
+      // IA lotada não quer dizer chave errada: a lista de modelos já confirmou a chave
+      if (!e.ocupado || !modelo) return { erro: `A chave não funcionou: ${e.message}` };
+      aviso = ' A chave está certa, mas a IA está ocupada neste momento; se o primeiro testemunhal falhar, é só tentar de novo.';
     }
   } else if (situacao?.provedor === provedor) {
     modelo = situacao.modelo || '';
@@ -356,7 +359,7 @@ export async function salvarIA(_prev, fd) {
   const { error } = await supabase.rpc('salvar_ia', { p_provedor: provedor, p_modelo: modelo, p_token: token || '' });
   if (error) return { erro: erroAmigavel(error) };
   revalidatePath('/gestao/assistente');
-  return { ok: `Assistente ligado com ${PROVEDORES[provedor].nome}${modelo ? ` (${modelo})` : ''}. Os vendedores já podem criar testemunhais.` };
+  return { ok: `Assistente ligado com ${PROVEDORES[provedor].nome}${modelo ? ` (${modelo})` : ''}. Os vendedores já podem criar testemunhais.${aviso}` };
 }
 
 export async function alternarMaterial(fd) {
