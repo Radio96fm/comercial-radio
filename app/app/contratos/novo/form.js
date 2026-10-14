@@ -30,6 +30,7 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
   const [planoId, setPlanoId] = useState(
     planosDe(inicial.programa).find((x) => x.id === inicial.plano)?.id || planosDe(inicial.programa)[0]?.id || ''
   );
+  const doPlano = (inicial.itens || []).length > 0 || !!inicial.radio;
   const [itens, setItens] = useState(() => // [{ id, qtd }]
     (inicial.itens || []).filter((i) => precos.some((p) => p.id === i.id && (!progInicial || p.radio_id === progInicial.radio_id)))
   );
@@ -37,11 +38,6 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
   const [meses, setMeses] = useState(3);
   const [valorManual, setValorManual] = useState(null);
 
-  // escolha do item avulso a adicionar
-  const [tipo, setTipo] = useState('insercao');
-  const [duracao, setDuracao] = useState('');
-  const [modalidade, setModalidade] = useState('indeterminada');
-  const [qtd, setQtd] = useState(22);
 
   const radio = radios.find((r) => r.id === radioId);
   const progsDaRadio = programas.filter((p) => p.radio_id === radioId);
@@ -49,28 +45,14 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
   const planosProg = planosDe(programaId);
   const plano = planosProg.find((x) => x.id === planoId);
   const cli = clientes.find((c) => c.id === clienteId);
-  const precosRadio = precos.filter((p) => p.radio_id === radioId);
-  const duracoes = [...new Set(precosRadio.filter((p) => p.tipo === tipo).map((p) => p.duracao))];
-  const modalidades = precosRadio.filter((p) => p.tipo === tipo && String(p.duracao) === String(duracao || duracoes[0])).map((p) => p.modalidade);
-  const modalidadeAtual = modalidades.includes(modalidade) ? modalidade : modalidades[0];
-  const precoEscolhido = precosRadio.find((p) => p.tipo === tipo && String(p.duracao) === String(duracao || duracoes[0]) && p.modalidade === modalidadeAtual);
 
   function trocarRadio(id) {
     if (id === radioId) return;
-    setRadioId(id); setProgramaId(''); setPlanoId(''); setItens([]); setDuracao(''); setValorManual(null);
+    setRadioId(id); setProgramaId(''); setPlanoId(''); setItens([]); setValorManual(null);
   }
   function trocarPrograma(id) {
     setProgramaId(id);
     setPlanoId(planosDe(id)[0]?.id || '');
-    setValorManual(null);
-  }
-  function adicionar() {
-    if (!precoEscolhido) return;
-    setItens((atual) => {
-      const ja = atual.find((i) => i.id === precoEscolhido.id);
-      if (ja) return atual.map((i) => (i.id === precoEscolhido.id ? { ...i, qtd: i.qtd + qtd } : i));
-      return [...atual, { id: precoEscolhido.id, qtd }];
-    });
     setValorManual(null);
   }
   const mudarQtd = (id, n) => { setItens((a) => a.map((i) => (i.id === id ? { ...i, qtd: n } : i))); setValorManual(null); };
@@ -110,6 +92,9 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
         </div>
       </div>
 
+      {doPlano ? (
+        <div className="faixa-radio" style={{ '--cor': radio?.cor }}><div><small>Plano personalizado</small><b>{radio?.nome}</b></div></div>
+      ) : (
       <div className="campo">
         <label>Rádio</label>
         <div className="escolha-radio">
@@ -120,11 +105,12 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
           ))}
         </div>
       </div>
+      )}
 
-      <h2 className="passo">1. Patrocínio de programa <small>(opcional)</small></h2>
+      <h2 className="passo">1. Programa {linhas.length ? <small>(opcional)</small> : null}</h2>
       <div className="campo">
         <select name="programa_id" value={programaId} onChange={(e) => trocarPrograma(e.target.value)}>
-          <option value="">Nenhum, só itens avulsos</option>
+          <option value="">{linhas.length ? 'Nenhum, só o plano montado' : 'Escolha o programa...'}</option>
           {progsDaRadio.map((p) => (
             <option key={p.id} value={p.id}>
               {p.nome} {p.cotas_livres > 0 ? `(${p.cotas_livres} vaga${p.cotas_livres > 1 ? 's' : ''})` : '(lotado agora)'}
@@ -149,48 +135,9 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
         </div>
       )}
 
-      <h2 className="passo">2. Itens avulsos <small>(opcional)</small></h2>
-      {!precosRadio.length ? (
-        <p className="muted">Nenhum preço avulso cadastrado para esta rádio.</p>
-      ) : (
-        <div className="card adicionar-item">
-          <div className="seg2">
-            <button type="button" className={tipo === 'insercao' ? 'ativo' : ''} onClick={() => { setTipo('insercao'); setDuracao(''); }}>Inserção</button>
-            <button type="button" className={tipo === 'testemunhal' ? 'ativo' : ''} onClick={() => { setTipo('testemunhal'); setDuracao(''); }}>Testemunhal</button>
-          </div>
-          <div className="grid2">
-            <div className="campo">
-              <label>Duração</label>
-              <select value={duracao || duracoes[0] || ''} onChange={(e) => setDuracao(e.target.value)}>
-                {duracoes.map((d) => <option key={d} value={d}>{d} segundos</option>)}
-              </select>
-            </div>
-            <div className="campo">
-              <label>Horário</label>
-              <select value={modalidadeAtual || ''} onChange={(e) => setModalidade(e.target.value)}>
-                {modalidades.map((m) => <option key={m} value={m}>{MODALIDADE[m]}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="linha-add">
-            <div>
-              <label>Quantidade por mês</label>
-              <Stepper valor={qtd} onChange={setQtd} />
-              <div className="ajuda">22 = uma por dia útil</div>
-            </div>
-            <div className="preco-un">
-              {precoEscolhido && <>{moeda(precoEscolhido.valor)}<small>cada</small></>}
-            </div>
-          </div>
-          <button type="button" className="btn sec" style={{ width: '100%' }} onClick={adicionar} disabled={!precoEscolhido}>
-            Adicionar {qtd}× {precoEscolhido ? nomeItem(precoEscolhido).toLowerCase() : ''} ({moeda(qtd * Number(precoEscolhido?.valor || 0))})
-          </button>
-        </div>
-      )}
-
-      <h2 className="passo">3. Resumo do pacote</h2>
+      <h2 className="passo">2. Resumo</h2>
       <div className="resumo-pacote">
-        {vazio && <div className="vazio">Escolha um programa ou adicione itens avulsos.</div>}
+        {vazio && <div className="vazio">Escolha um programa acima.</div>}
         {prog && (
           <div className="linha-pacote">
             <div className="info"><b>{prog.nome}</b><small>{plano ? plano.nome : 'Cota de patrocínio'}</small></div>
@@ -210,7 +157,7 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
         )}
       </div>
 
-      <h2 className="passo">4. Período e valor</h2>
+      <h2 className="passo">3. Período e valor</h2>
       {isGestor && (
         <div className="campo">
           <label>Vendedor responsável</label>

@@ -17,7 +17,7 @@ export default async function VisitaPage({ params }) {
   if (!v) notFound();
 
   const hoje = hojeISO();
-  const [{ data: programas }, { data: ocupados }] = await Promise.all([
+  const [{ data: programas }, { data: ocupados }, { data: radiosVisita }] = await Promise.all([
     supabase.from('programas_ocupacao').select('*').eq('ativo', true).gt('cotas_livres', 0).order('radio_nome').order('horario_inicio'),
     supabase
       .from('contratos')
@@ -26,6 +26,7 @@ export default async function VisitaPage({ params }) {
       .in('status', ['pendente', 'ativo'])
       .lte('data_inicio', hoje)
       .gte('data_fim', hoje),
+    supabase.from('radios').select('id, nome, cor').order('ordem'),
   ]);
   const bloqueados = new Set((ocupados || []).map((c) => c.programa_id));
   const disponiveis = (programas || []).filter((p) => !bloqueados.has(p.id));
@@ -64,9 +65,13 @@ export default async function VisitaPage({ params }) {
         </div>
 
         {podeEditar && aberta && (
-          <Link className="btn grande sec" style={{ marginBottom: 14 }} href={`/app/contratos/novo?cliente=${v.cliente.id}&visita=${v.id}`}>
-            Montar pacote personalizado
-          </Link>
+          <div className="grid2" style={{ marginBottom: 14 }}>
+            {(radiosVisita || []).map((r) => (
+              <Link key={r.id} className="btn btn-radio" style={{ '--cor': r.cor, marginTop: 0 }} href={`/app/radio/${r.id}/montar?cliente=${v.cliente.id}&visita=${v.id}`}>
+                Montar plano {r.nome}
+              </Link>
+            ))}
+          </div>
         )}
 
         <div className="secao-titulo"><h2>Programas que este cliente pode patrocinar</h2></div>

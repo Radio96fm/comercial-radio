@@ -82,13 +82,13 @@ small, .muted { color: var(--muted); }
   position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 10;
   background: rgba(23, 23, 23, .92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--line-2); border-radius: 24px;
-  display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px;
+  display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, .5);
   max-width: 560px; margin: 0 auto;
 }
 .bottomnav a {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 9px 2px; color: var(--muted); font-size: .75rem; font-weight: 600; border-radius: 18px;
+  padding: 9px 4px; color: var(--muted); font-size: .8rem; font-weight: 600; border-radius: 18px;
 }
 .bottomnav a .ico { width: 24px; height: 24px; }
 .bottomnav a.ativo { color: var(--on-accent); background: var(--accent); }
@@ -420,6 +420,7 @@ code { background: var(--card-2); border: 1px solid var(--line-2); padding: 2px 
 .plano-card li .ico { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--verde, #4ade80); }
 
 /* ---------- Tabela de preços do vendedor ---------- */
+/* (montar plano) */
 .tabela-prog { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
 .tabela-prog .cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
 .tabela-prog .cab small { display: block; color: var(--muted); font-size: .85rem; }
@@ -442,3 +443,30 @@ code { background: var(--card-2); border: 1px solid var(--line-2); padding: 2px 
 .barra-total .soma b { font-size: 1.35rem; }
 .barra-total .btn { flex: none; }
 .barra-total .limpar { background: none; border: 0; color: var(--muted); text-decoration: underline; font: inherit; font-size: .85rem; cursor: pointer; padding: 0; text-align: left; }
+
+/* ---------- Tabela de preços na tela da rádio (estilo mídia kit) ---------- */
+.tabela-kit { background: var(--card); border: 1px solid var(--line); border-top: 4px solid var(--cor); border-radius: var(--radius); padding: 6px 16px 16px; }
+.tabela-kit .titulo-kit { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; margin: 14px 0 6px; color: var(--cor); }
+.tabela-kit .titulo-kit small { color: var(--muted); font-family: inherit; font-weight: 500; font-size: .8rem; margin-left: 6px; }
+.tabela-kit table { width: 100%; border-collapse: collapse; }
+.tabela-kit td, .tabela-kit th { padding: 10px 0; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.tabela-kit th { color: var(--muted); font-size: .8rem; font-weight: 600; padding-top: 4px; }
+.tabela-kit th:not(:first-child), .tabela-kit td.num { text-align: right; white-space: nowrap; padding-left: 10px; font-weight: 700; }
+.tabela-kit tr:last-child td { border-bottom: 0; }
+.tabela-kit .sub-kit { display: block; color: var(--muted); font-size: .9rem; }
+.btn-radio { margin-top: 16px; background: var(--cor); color: #fff; border-color: var(--cor); box-shadow: 0 10px 30px color-mix(in srgb, var(--cor) 35%, transparent); }
+
+/* ---------- Montar plano: a tela inteira na cor da rádio ---------- */
+.tema-radio { min-height: 100vh; background: linear-gradient(180deg, color-mix(in srgb, var(--cor) 30%, #0a0a0a) 0, color-mix(in srgb, var(--cor) 12%, #0a0a0a) 420px, color-mix(in srgb, var(--cor) 8%, #0a0a0a) 100%); }
+.tema-radio .topbar { background: color-mix(in srgb, var(--cor) 30%, #0a0a0a); }
+.tema-radio .resumo-pacote, .tema-radio .tabela-prog { border-color: color-mix(in srgb, var(--cor) 35%, transparent); }
+.tema-radio .barra-total { background: color-mix(in srgb, var(--cor) 25%, #141414); border-color: var(--cor); }
+.faixa-radio { display: flex; align-items: center; gap: 14px; padding: 16px; margin-bottom: 16px; border-radius: var(--radius); background: var(--cor); color: #fff; }
+.faixa-radio img { height: 46px; width: auto; }
+.faixa-radio small { display: block; opacity: .85; }
+.faixa-radio b { font-family: var(--font-display); font-size: 1.5rem; }
+.passo-guia { font-size: 1.1rem; line-height: 1.4; margin: 4px 0 12px; }
+.passo-guia > b:first-child { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--cor); color: #fff; margin-right: 6px; }
+.stepper.grande button { width: 50px; height: 50px; }
+.stepper.grande input { width: 56px; height: 50px; font-size: 1.15rem; }
+.linha-preco .info b { font-size: 1.05rem; }
