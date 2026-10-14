@@ -79,3 +79,45 @@ _____________________________________
 {{cliente_contato}}
 $txt$, true
 where not exists (select 1 from public.modelos_contrato);
+-- Planos de cada programa (mídia kits 2026). Programa com um só valor = um plano.
+insert into public.programa_planos (programa_id, nome, descricao, valor, ordem)
+select p.id, x.nome, x.descr, x.valor, x.ordem
+from (values
+  ('Bom Dia Produtor', 'Plano 01', 'Abertura e encerramento do programa + 4 inserções de 15" dentro do programa', 2350.00, 1),
+  ('Bom Dia Produtor', 'Plano 02', 'Abertura e encerramento do programa + 2 inserções de 30" dentro do programa', 2350.00, 2),
+  ('Bom Dia Produtor', 'Plano 03', 'Abertura e encerramento + 4 inserções de 15" + 1 testemunhal ao vivo dentro do programa', 3135.00, 3),
+  ('Bom Dia Produtor', 'Plano 04', 'Abertura e encerramento + 2 inserções de 30" + 1 testemunhal ao vivo dentro do programa', 3135.00, 4)
+) as x(programa, nome, descr, valor, ordem)
+join public.programas p on p.nome = x.programa
+where not exists (select 1 from public.programa_planos pp where pp.programa_id = p.id);
+
+insert into public.programa_planos (programa_id, nome, descricao, valor, ordem)
+select p.id, 'Plano comercial', p.descricao_cota, p.valor_cota, 1
+from public.programas p
+where not exists (select 1 from public.programa_planos pp where pp.programa_id = p.id);
+
+-- Tabela de preços avulsos (valor por inserção / testemunhal)
+insert into public.tabela_precos (radio_id, tipo, duracao, modalidade, valor)
+select r.id, x.tipo, x.dur, x.modal, x.valor
+from (values
+  ('96 FM','insercao',7,'indeterminada',20.16),   ('96 FM','insercao',7,'determinada',24.47),
+  ('96 FM','insercao',15,'indeterminada',37.63),  ('96 FM','insercao',15,'determinada',42.56),
+  ('96 FM','insercao',30,'indeterminada',66.86),  ('96 FM','insercao',30,'determinada',78.06),
+  ('96 FM','insercao',45,'indeterminada',89.04),  ('96 FM','insercao',45,'determinada',105.28),
+  ('96 FM','insercao',60,'indeterminada',113.79), ('96 FM','insercao',60,'determinada',149.90),
+  ('96 FM','insercao',90,'indeterminada',170.58), ('96 FM','insercao',90,'determinada',200.70),
+  ('96 FM','insercao',120,'indeterminada',227.36),('96 FM','insercao',120,'determinada',266.56),
+  ('96 FM','insercao',180,'indeterminada',341.21),('96 FM','insercao',180,'determinada',401.41),
+  ('96 FM','testemunhal',30,'determinada',155.57),('96 FM','testemunhal',45,'determinada',209.50),
+  ('96 FM','testemunhal',60,'determinada',257.04),
+  ('Rádio do Agro','insercao',7,'indeterminada',25.00),  ('Rádio do Agro','insercao',7,'determinada',35.00),
+  ('Rádio do Agro','insercao',10,'indeterminada',35.00), ('Rádio do Agro','insercao',10,'determinada',50.00),
+  ('Rádio do Agro','insercao',15,'indeterminada',50.00), ('Rádio do Agro','insercao',15,'determinada',65.00),
+  ('Rádio do Agro','insercao',30,'indeterminada',70.00), ('Rádio do Agro','insercao',30,'determinada',95.00),
+  ('Rádio do Agro','insercao',45,'indeterminada',100.00),('Rádio do Agro','insercao',45,'determinada',140.00),
+  ('Rádio do Agro','insercao',60,'indeterminada',120.00),('Rádio do Agro','insercao',60,'determinada',170.00),
+  ('Rádio do Agro','insercao',90,'indeterminada',190.00),('Rádio do Agro','insercao',90,'determinada',260.00),
+  ('Rádio do Agro','testemunhal',30,'determinada',190.00),('Rádio do Agro','testemunhal',60,'determinada',340.00)
+) as x(radio, tipo, dur, modal, valor)
+join public.radios r on r.nome = x.radio
+on conflict (radio_id, tipo, duracao, modalidade) do nothing;

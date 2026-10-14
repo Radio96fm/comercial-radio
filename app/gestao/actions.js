@@ -227,3 +227,52 @@ export async function importarClientes(linhas) {
   revalidatePath('/gestao/clientes');
   return { importados: novos.length, duplicados, semNome, segmentosCriados, vendedoresNaoAchados: [...vendedoresNaoAchados] };
 }
+
+// ------------------------------------------------------------------ planos e tabela de preços
+export async function salvarPlano(_prev, fd) {
+  const { supabase } = await requireGestor();
+  const id = txt(fd, 'id');
+  const valor = parseValor(fd.get('valor'));
+  const registro = { nome: txt(fd, 'nome'), descricao: txt(fd, 'descricao'), valor: Number.isFinite(valor) ? valor : NaN, ordem: parseInt(fd.get('ordem'), 10) || 0 };
+  if (!registro.nome) return { erro: 'Dê um nome ao plano (ex.: Plano 01).' };
+  if (!(registro.valor >= 0)) return { erro: 'Valor do plano inválido.' };
+  const q = id
+    ? supabase.from('programa_planos').update(registro).eq('id', id)
+    : supabase.from('programa_planos').insert({ ...registro, programa_id: txt(fd, 'programa_id') });
+  const { error } = await q;
+  if (error) return { erro: erroAmigavel(error) };
+  revalidatePath('/gestao/programas');
+  return { ok: id ? 'Plano salvo.' : 'Plano adicionado.' };
+}
+
+export async function excluirPlano(fd) {
+  const { supabase } = await requireGestor();
+  await supabase.from('programa_planos').delete().eq('id', txt(fd, 'id'));
+  revalidatePath('/gestao/programas');
+}
+
+export async function salvarPreco(_prev, fd) {
+  const { supabase } = await requireGestor();
+  const id = txt(fd, 'id');
+  const valor = parseValor(fd.get('valor'));
+  if (!(valor >= 0)) return { erro: 'Valor inválido.' };
+  if (id) {
+    const { error } = await supabase.from('tabela_precos').update({ valor, ativo: fd.get('ativo') === 'on' }).eq('id', id);
+    if (error) return { erro: erroAmigavel(error) };
+  } else {
+    const duracao = parseInt(fd.get('duracao'), 10);
+    if (!(duracao > 0)) return { erro: 'Informe a duração em segundos.' };
+    const { error } = await supabase.from('tabela_precos').insert({
+      radio_id: txt(fd, 'radio_id'), tipo: txt(fd, 'tipo'), modalidade: txt(fd, 'modalidade'), duracao, valor,
+    });
+    if (error) return { erro: /duplicate|already exists/i.test(error.message) ? 'Esse item já existe na tabela desta rádio. Altere o valor dele na lista.' : erroAmigavel(error) };
+  }
+  revalidatePath('/gestao/precos');
+  return { ok: 'Tabela de preços salva.' };
+}
+
+export async function excluirPreco(fd) {
+  const { supabase } = await requireGestor();
+  await supabase.from('tabela_precos').delete().eq('id', txt(fd, 'id'));
+  revalidatePath('/gestao/precos');
+}

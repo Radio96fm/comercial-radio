@@ -53,7 +53,7 @@ export default async function ClientePage({ params }) {
             {contratos.map((k) => (
               <Link key={k.id} href={`/app/contratos/${k.id}`} className="item">
                 <div className="info">
-                  <div className="nome">Nº {k.numero} · {k.programa?.nome}</div>
+                  <div className="nome">Nº {k.numero} · {k.programa?.nome || 'Pacote avulso'}</div>
                   <div className="det">até {data(k.data_fim)}</div>
                 </div>
                 <span className="badge b-cinza">{STATUS_CONTRATO[k.status]}</span>

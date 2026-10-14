@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getSessao } from '@/lib/auth';
 import { dadosDoContrato, preencherModelo } from '@/lib/contrato';
-import { somarMeses, somarDias, parseValor } from '@/lib/format';
+import { somarMeses, somarDias, parseValor, moeda } from '@/lib/format';
+import { descricaoItem } from '@/lib/pacote';
 import { OUTRO } from '@/lib/segmento';
 
 const txt = (fd, k) => {
@@ -136,33 +137,72 @@ export async function criarContrato(_prev, fd) {
 
   const cliente_id = txt(fd, 'cliente_id');
   const programa_id = txt(fd, 'programa_id');
+  const plano_id = programa_id ? txt(fd, 'plano_id') : null;
   const data_inicio = txt(fd, 'data_inicio');
   const meses = parseInt(fd.get('meses'), 10);
-  const valor_mensal = parseValor(fd.get('valor_mensal'));
   const dia_vencimento = parseInt(fd.get('dia_vencimento'), 10) || 10;
   const vendedor_id = isGestor && txt(fd, 'vendedor_id') ? txt(fd, 'vendedor_id') : perfil.id;
+  let pedidos = [];
+  try {
+    pedidos = JSON.parse(fd.get('itens') || '[]')
+      .map((i) => ({ id: String(i.id), qtd: parseInt(i.qtd, 10) }))
+      .filter((i) => i.id && i.qtd > 0);
+  } catch {
+    return { erro: 'Itens do pacote inválidos.' };
+  }
 
   if (!cliente_id) return { erro: 'Escolha o cliente.' };
-  if (!programa_id) return { erro: 'Escolha o programa.' };
+  if (!programa_id && !pedidos.length) return { erro: 'Escolha um programa ou adicione itens avulsos ao pacote.' };
   if (!data_inicio) return { erro: 'Informe a data de início.' };
   if (!meses || meses < 1 || meses > 60) return { erro: 'Quantidade de meses inválida (1 a 60).' };
-  if (!(valor_mensal >= 0) || Number.isNaN(valor_mensal)) return { erro: 'Valor mensal inválido.' };
   if (dia_vencimento < 1 || dia_vencimento > 28) return { erro: 'Dia de vencimento deve ser entre 1 e 28.' };
 
-  const [{ data: cliente }, { data: programa }, { data: modelo }] = await Promise.all([
+  const [{ data: cliente }, { data: programa }, { data: plano }, { data: precos }, { data: modelo }] = await Promise.all([
     supabase.from('clientes').select('*, segmento:segmentos(id, nome)').eq('id', cliente_id).single(),
-    supabase.from('programas').select('*, radio:radios(nome)').eq('id', programa_id).single(),
+    programa_id ? supabase.from('programas').select('*, radio:radios(id, nome)').eq('id', programa_id).single() : Promise.resolve({ data: null }),
+    plano_id ? supabase.from('programa_planos').select('*').eq('id', plano_id).eq('programa_id', programa_id).maybeSingle() : Promise.resolve({ data: null }),
+    pedidos.length ? supabase.from('tabela_precos').select('*').in('id', pedidos.map((i) => i.id)) : Promise.resolve({ data: [] }),
     supabase.from('modelos_contrato').select('id, conteudo').eq('ativo', true).order('updated_at', { ascending: false }).limit(1).maybeSingle(),
   ]);
-  if (!cliente || !programa) return { erro: 'Cliente ou programa não encontrado.' };
+  if (!cliente) return { erro: 'Cliente não encontrado.' };
+  if (programa_id && !programa) return { erro: 'Programa não encontrado.' };
+  if (plano_id && !plano) return { erro: 'Plano não encontrado para este programa.' };
   if (!isGestor && cliente.vendedor_id && cliente.vendedor_id !== perfil.id) {
     return { erro: 'Este cliente é da carteira de outro vendedor. Fale com o gestor para transferir.' };
   }
+
+  // rádio do contrato: a do programa ou a escolhida no montador; itens têm que ser dela
+  const radio_id = programa?.radio_id || txt(fd, 'radio_id');
+  const itens = [];
+  for (const pd of pedidos) {
+    const p = (precos || []).find((x) => x.id === pd.id);
+    if (!p || p.radio_id !== radio_id) return { erro: 'Um dos itens avulsos não é desta rádio. Monte o pacote de novo.' };
+    itens.push({ descricao: descricaoItem(p), quantidade: pd.qtd, valor_unitario: Number(p.valor) });
+  }
+  const { data: radio } = await supabase.from('radios').select('id, nome').eq('id', radio_id).maybeSingle();
+  if (!radio) return { erro: 'Escolha a rádio.' };
+
+  // valor de tabela; o vendedor pode negociar o valor final
+  const valorPrograma = programa ? Number(plano ? plano.valor : programa.valor_cota) : 0;
+  const valorTabela = Math.round((valorPrograma + itens.reduce((s, i) => s + i.quantidade * i.valor_unitario, 0)) * 100) / 100;
+  const informado = parseValor(fd.get('valor_mensal'));
+  const valor_mensal = Number.isFinite(informado) && informado >= 0 && String(fd.get('valor_mensal') || '').trim() !== '' ? informado : valorTabela;
+
+  // o que o cliente está comprando (vai no texto do contrato)
+  const partes = [];
+  if (programa) {
+    const desc = plano ? `${plano.nome}${plano.descricao ? `: ${plano.descricao}` : ''}` : programa.descricao_cota || 'cota de patrocínio';
+    partes.push(`Patrocínio do programa "${programa.nome}" (${desc}).`);
+  }
+  for (const i of itens) partes.push(`${i.quantidade} por mês: ${i.descricao}.`);
+  if (valor_mensal < valorTabela) partes.push(`Valor de tabela ${moeda(valorTabela)}/mês; valor negociado ${moeda(valor_mensal)}/mês.`);
 
   const data_fim = somarDias(somarMeses(data_inicio, meses), -1);
   const novo = {
     cliente_id,
     programa_id,
+    plano_id: plano?.id ?? null,
+    radio_id,
     segmento_id: cliente.segmento_id,
     vendedor_id,
     modelo_id: modelo?.id ?? null,
@@ -172,13 +212,18 @@ export async function criarContrato(_prev, fd) {
     valor_mensal,
     meses,
     dia_vencimento,
-    descricao_produto: txt(fd, 'descricao_produto') || programa.descricao_cota,
+    descricao_produto: partes.join('\n'),
     observacoes: txt(fd, 'observacoes'),
     status: 'pendente',
   };
 
   const { data: criado, error } = await supabase.from('contratos').insert(novo).select('*').single();
   if (error) return { erro: traduzErro(error) };
+
+  if (itens.length) {
+    const { error: e2 } = await supabase.from('contrato_itens').insert(itens.map((i) => ({ ...i, contrato_id: criado.id })));
+    if (e2) return { erro: 'Contrato criado, mas os itens avulsos não foram salvos: ' + traduzErro(e2) };
+  }
 
   // gera o texto do contrato a partir do modelo (fica "congelado" no contrato)
   let vendedorNome = perfil.nome;
@@ -189,7 +234,7 @@ export async function criarContrato(_prev, fd) {
   const texto = modelo
     ? preencherModelo(
         modelo.conteudo,
-        dadosDoContrato({ contrato: criado, cliente, programa, radio: programa.radio, segmento: cliente.segmento, vendedor: { nome: vendedorNome } })
+        dadosDoContrato({ contrato: criado, cliente, programa, radio, segmento: cliente.segmento, vendedor: { nome: vendedorNome } })
       )
     : null;
   if (texto) await supabase.from('contratos').update({ conteudo_gerado: texto }).eq('id', criado.id);

@@ -124,7 +124,7 @@ create table if not exists public.contratos (
   id                uuid primary key default gen_random_uuid(),
   numero            bigint not null unique default nextval('public.contratos_numero_seq'),
   cliente_id        uuid not null references public.clientes(id) on delete restrict,
-  programa_id       uuid not null references public.programas(id) on delete restrict,
+  programa_id       uuid references public.programas(id) on delete restrict,  -- vazio = pacote avulso
   segmento_id       uuid not null references public.segmentos(id) on delete restrict,
   vendedor_id       uuid not null references public.profiles(id) on delete restrict default auth.uid(),
   modelo_id         uuid references public.modelos_contrato(id) on delete set null,
@@ -265,7 +265,9 @@ declare
   v_conflito   record;
   v_ocupadas   int;
 begin
-  if new.status not in ('pendente', 'ativo') then
+  new.updated_at := now();
+  -- pacote só de itens avulsos (sem programa) não ocupa cota
+  if new.status not in ('pendente', 'ativo') or new.programa_id is null then
     return new;
   end if;
 
@@ -403,7 +405,8 @@ begin
     select nome into v_cli from public.clientes where id = coalesce(new.cliente_id, old.cliente_id);
     select nome into v_prog from public.programas where id = coalesce(new.programa_id, old.programa_id);
     if tg_op = 'INSERT' then
-      v_desc := 'Criou o contrato nº ' || new.numero || ' — ' || coalesce(v_cli, '?') || ' no programa ' || coalesce(v_prog, '?');
+      v_desc := 'Criou o contrato nº ' || new.numero || ' — ' || coalesce(v_cli, '?') ||
+        coalesce(' no programa ' || v_prog, ' (pacote avulso)');
     elsif tg_op = 'UPDATE' and new.status is distinct from old.status then
       v_desc := 'Contrato nº ' || new.numero || ' (' || coalesce(v_cli, '?') || ') mudou para: ' || new.status::text;
     elsif tg_op = 'UPDATE' then
@@ -662,3 +665,69 @@ begin
 end $$;
 revoke execute on function public.segmento_garantir(text) from public, anon;
 grant execute on function public.segmento_garantir(text) to authenticated;
+
+-- ---------------------------------------------------------------------
+-- Planos dos programas, tabela de preços avulsos e itens do pacote
+-- ---------------------------------------------------------------------
+create table if not exists public.programa_planos (
+  id          uuid primary key default gen_random_uuid(),
+  programa_id uuid not null references public.programas(id) on delete cascade,
+  nome        text not null,
+  descricao   text,
+  valor       numeric(12,2) not null check (valor >= 0),
+  ordem       int not null default 0,
+  created_at  timestamptz not null default now()
+);
+create index if not exists programa_planos_prog_idx on public.programa_planos(programa_id);
+
+-- valor por unidade (uma inserção / um testemunhal)
+create table if not exists public.tabela_precos (
+  id          uuid primary key default gen_random_uuid(),
+  radio_id    uuid not null references public.radios(id) on delete cascade,
+  tipo        text not null check (tipo in ('insercao', 'testemunhal')),
+  duracao     int not null check (duracao > 0),
+  modalidade  text not null check (modalidade in ('indeterminada', 'determinada')),
+  valor       numeric(12,2) not null check (valor >= 0),
+  ativo       boolean not null default true,
+  created_at  timestamptz not null default now(),
+  unique (radio_id, tipo, duracao, modalidade)
+);
+
+alter table public.contratos add column if not exists radio_id uuid references public.radios(id) on delete restrict;
+alter table public.contratos add column if not exists plano_id uuid references public.programa_planos(id) on delete set null;
+
+-- itens do pacote: quantidade por mês x valor unitário
+create table if not exists public.contrato_itens (
+  id              uuid primary key default gen_random_uuid(),
+  contrato_id     uuid not null references public.contratos(id) on delete cascade,
+  descricao       text not null,
+  quantidade      int not null check (quantidade > 0),
+  valor_unitario  numeric(12,2) not null check (valor_unitario >= 0),
+  subtotal        numeric(12,2) generated always as (quantidade * valor_unitario) stored,
+  created_at      timestamptz not null default now()
+);
+create index if not exists contrato_itens_contrato_idx on public.contrato_itens(contrato_id);
+
+alter table public.programa_planos enable row level security;
+alter table public.tabela_precos enable row level security;
+alter table public.contrato_itens enable row level security;
+grant select, insert, update, delete on public.programa_planos, public.tabela_precos, public.contrato_itens to authenticated;
+
+drop policy if exists planos_select on public.programa_planos;
+drop policy if exists planos_write on public.programa_planos;
+drop policy if exists precos_select on public.tabela_precos;
+drop policy if exists precos_write on public.tabela_precos;
+drop policy if exists itens_select on public.contrato_itens;
+drop policy if exists itens_insert on public.contrato_itens;
+drop policy if exists itens_update on public.contrato_itens;
+drop policy if exists itens_delete on public.contrato_itens;
+create policy planos_select on public.programa_planos for select to authenticated using (public.usuario_ativo());
+create policy planos_write  on public.programa_planos for all to authenticated using (public.is_gestor()) with check (public.is_gestor());
+create policy precos_select on public.tabela_precos for select to authenticated using (public.usuario_ativo());
+create policy precos_write  on public.tabela_precos for all to authenticated using (public.is_gestor()) with check (public.is_gestor());
+create policy itens_select on public.contrato_itens for select to authenticated using (public.usuario_ativo());
+create policy itens_insert on public.contrato_itens for insert to authenticated
+  with check (public.is_gestor() or exists (
+    select 1 from public.contratos c where c.id = contrato_id and c.vendedor_id = auth.uid() and public.usuario_ativo()));
+create policy itens_update on public.contrato_itens for update to authenticated using (public.is_gestor()) with check (public.is_gestor());
+create policy itens_delete on public.contrato_itens for delete to authenticated using (public.is_gestor());

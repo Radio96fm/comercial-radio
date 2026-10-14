@@ -2,12 +2,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Radio, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut,
+  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut,
 } from 'lucide-react';
 
 const ITENS = [
   ['/gestao', LayoutDashboard, 'Visão geral', true],
   ['/gestao/programas', Radio, 'Programas'],
+  ['/gestao/precos', Receipt, 'Tabela de preços'],
   ['/gestao/contratos', FileText, 'Contratos'],
   ['/gestao/parcelas', Wallet, 'Parcelas / boletos'],
   ['/gestao/clientes', Users, 'Clientes'],

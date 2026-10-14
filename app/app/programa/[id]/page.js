@@ -10,6 +10,10 @@ export default async function ProgramaPage({ params }) {
   const { data: p } = await supabase.from('programas_ocupacao').select('*').eq('id', params.id).maybeSingle();
   if (!p) notFound();
 
+  const { data: planos } = await supabase.from('programa_planos').select('nome, valor').eq('programa_id', p.id).order('ordem');
+  const valores = (planos || []).map((x) => Number(x.valor));
+  const aPartir = valores.length > 1 && Math.min(...valores) !== Math.max(...valores);
+  const valorRef = valores.length ? Math.min(...valores) : p.valor_cota;
   const { data: contratos } = await supabase
     .from('contratos')
     .select('id, numero, data_inicio, data_fim, status, vendedor_id, cliente_nome, segmento:segmentos(id, nome), vendedor:profiles(nome)')
@@ -63,7 +67,7 @@ export default async function ProgramaPage({ params }) {
           </div>
 
           <div className="grid2" style={{ marginTop: 16 }}>
-            <div><div className="muted">Valor da cota</div><b className="num" style={{ fontSize: '1.3rem' }}>{moeda(p.valor_cota)}</b><span className="muted"> /mês</span></div>
+            <div><div className="muted">{aPartir ? `${valores.length} planos, a partir de` : 'Valor da cota'}</div><b className="num" style={{ fontSize: '1.3rem' }}>{moeda(valorRef)}</b><span className="muted"> /mês</span></div>
             <div><div className="muted">Cotas livres</div><b className="num" style={{ fontSize: '1.3rem' }}>{p.cotas_livres}</b></div>
           </div>
           {p.descricao_cota && <p className="muted" style={{ marginTop: 14, marginBottom: 0, display: 'flex', gap: 8 }}><Package className="ico" />{p.descricao_cota}</p>}

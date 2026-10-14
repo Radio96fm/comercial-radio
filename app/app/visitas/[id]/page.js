@@ -63,6 +63,12 @@ export default async function VisitaPage({ params }) {
           <div style={{ marginTop: 10 }}><Link href={`/app/clientes/${v.cliente.id}`}>Ver ficha completa do cliente ›</Link></div>
         </div>
 
+        {podeEditar && aberta && (
+          <Link className="btn grande sec" style={{ marginBottom: 14 }} href={`/app/contratos/novo?cliente=${v.cliente.id}&visita=${v.id}`}>
+            Montar pacote personalizado
+          </Link>
+        )}
+
         <div className="secao-titulo"><h2>Programas que este cliente pode patrocinar</h2></div>
         <p className="muted">
           Já filtrado: só aparecem programas com vaga e sem outro patrocinador do segmento <b>{v.cliente.segmento?.nome}</b>.

@@ -92,7 +92,7 @@ export default async function Dashboard() {
                 <Link key={c.id} href={`/app/contratos/${c.id}`} className="item plano">
                   <div className="info">
                     <div className="nome">{c.cliente?.nome}</div>
-                    <div className="det">{c.programa?.nome} · {c.vendedor?.nome}</div>
+                    <div className="det">{c.programa?.nome || 'Pacote avulso'} · {c.vendedor?.nome}</div>
                   </div>
                   <span className="badge b-amarelo">{data(c.data_fim)}</span>
                 </Link>

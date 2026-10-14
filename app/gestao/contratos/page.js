@@ -11,7 +11,7 @@ export default async function ContratosGestao({ searchParams }) {
 
   let q = supabase
     .from('contratos')
-    .select('id, numero, status, data_inicio, data_fim, valor_mensal, meses, cliente:clientes(nome), segmento:segmentos(nome), programa:programas(nome, radio:radios(nome)), vendedor:profiles(nome)')
+    .select('id, numero, status, data_inicio, data_fim, valor_mensal, meses, cliente:clientes(nome), segmento:segmentos(nome), programa:programas(nome), radio:radios(nome), vendedor:profiles(nome)')
     .order('numero', { ascending: false })
     .limit(300);
   if (status) q = q.eq('status', status);
@@ -55,7 +55,7 @@ export default async function ContratosGestao({ searchParams }) {
               <tr key={c.id}>
                 <td><Link href={`/app/contratos/${c.id}`}><b>{c.numero}</b></Link></td>
                 <td>{c.cliente?.nome}<br /><small>{c.segmento?.nome}</small></td>
-                <td>{c.programa?.nome}<br /><small>{c.programa?.radio?.nome}</small></td>
+                <td>{c.programa?.nome || 'Pacote avulso'}<br /><small>{c.radio?.nome}</small></td>
                 <td>{data(c.data_inicio)}<br /><small>até {data(c.data_fim)}</small></td>
                 <td>{moeda(c.valor_mensal)}<br /><small>{c.meses}x</small></td>
                 <td>{c.vendedor?.nome}</td>

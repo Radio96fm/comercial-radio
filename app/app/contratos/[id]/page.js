@@ -12,17 +12,21 @@ export default async function ContratoPage({ params, searchParams }) {
   const { supabase, perfil, isGestor } = await getSessao();
   const { data: c } = await supabase
     .from('contratos')
-    .select('*, cliente:clientes(nome, telefone, contato_nome), programa:programas(nome, radio:radios(nome)), segmento:segmentos(nome), vendedor:profiles(nome)')
+    .select('*, cliente:clientes(nome, telefone, contato_nome), programa:programas(nome), plano:programa_planos(nome), radio:radios(nome), segmento:segmentos(nome), vendedor:profiles(nome)')
     .eq('id', params.id)
     .maybeSingle();
   if (!c) notFound();
-  const { data: parcelas } = await supabase.from('parcelas').select('*').eq('contrato_id', c.id).order('numero');
+  const [{ data: parcelas }, { data: itens }] = await Promise.all([
+    supabase.from('parcelas').select('*').eq('contrato_id', c.id).order('numero'),
+    supabase.from('contrato_itens').select('*').eq('contrato_id', c.id).order('created_at'),
+  ]);
+  const produto = c.programa?.nome || 'Pacote avulso';
 
   const dono = c.vendedor_id === perfil.id;
   const podeMudar = isGestor || (dono && c.status === 'pendente');
   const msgWhats =
-    `Olá${c.cliente?.contato_nome ? ' ' + c.cliente.contato_nome : ''}! Segue o resumo do contrato nº ${c.numero} com a ${c.programa?.radio?.nome}:\n` +
-    `• Programa: ${c.programa?.nome}\n• Período: ${data(c.data_inicio)} a ${data(c.data_fim)}\n` +
+    `Olá${c.cliente?.contato_nome ? ' ' + c.cliente.contato_nome : ''}! Segue o resumo do contrato nº ${c.numero} com a ${c.radio?.nome}:\n` +
+    `• ${c.programa ? `Programa: ${c.programa.nome}` : 'Pacote de inserções avulsas'}\n• Período: ${data(c.data_inicio)} a ${data(c.data_fim)}\n` +
     `• Valor: ${moeda(c.valor_mensal)}/mês (${c.meses}x)\n\nQualquer dúvida, estou à disposição. ${c.vendedor?.nome}`;
 
   const Status = ({ status, texto, classe, confirmar }) => (
@@ -44,7 +48,7 @@ export default async function ContratoPage({ params, searchParams }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
             <div>
               <h1 style={{ marginBottom: 2 }}>{c.cliente?.nome}</h1>
-              <div className="muted">{c.programa?.radio?.nome} · {c.programa?.nome} · {c.segmento?.nome}</div>
+              <div className="muted">{c.radio?.nome} · {produto}{c.plano ? ` (${c.plano.nome})` : ''} · {c.segmento?.nome}</div>
             </div>
             <span className={`badge ${COR[c.status]}`}>{STATUS_CONTRATO[c.status]}</span>
           </div>
@@ -54,6 +58,22 @@ export default async function ContratoPage({ params, searchParams }) {
           </div>
           <p style={{ marginTop: 10 }}>Vendedor: <b>{dono ? 'você' : c.vendedor?.nome}</b></p>
         </div>
+
+        {c.descricao_produto && (
+          <div className="card nao-imprimir">
+            <h2 style={{ marginTop: 0 }}>O que foi contratado</h2>
+            <div style={{ whiteSpace: 'pre-line' }}>{c.descricao_produto}</div>
+            {!!itens?.length && (
+              <table className="itens-contrato" style={{ width: '100%', marginTop: 10 }}>
+                <tbody>
+                  {itens.map((i) => (
+                    <tr key={i.id}><td>{i.quantidade}× {i.descricao}</td><td className="num">{moeda(i.subtotal)}/mês</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
 
         <div className="acoes nao-imprimir" style={{ marginBottom: 14 }}>
           <BotaoImprimir />
