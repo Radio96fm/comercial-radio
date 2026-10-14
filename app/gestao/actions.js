@@ -350,8 +350,9 @@ export async function salvarIA(_prev, fd) {
       await gerar({ cfg: { provedor, modelo, token }, sistema: 'Responda apenas: OK', mensagens: [{ papel: 'vendedor', texto: 'Teste' }], maxTokens: 20 });
     } catch (e) {
       // IA lotada não quer dizer chave errada: a lista de modelos já confirmou a chave
-      if (!e.ocupado || !modelo) return { erro: `A chave não funcionou: ${e.message}` };
-      aviso = ' A chave está certa, mas a IA está ocupada neste momento; se o primeiro testemunhal falhar, é só tentar de novo.';
+      if (e.semCredito && modelo) aviso = ` Atenção: ${e.message}`;
+      else if (e.ocupado && modelo) aviso = ' A chave está certa, mas a IA está ocupada neste momento; se o primeiro testemunhal falhar, é só tentar de novo.';
+      else return { erro: `A chave não funcionou: ${e.message}` };
     }
   } else if (situacao?.provedor === provedor) {
     modelo = situacao.modelo || '';
