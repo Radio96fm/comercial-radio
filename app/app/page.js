@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getSessao } from '@/lib/auth';
-import { ArrowUpRight, Car, ChevronRight, LogOut } from 'lucide-react';
+import { ArrowUpRight, Car, ChevronRight, LogOut, Sparkles } from 'lucide-react';
 import { tempoDesde } from '@/lib/format';
 import BotaoTema from '@/components/BotaoTema';
 import { marcaDaRadio } from '@/lib/marca';
@@ -47,6 +47,12 @@ export default async function HomeVendedor() {
             Preencha seu <b>nome completo, CPF e telefone</b> em Meus dados. Eles saem nos seus contratos. Toque aqui ›
           </Link>
         )}
+
+        <Link href="/app/assistente" className="atalho-ia">
+          <span className="icone"><Sparkles size={22} /></span>
+          <span className="txt"><b>Tirar dúvida com a IA</b><small>Vagas, preços, programas: pergunte por texto ou voz</small></span>
+          <ChevronRight size={22} />
+        </Link>
 
         <p className="rotulo-secao">Escolha a rádio</p>
         {(radios || []).map((r) => {
