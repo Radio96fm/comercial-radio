@@ -82,7 +82,7 @@ export default async function ProgramaPage({ params }) {
 
         <div className="rodape-acao">
           {p.cotas_livres > 0 ? (
-            <Link href={`/app/contratos/novo?programa=${p.id}`} className="btn grande" style={{ boxShadow: '0 10px 30px rgba(31,46,255,.35)' }}>
+            <Link href={`/app/contratos/novo?programa=${p.id}`} className="btn grande" style={{ boxShadow: '0 10px 30px rgba(0,0,0,.6)' }}>
               <PenLine className="ico" strokeWidth={2.4} /> Fechar contrato
             </Link>
           ) : (

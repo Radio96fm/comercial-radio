@@ -218,6 +218,26 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- O Supabase grava o app_metadata (onde fica o papel) logo DEPOIS de criar o
+-- login, então no momento do INSERT o papel ainda não existe. Este gatilho
+-- mantém o perfil em dia sempre que o app_metadata muda.
+create or replace function public.sincronizar_papel() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.raw_app_meta_data->>'papel' in ('gestor', 'vendedor')
+     and new.raw_app_meta_data->>'papel' is distinct from old.raw_app_meta_data->>'papel' then
+    update public.profiles
+       set papel = (new.raw_app_meta_data->>'papel')::papel_usuario
+     where id = new.id;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists on_auth_user_papel on auth.users;
+create trigger on_auth_user_papel
+  after update of raw_app_meta_data on auth.users
+  for each row execute function public.sincronizar_papel();
+
 -- ---------------------------------------------------------------------
 -- REGRAS DE NEGÓCIO DO CONTRATO
 --  1) Exclusividade: o mesmo segmento não pode estar duas vezes no mesmo

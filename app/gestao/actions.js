@@ -54,7 +54,7 @@ export async function criarUsuario(_prev, fd) {
   if (senha.length < 8) return { erro: 'A senha precisa ter pelo menos 8 caracteres.' };
 
   const admin = createAdminClient();
-  const { error } = await admin.auth.admin.createUser({
+  const { data: criado, error } = await admin.auth.admin.createUser({
     email,
     password: senha,
     email_confirm: true,
@@ -62,6 +62,8 @@ export async function criarUsuario(_prev, fd) {
     app_metadata: { papel },
   });
   if (error) return { erro: erroAmigavel(error) };
+  // garante o papel no perfil (o gatilho de criação roda antes do app_metadata ser gravado)
+  await admin.from('profiles').update({ papel }).eq('id', criado.user.id);
   revalidatePath('/gestao/vendedores');
   return { ok: `Usuário ${nome} criado. Passe para ele o e-mail e a senha para o primeiro acesso.` };
 }
