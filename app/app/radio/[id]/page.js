@@ -14,6 +14,16 @@ function diasCurto(d = '') {
 }
 const hhmm = (t) => (t ? t.slice(0, 5) : '');
 
+// Programa de faixa fixa: "07:00–08:00". Programete com vários horários: o
+// texto que vem depois do "·" em dias (ex.: "08h00, 11h20 e 15h00").
+function Horario({ p }) {
+  const [dias, extra] = (p.dias || '').split(' · ');
+  if (p.horario_inicio) {
+    return <div><b>{hhmm(p.horario_inicio)}{p.horario_fim ? `–${hhmm(p.horario_fim)}` : ''}</b><span>{diasCurto(p.dias)}</span></div>;
+  }
+  return <div><b className={extra ? 'texto' : ''}>{extra || 'Horário a definir'}</b><span>{diasCurto(dias)}</span></div>;
+}
+
 export default async function RadioPage({ params }) {
   const { supabase } = await getSessao();
   const { data: radio } = await supabase.from('radios').select('*').eq('id', params.id).maybeSingle();
@@ -59,7 +69,7 @@ export default async function RadioPage({ params }) {
                 </div>
                 {p.descricao && <div className="desc">{p.descricao}</div>}
                 <div className="numeros">
-                  <div><b>{hhmm(p.horario_inicio)}–{hhmm(p.horario_fim)}</b><span>{diasCurto(p.dias)}</span></div>
+                  <Horario p={p} />
                   <div><b>{p.cotas_livres}</b><span>{p.cotas_livres === 1 ? 'cota livre' : 'cotas livres'} de {p.cotas_total}</span></div>
                   <div className="situacao">
                     <span className="vagas" style={{ color: COR_STATUS[st.cor] }}>{st.cor === 'verde' ? 'Tem vaga' : st.texto}</span>

@@ -50,7 +50,7 @@ export default async function ProgramaPage({ params }) {
             <span className={`badge b-${st.cor}`} style={{ fontSize: '.95rem' }}>{st.texto}</span>
           </div>
           <h1 style={{ margin: '10px 0 8px', fontSize: '2rem' }}>{p.nome}</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Clock className="ico" />{p.dias} · {horario(p)}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Clock className="ico" />{p.dias}{horario(p) ? ` · ${horario(p)}` : ''}</div>
           {p.apresentador && <div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}><Mic className="ico" />{p.apresentador}</div>}
           {p.descricao && <p style={{ marginTop: 12 }} className="muted">{p.descricao}</p>}
 

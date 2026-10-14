@@ -76,7 +76,7 @@ export default async function VisitaPage({ params }) {
                 <div key={p.id} className="item">
                   <div className="info">
                     <div className="nome">{p.nome}</div>
-                    <div className="det">{p.dias} · {horario(p)}</div>
+                    <div className="det">{p.dias}{horario(p) ? ` · ${horario(p)}` : ''}</div>
                     <div className="det">{moeda(p.valor_cota)}/mês · {p.cotas_livres} vaga{p.cotas_livres > 1 ? 's' : ''}</div>
                   </div>
                   {podeEditar && aberta && (
