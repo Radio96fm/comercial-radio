@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
 import Tendencia from '@/components/Tendencia';
-import { calcularGanhos, faltaParaVencer } from '@/lib/ganhos';
+import { calcularGanhos, faltaParaVencer, DIA_CORTE } from '@/lib/ganhos';
 import { data, hojeISO, moeda, somarDias } from '@/lib/format';
 import { CalendarClock, FileCheck2, Rocket, TrendingUp, Trophy } from 'lucide-react';
 
@@ -49,6 +49,12 @@ export default async function GanhosPage() {
           <div><span>Já garantido em {mesLongo(proximo.chave)}</span><b className="num">{curto(proximo.certo)}</b></div>
           <div><span>Contratos ativos</span><b className="num">{g.ativos.length}</b></div>
         </div>
+        {g.atrasadas.length > 0 && (
+          <div className="alerta aviso">
+            <b>{g.atrasadas.length === 1 ? '1 boleto em atraso' : `${g.atrasadas.length} boletos em atraso`}:</b>{' '}
+            {g.atrasadas.slice(0, 3).map((p) => p.contrato.cliente_nome).join(', ')}. Se não for pago até o dia {DIA_CORTE}, essa comissão ({moeda(g.atrasadas.reduce((t, p) => t + p.comissao, 0))}) fica para o próximo mês.
+          </div>
+        )}
         {g.previstoMes > 0 && (
           <p className="dica-ganhos">+ {moeda(g.previstoMes)} entram neste mês quando os clientes assinarem os contratos que estão aguardando.</p>
         )}
@@ -107,7 +113,7 @@ export default async function GanhosPage() {
           </div>
         )}
         <Link href="/app/contratos" className="btn cinza" style={{ width: '100%', marginTop: 14 }}>Ver todos os meus contratos</Link>
-        <p className="muted" style={{ marginTop: 12, fontSize: '.85rem' }}>Você recebe {pctTxt}% de tudo o que vende. A conta é feita pelas parcelas que vencem em cada mês.</p>
+        <p className="muted" style={{ marginTop: 12, fontSize: '.85rem' }}>Você recebe {pctTxt}% de tudo o que vende. A comissão fecha todo dia {DIA_CORTE}: parcela paga até o dia {DIA_CORTE} entra no mês; paga depois, entra no mês seguinte.</p>
       </main>
     </>
   );

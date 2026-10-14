@@ -7,7 +7,7 @@ import { FileDown, PenTool, CheckCircle2, Clock3 } from 'lucide-react';
 import DocumentoContrato from '@/components/DocumentoContrato';
 import CopiarTexto from '@/components/CopiarTexto';
 import { mensagemContrato } from '@/lib/mensagemContrato';
-import { mudarStatusContrato, enviarParaAssinatura } from '../../actions';
+import { mudarStatusContrato, enviarParaAssinatura, reenviarEmailAssinatura } from '../../actions';
 import { configAutentique, situacaoDocumento, marcarAssinado } from '@/lib/autentique';
 import { SELECT_CONTRATO } from '@/lib/pdfGerar';
 import { data, moeda, linkWhatsApp, STATUS_CONTRATO, STATUS_PARCELA } from '@/lib/format';
@@ -107,6 +107,21 @@ export default async function ContratoPage({ params, searchParams }) {
           ) : c.status === 'pendente' && c.autentique_id ? (
             <>
               <div className="topo-a"><Clock3 className="ico" /><div><b>Aguardando o cliente assinar</b><small>Enviado em {data(c.assinatura_enviada_em?.slice(0, 10))}{c.cliente?.email ? ` · e-mail ${c.cliente.email}` : ''}</small></div></div>
+              {assinatura?.email && (
+                <div className={`email-status ${assinatura.emailEventos?.recusado || assinatura.emailDoDono ? 'erro' : ''}`}>
+                  {assinatura.emailDoDono
+                    ? <>A Autentique não manda e-mail para o mesmo e-mail da conta da rádio ({assinatura.email}). Para testar, use um cliente com outro e-mail. O link no WhatsApp funciona normalmente.</>
+                    : assinatura.emailEventos?.recusado
+                      ? <>O e-mail para {assinatura.email} não foi entregue{assinatura.emailEventos.motivo ? ` (${assinatura.emailEventos.motivo})` : ''}. Confira o e-mail do cliente ou mande pelo WhatsApp.</>
+                      : assinatura.emailEventos?.aberto
+                        ? <>E-mail aberto pelo cliente ✓</>
+                        : assinatura.emailEventos?.entregue
+                          ? <>E-mail entregue em {assinatura.email}. Se não achar, peça para olhar no spam/lixo eletrônico.</>
+                          : assinatura.emailEventos?.enviado
+                            ? <>E-mail enviado para {assinatura.email}. Se não chegar, peça para olhar no spam.</>
+                            : <>O e-mail para {assinatura.email} ainda está na fila da Autentique.</>}
+                </div>
+              )}
               {assinatura?.recusado && <div className="alerta erro" style={{ margin: '10px 0 0' }}>O cliente recusou a assinatura. Fale com ele e, se precisar, cancele e crie um novo contrato.</div>}
               {c.assinatura_link && (
                 <div className="acoes" style={{ marginTop: 12 }}>
@@ -114,6 +129,12 @@ export default async function ContratoPage({ params, searchParams }) {
                   <CopiarTexto texto={msgAssinar} rotulo="Copiar mensagem com link" />
                   <CopiarTexto texto={c.assinatura_link} rotulo="Copiar só o link" className="btn cinza" />
                 </div>
+              )}
+              {c.cliente?.email && !assinatura?.emailDoDono && (
+                <form action={reenviarEmailAssinatura} style={{ marginTop: 8 }}>
+                  <input type="hidden" name="id" value={c.id} />
+                  <BotaoEnviar className="btn cinza peq" texto="Reenviar e-mail" enviando="Reenviando..." />
+                </form>
               )}
               <p className="muted" style={{ margin: '10px 0 0', fontSize: '.88rem' }}>Quando o cliente assinar, o contrato fica ativo sozinho.</p>
             </>

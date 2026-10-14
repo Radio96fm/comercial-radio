@@ -1,6 +1,6 @@
 'use server';
 import { valorNoPeriodo } from '@/lib/periodo';
-import { configAutentique, enviarDocumento } from '@/lib/autentique';
+import { configAutentique, enviarDocumento, reenviarAssinatura } from '@/lib/autentique';
 import { gerarPdfContrato, nomeArquivo, SELECT_CONTRATO } from '@/lib/pdfGerar';
 import { mensagemContrato } from '@/lib/mensagemContrato';
 import { redirect } from 'next/navigation';
@@ -325,4 +325,19 @@ export async function enviarParaAssinatura(fd) {
   if (error) voltar(`erro=${encodeURIComponent(traduzErro(error))}`);
   revalidatePath(`/app/contratos/${id}`);
   voltar('enviado=1');
+}
+
+export async function reenviarEmailAssinatura(fd) {
+  const { supabase } = await getSessao();
+  const id = txt(fd, 'id');
+  const { data: c } = await supabase.from('contratos').select('id, status, autentique_assinatura').eq('id', id).maybeSingle();
+  let msg = 'enviado=1';
+  try {
+    if (!c?.autentique_assinatura || c.status !== 'pendente') throw new Error('Este contrato não está aguardando assinatura.');
+    const cfg = await configAutentique();
+    await reenviarAssinatura(cfg.token, c.autentique_assinatura);
+  } catch (e) {
+    msg = `erro=${encodeURIComponent(/too_many/.test(e.message) ? 'O e-mail acabou de ser reenviado. Espere alguns minutos para tentar de novo.' : e.message)}`;
+  }
+  redirect(`/app/contratos/${id}?${msg}`);
 }
