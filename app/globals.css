@@ -951,3 +951,4 @@ a.linha-g:hover b { text-decoration: underline; }
   .sidebar .marca-gestao .emissoras-mini { display: flex; }
   .sidebar .marca-gestao .emissoras-mini img { height: 34px; }
 }
+.chip-r .pos { width: 24px; height: 24px; border-radius: 50%; background: #fff; color: var(--cor96); display: grid; place-items: center; font-size: .75rem; font-weight: 800; }

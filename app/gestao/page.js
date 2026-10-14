@@ -2,10 +2,9 @@ import Link from 'next/link';
 import { Users, PenLine, Car, Hourglass, History, ArrowUpRight, TrendingUp } from 'lucide-react';
 import { requireGestor } from '@/lib/auth';
 import { marcaDaRadio } from '@/lib/marca';
-import { data, dataHora, tempoDesde, horario, hojeISO, somarDias, moeda, statusPrograma } from '@/lib/format';
+import { data, dataHora, tempoDesde, horario, hojeISO, somarDias, statusPrograma } from '@/lib/format';
 
 const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-const curto = (v) => (v >= 1000 ? `R$ ${(v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : moeda(v));
 
 function saudacao() {
   const h = Number(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo', hour: 'numeric', hour12: false }));
@@ -13,12 +12,12 @@ function saudacao() {
 }
 
 export default async function Dashboard() {
-  const { supabase, perfil } = await requireGestor();
+  const { supabase } = await requireGestor();
   const hoje = hojeISO();
   const em30 = somarDias(hoje, 30);
   const inicioSerie = `${somarDias(`${hoje.slice(0, 8)}01`, -150).slice(0, 8)}01`;
 
-  const [{ data: radios }, { data: programas }, { data: vencendo }, { data: visitas }, { data: pendentes }, { count: totalClientes }, { count: totalVendedores }, { data: atividades }, { data: ativos }, { data: vendas }] = await Promise.all([
+  const [{ data: radios }, { data: programas }, { data: vencendo }, { data: visitas }, { data: pendentes }, { count: totalClientes }, { count: totalVendedores }, { data: atividades }, { data: visitasSerie }, { count: clientesNovos }] = await Promise.all([
     supabase.from('radios').select('id, nome, cor, slogan').order('ordem'),
     supabase.from('programas_ocupacao').select('*').eq('ativo', true).order('horario_inicio', { nullsFirst: false }),
     supabase.from('contratos').select('id, numero, data_fim, cliente:clientes(nome), programa:programas(nome), vendedor:profiles(nome)')
@@ -28,24 +27,29 @@ export default async function Dashboard() {
     supabase.from('clientes').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('papel', 'vendedor').eq('ativo', true),
     supabase.from('atividades').select('id, descricao, created_at, usuario:profiles(nome)').order('created_at', { ascending: false }).limit(6),
-    supabase.from('contratos').select('valor_mensal, radio_id').eq('status', 'ativo').lte('data_inicio', hoje).gte('data_fim', hoje),
-    supabase.from('contratos').select('created_at, valor_mensal, meses').neq('status', 'cancelado').gte('created_at', inicioSerie),
+    supabase.from('visitas').select('iniciada_em, vendedor_id, vendedor:profiles(nome)').gte('iniciada_em', inicioSerie),
+    supabase.from('clientes').select('id', { count: 'exact', head: true }).gte('created_at', `${somarDias(hoje, -30)}T00:00:00`),
   ]);
 
   const progs = programas || [];
   const totalCotas = progs.reduce((s, p) => s + p.cotas_total, 0);
   const ocupadas = progs.reduce((s, p) => s + p.cotas_ocupadas, 0);
   const pctOcup = totalCotas ? Math.round((ocupadas / totalCotas) * 100) : 0;
-  const mensal = (ativos || []).reduce((s, c) => s + Number(c.valor_mensal || 0), 0);
-  const mensalDe = (id) => (ativos || []).filter((c) => c.radio_id === id).reduce((s, c) => s + Number(c.valor_mensal || 0), 0);
+  const desde30 = `${somarDias(hoje, -30)}T00:00:00`;
+  const visitas30 = (visitasSerie || []).filter((v) => v.iniciada_em >= desde30);
+  const ranking = Object.values(visitas30.reduce((acc, v) => {
+    const k = v.vendedor_id;
+    acc[k] = acc[k] || { nome: v.vendedor?.nome || 'Vendedor', qtd: 0 };
+    acc[k].qtd += 1;
+    return acc;
+  }, {})).sort((x, y) => y.qtd - x.qtd).slice(0, 3);
 
-  // vendas dos últimos 6 meses (valor total dos contratos fechados no mês)
+  // visitas dos últimos 6 meses
   const serie = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(`${hoje.slice(0, 7)}-15T12:00:00`);
     d.setMonth(d.getMonth() - (5 - i));
     const chave = d.toISOString().slice(0, 7);
-    const doMes = (vendas || []).filter((v) => v.created_at.slice(0, 7) === chave);
-    return { chave, rotulo: MES[d.getMonth()], valor: doMes.reduce((s, v) => s + Number(v.valor_mensal || 0) * (v.meses || 1), 0), qtd: doMes.length };
+    return { chave, rotulo: MES[d.getMonth()], valor: (visitasSerie || []).filter((v) => v.iniciada_em.slice(0, 7) === chave).length };
   });
   const maxSerie = Math.max(1, ...serie.map((s) => s.valor));
   const atual = serie[5], anterior = serie[4];
@@ -56,21 +60,19 @@ export default async function Dashboard() {
     <>
       <div className="saudacao-g">
         <small>{dataLonga}</small>
-        <h1>{saudacao()}, {perfil.nome?.split(' ')[0]}</h1>
+        <h1>{saudacao()}! Veja como está a equipe</h1>
       </div>
 
       <div className="bento">
         <div className="b-card b-hero">
-          <div className="b-eyebrow">Faturamento mensal em contratos ativos</div>
-          <div className="b-gigante num">{moeda(mensal)}</div>
-          <div className="b-sub">{(ativos || []).length} contratos rodando hoje</div>
+          <div className="b-eyebrow">Visitas a clientes nos últimos 30 dias</div>
+          <div className="b-gigante num">{visitas30.length}</div>
+          <div className="b-sub">{clientesNovos || 0} clientes novos cadastrados no período</div>
           <div className="b-chips">
-            {(radios || []).map((r) => (
-              <span key={r.id} className="chip-r">
-                {marcaDaRadio(r.nome).logo && <img src={marcaDaRadio(r.nome).logo} alt="" />}
-                {r.nome}<b>{curto(mensalDe(r.id))}</b>
-              </span>
+            {ranking.map((v, i) => (
+              <span key={v.nome} className="chip-r"><span className="pos">{i + 1}º</span>{v.nome.split(' ')[0]}<b>{v.qtd} visita{v.qtd > 1 ? 's' : ''}</b></span>
             ))}
+            {!ranking.length && <span className="chip-r">Nenhuma visita registrada ainda</span>}
           </div>
         </div>
 
@@ -101,9 +103,9 @@ export default async function Dashboard() {
         <div className="b-card b-grafico">
           <div className="b-topo">
             <div>
-              <div className="b-eyebrow">Vendas por mês</div>
-              <div className="b-medio num">{moeda(atual.valor)}</div>
-              <div className="b-sub">{atual.qtd} contratos fechados em {atual.rotulo}</div>
+              <div className="b-eyebrow">Visitas por mês</div>
+              <div className="b-medio num">{atual.valor} visitas</div>
+              <div className="b-sub">feitas pelos vendedores em {atual.rotulo}</div>
             </div>
             {variacao !== null && (
               <span className={`var-chip ${variacao >= 0 ? 'sobe' : 'desce'}`}><TrendingUp size={14} />{variacao >= 0 ? '+' : ''}{variacao}%</span>
@@ -111,8 +113,8 @@ export default async function Dashboard() {
           </div>
           <div className="barras">
             {serie.map((s, i) => (
-              <div key={s.chave} className={`col ${i === 5 ? 'atual' : ''}`} title={`${s.rotulo}: ${moeda(s.valor)}`}>
-                <small>{s.valor ? curto(s.valor) : ''}</small>
+              <div key={s.chave} className={`col ${i === 5 ? 'atual' : ''}`} title={`${s.rotulo}: ${s.valor} visitas`}>
+                <small>{s.valor || ''}</small>
                 <span style={{ height: `${Math.max(4, (s.valor / maxSerie) * 100)}%` }} />
                 <em>{s.rotulo}</em>
               </div>
