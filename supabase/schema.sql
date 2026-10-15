@@ -1244,3 +1244,22 @@ begin
   return v;
 end $f$$q$;
 end $do$;
+
+-- Comissão: relatório enviado ao vendedor e nota fiscal recebida (antes do pagamento)
+do $do$ begin
+execute $q$create table if not exists public.comissoes_nf (
+  vendedor_id uuid not null references public.profiles(id) on delete cascade,
+  mes text not null,
+  relatorio_em timestamptz,
+  nf_numero text,
+  nf_em date,
+  primary key (vendedor_id, mes)
+)$q$;
+execute $q$alter table public.comissoes_nf enable row level security$q$;
+if not exists (select 1 from pg_policies where tablename = 'comissoes_nf' and policyname = 'cnf_ver') then
+  execute $q$create policy cnf_ver on public.comissoes_nf for select to authenticated using (public.is_financeiro() or vendedor_id = auth.uid())$q$;
+end if;
+if not exists (select 1 from pg_policies where tablename = 'comissoes_nf' and policyname = 'cnf_fin') then
+  execute $q$create policy cnf_fin on public.comissoes_nf for all to authenticated using (public.is_financeiro()) with check (public.is_financeiro())$q$;
+end if;
+end $do$;

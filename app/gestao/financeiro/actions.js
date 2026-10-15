@@ -53,3 +53,31 @@ export async function desfazerComissao(fd) {
   await supabase.from('comissoes_pagas').delete().eq('id', fd.get('id'));
   atualizar();
 }
+
+// relatório de comissão mandado ao vendedor pelo WhatsApp
+export async function registrarRelatorio(vendedorId, mes) {
+  const { supabase } = await requireFinanceiro();
+  if (!mes) return;
+  await supabase.from('comissoes_nf').upsert({ vendedor_id: vendedorId, mes, relatorio_em: new Date().toISOString() }, { onConflict: 'vendedor_id,mes' });
+  atualizar();
+}
+
+export async function salvarNotaFiscal(_prev, fd) {
+  const { supabase } = await requireFinanceiro();
+  const vendedor_id = String(fd.get('vendedor_id'));
+  const mes = String(fd.get('mes'));
+  const nf_em = String(fd.get('nf_em') || '') || hojeISO();
+  const { data: atual } = await supabase.from('comissoes_nf').select('relatorio_em').eq('vendedor_id', vendedor_id).eq('mes', mes).maybeSingle();
+  const { error } = await supabase.from('comissoes_nf').upsert({
+    vendedor_id, mes, nf_em, nf_numero: String(fd.get('nf_numero') || '').trim() || null, relatorio_em: atual?.relatorio_em || null,
+  }, { onConflict: 'vendedor_id,mes' });
+  if (error) return { erro: error.message };
+  atualizar();
+  return { ok: 'Nota fiscal registrada. Agora é só pagar.' };
+}
+
+export async function desfazerNotaFiscal(fd) {
+  const { supabase } = await requireFinanceiro();
+  await supabase.from('comissoes_nf').update({ nf_em: null, nf_numero: null }).eq('vendedor_id', fd.get('vendedor_id')).eq('mes', fd.get('mes'));
+  atualizar();
+}

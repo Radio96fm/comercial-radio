@@ -1,6 +1,5 @@
 import { requireFinanceiro } from '@/lib/auth';
-import { lerPeriodo, comissoesDoMes } from '@/lib/financeiro';
-import { mesDaComissao } from '@/lib/ganhos';
+import { lerPeriodo, periodoComissao, comissoesNoPeriodo } from '@/lib/financeiro';
 import { hojeISO, data, STATUS_PARCELA, STATUS_CONTRATO } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -22,14 +21,14 @@ export async function GET(req) {
   let nome;
 
   if (sp.tipo === 'comissoes') {
-    const mes = /^\d{4}-\d{2}$/.test(sp.mes || '') ? sp.mes : mesDaComissao(hoje);
-    const lista = await comissoesDoMes(supabase, mes, vend || null);
+    const per = periodoComissao(sp);
+    const lista = await comissoesNoPeriodo(supabase, per.de, per.ate, vend || null, per.mes);
     linhas = [['Vendedor', 'Cliente', 'Contrato', 'Parcela', 'Pago em', 'Valor recebido', '%', 'Comissão', 'Comissão paga em']];
     lista.forEach((v) => v.itens.forEach((p) => linhas.push([
-      v.nome, p.contrato.cliente_nome, p.contrato.numero, `${p.numero}ª`, data(p.pago_em), num(p.valor), String(v.pct).replace('.', ','), num(p.comissao), v.pago ? data(v.pago.pago_em) : 'A pagar',
+      v.nome, p.contrato.cliente_nome, p.contrato.numero, `${p.numero}ª`, data(p.pago_em), num(p.valor), String(v.pct).replace('.', ','), num(p.comissao), v.pago ? data(v.pago.pago_em) : v.nf?.nf_em ? `NF ${v.nf.nf_numero || ''} recebida` : 'A pagar',
     ])));
     lista.forEach((v) => linhas.push([`TOTAL ${v.nome}`, '', '', '', '', num(v.recebido), '', num(v.comissao), '']));
-    nome = `comissoes-${mes}`;
+    nome = `comissoes-${per.de}-a-${per.ate}`;
   } else if (sp.tipo === 'contratos') {
     const per = lerPeriodo(sp);
     let q = supabase.from('contratos')

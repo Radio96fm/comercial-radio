@@ -1197,3 +1197,78 @@ a.b-hero { color: var(--on-destaque, #fff); }
 .prev-legenda { display: flex; gap: 16px; font-size: .85rem; color: var(--muted); }
 .prev-legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
 .gestao-main .cabecalho .btn { margin: 0; }
+
+/* ---------- Comissões ---------- */
+.filtro-com { display: grid; gap: 14px; margin-bottom: 16px; }
+.atalhos-mes { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.chip-mes { flex: none; display: grid; gap: 2px; padding: 10px 14px; border-radius: 14px; background: var(--card-2); border: 1px solid var(--line); color: var(--text); }
+.chip-mes b { font-size: .95rem; }
+.chip-mes small { font-size: .8rem; color: var(--muted); }
+.chip-mes.ativo { background: var(--destaque); border-color: var(--destaque); color: var(--on-destaque); }
+.chip-mes.ativo small { color: var(--on-destaque); opacity: .75; }
+.com-resumo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.com-resumo > div { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; display: grid; gap: 4px; }
+.com-resumo small { color: var(--muted); font-size: .82rem; }
+.com-resumo b { font-size: 1.15rem; }
+.com-resumo .destaque { background: var(--destaque); border-color: var(--destaque); color: var(--on-destaque); }
+.com-resumo .destaque small { color: var(--on-destaque); opacity: .75; }
+.com-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.com-card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin: 0; }
+.com-card-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; width: 100%; color: var(--text); }
+.com-card-topo b { display: block; font-size: 1.08rem; }
+.com-card-topo small { color: var(--muted); font-size: .84rem; }
+.com-card-topo .ico { color: var(--muted); flex: none; }
+.com-card-valor { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; letter-spacing: -.03em; }
+.com-card-acoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; width: 100%; }
+.com-card-acoes .btn { margin: 0; }
+.rel-com { display: grid; gap: 18px; }
+.rel-topo { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.rel-topo h2 { margin: 2px 0 4px; font-size: 1.6rem; }
+.rel-valor { display: grid; justify-items: end; gap: 4px; }
+.rel-valor small { color: var(--muted); }
+.rel-valor b { font-family: var(--font-display); font-size: 2.2rem; letter-spacing: -.03em; line-height: 1; }
+.rel-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.rel-acoes .btn { margin: 0; }
+.etapas-com { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.etapa { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 16px; background: var(--card-2); border: 1px solid var(--line); }
+.etapa .n { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--line-2); color: var(--text); }
+.etapa .n svg { width: 18px; height: 18px; }
+.etapa.feita .n { background: var(--verde); color: #04130a; }
+.etapa.agora { border-color: var(--destaque); }
+.etapa.agora .n { background: var(--destaque); color: var(--on-destaque); }
+.etapa b { display: block; }
+.etapa small { color: var(--muted); font-size: .85rem; }
+.form-nf { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.form-nf input { flex: 1 1 120px; min-width: 0; padding: 8px 10px; font-size: .9rem; }
+.form-nf .btn { margin: 0; }
+.link-btn { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font: inherit; }
+.linha-total td { font-weight: 800; background: var(--card-2); }
+@media (max-width: 900px) { .com-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); } .etapas-com { grid-template-columns: 1fr; } }
+
+/* ---------- Contratos / Autentique no financeiro ---------- */
+.assin-resumo { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; margin: 4px 0 14px; font-weight: 600; }
+.assin-resumo span { display: inline-flex; align-items: center; gap: 6px; }
+.assin-resumo .muted { font-weight: 400; font-size: .85rem; }
+.assin-resumo .ico { width: 18px; height: 18px; }
+.ico.ok, .assin-tag.ok { color: var(--verde); }
+.ico.aviso, .assin-tag.aviso { color: var(--amarelo); }
+.assin-tag { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: .88rem; white-space: nowrap; color: var(--muted); }
+.assin-tag.perigo { color: var(--vermelho); }
+.assin-tag .ico { width: 16px; height: 16px; }
+.assin-fin { display: grid; gap: 14px; }
+.assin-fin.ok { border-color: color-mix(in srgb, var(--verde) 45%, transparent); }
+.assin-topo { display: flex; gap: 12px; align-items: center; }
+.assin-topo > .ico { width: 34px; height: 34px; color: var(--amarelo); flex: none; }
+.assin-fin.ok .assin-topo > .ico { color: var(--verde); }
+.assin-topo .ico.perigo { color: var(--vermelho); }
+.assin-topo b { display: block; font-size: 1.1rem; }
+.assin-topo small { color: var(--muted); }
+.signatarios { display: grid; gap: 8px; }
+.signatario { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border-radius: 14px; background: var(--card-2); }
+.signatario b { display: block; }
+.signatario small { color: var(--muted); font-size: .85rem; }
+.sig-passos { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .88rem; color: var(--muted); }
+.sig-passos span { display: inline-flex; align-items: center; gap: 5px; }
+.sig-passos .ok { color: var(--verde); font-weight: 600; }
+.sig-passos .perigo { color: var(--vermelho); font-weight: 600; }
+.sig-passos .ico { width: 16px; height: 16px; }
