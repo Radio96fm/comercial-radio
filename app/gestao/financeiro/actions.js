@@ -4,7 +4,10 @@ import { requireFinanceiro } from '@/lib/auth';
 import { emitirBoleto } from '@/lib/cobranca';
 import { hojeISO, parseValor } from '@/lib/format';
 
-const atualizar = () => revalidatePath('/gestao/financeiro', 'layout');
+const atualizar = () => {
+  revalidatePath('/gestao/financeiro', 'layout');
+  revalidatePath('/financeiro', 'layout');
+};
 
 export async function mudarParcela(fd) {
   const { supabase } = await requireFinanceiro();

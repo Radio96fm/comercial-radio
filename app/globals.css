@@ -1131,3 +1131,38 @@ details.parcela-fin summary::-webkit-details-marker { display: none; }
 @media (max-width: 700px) { .fin-cards { grid-template-columns: 1fr; } }
 .nav-grupo { display: block; margin: 14px 12px 4px; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 @media (max-width: 860px) { .nav-grupo { margin: 0 4px; align-self: center; flex: none; } }
+
+/* ---------- Painel financeiro (início) ---------- */
+.chip-r .bolinha { width: 22px; height: 22px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .85); flex: none; }
+a.b-hero { color: var(--on-destaque, #fff); }
+.b-col { display: flex; flex-direction: column; gap: 2px; }
+.b-col .ver-tudo { margin-top: auto; padding-top: 10px; }
+.b-col { position: relative; }
+.ico-redondo { position: absolute; right: 22px; top: 22px; width: 42px; height: 42px; padding: 10px; border-radius: 50%; background: var(--card-2); }
+.b-mini.mini-perigo { border-color: color-mix(in srgb, var(--vermelho) 45%, transparent); }
+.b-mini.mini-perigo .ico { background: var(--vermelho-bg); color: var(--vermelho); }
+.b-mini.mini-perigo b { color: var(--vermelho); }
+.b-minis .b-mini b { font-size: 1.35rem; }
+.barras-fin { min-height: 0; }
+.barras-fin .col .par { height: 140px; width: 100%; max-width: 64px; display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
+.bento > .b-col { grid-column: span 2; }
+@media (min-width: 1600px) { .bento > .b-col { grid-column: span 3; } }
+@media (max-width: 1100px) { .bento > .b-col { grid-column: span 1; } }
+@media (max-width: 700px) { .bento > .b-col { grid-column: auto; } }
+.barras-fin .col .par span { flex: 1; max-width: 26px; }
+.barras-fin .col .par span.prev { background: transparent; border: 1.5px dashed var(--line-2); }
+.barras-fin .col.atual .par span.prev { background: transparent; box-shadow: none; border: 1.5px dashed var(--line-2); }
+.fin-tarefas { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: -8px 0 20px; }
+.fin-tarefas > b { font-size: .9rem; color: var(--muted); margin-right: 4px; }
+.fin-tarefas .tarefa { display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px 10px 14px; border-radius: 999px; background: var(--amarelo-bg); color: var(--amarelo); font-weight: 700; font-size: .95rem; }
+.fin-tarefas .tarefa.perigo { background: var(--vermelho-bg); color: var(--vermelho); }
+.fin-tarefas .tarefa .ico { width: 18px; height: 18px; }
+.fin-tarefas .tarefa:hover { filter: brightness(1.1); }
+.fin-atalhos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: -8px 0 26px; }
+.fin-atalhos a { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; padding: 16px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); color: var(--text); transition: border-color .15s, transform .15s; }
+.fin-atalhos a:hover { border-color: var(--destaque, var(--line-2)); transform: translateY(-2px); }
+.fin-atalhos .ico { grid-row: span 2; width: 44px; height: 44px; padding: 11px; border-radius: 14px; background: var(--destaque, var(--accent)); color: var(--on-destaque, #000); }
+.fin-atalhos b { font-size: 1.02rem; }
+.fin-atalhos small { color: var(--muted); font-size: .84rem; }
+@media (max-width: 1100px) { .fin-atalhos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .fin-atalhos { grid-template-columns: 1fr; } .fin-tarefas .tarefa { width: 100%; } }
