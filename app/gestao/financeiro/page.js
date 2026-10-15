@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {
-  AlertTriangle, FileText, PenLine, Wallet, Send, BadgePercent, CalendarClock, RefreshCw, TrendingUp, CircleDollarSign, ChevronRight,
+  AlertTriangle, FileText, PenLine, Wallet, Send, BadgePercent, CalendarClock, RefreshCw, TrendingUp, CircleDollarSign, ChevronRight, Building2, Search,
 } from 'lucide-react';
 import { requireFinanceiro } from '@/lib/auth';
 import { lerPeriodo, comissoesDoMes, mensagemCobranca } from '@/lib/financeiro';
@@ -48,7 +48,7 @@ export default async function ResumoFinanceiro({ searchParams }) {
     parcelas('valor, status, vencimento, pago_em, contrato:contratos!inner(status, vendedor_id)')
       .or(`vencimento.gte.${inicioSerie},pago_em.gte.${inicioSerie}`),
     // em aberto: atrasadas + vencendo nos próximos 30 dias
-    parcelas('id, numero, valor, status, vencimento, url_boleto, linha_digitavel, contrato:contratos!inner(id, numero, status, vendedor_id, cliente_nome, cliente:clientes(nome, contato_nome, telefone), radio:radios(nome))')
+    parcelas('id, numero, valor, status, vencimento, url_boleto, linha_digitavel, contrato:contratos!inner(id, numero, status, vendedor_id, cliente_nome, cliente:clientes(id, nome, contato_nome, telefone), radio:radios(nome))')
       .in('status', ['a_emitir', 'emitido']).lte('vencimento', somarDias(hoje, 30)).order('vencimento'),
     parcelas('valor, contrato:contratos!inner(status, vendedor_id)').eq('status', 'pago').gte('pago_em', per.de).lte('pago_em', per.ate),
     comissoesDoMes(supabase, mesCom, vend || null),
@@ -94,6 +94,9 @@ export default async function ResumoFinanceiro({ searchParams }) {
       <div className="saudacao-g">
         <small>{dataLonga}</small>
         <h1>{saudacao()}, {perfil.nome.split(' ')[0]}!{nomeVend ? ` Números de ${nomeVend.split(' ')[0]}` : ' Veja como está o caixa'}</h1>
+        <form method="get" action={`${baseFin}/clientes`} className="busca-fin">
+          <Search className="ico" /><input name="busca" placeholder="Procurar cliente pelo nome ou CNPJ" aria-label="Procurar cliente" /><button className="btn peq">Procurar</button>
+        </form>
       </div>
 
       {(atrasadas.length > 0 || aEmitir.length > 0 || faltaPagar.length > 0) && (
@@ -186,6 +189,8 @@ export default async function ResumoFinanceiro({ searchParams }) {
         <Link href={`${baseFin}/parcelas${q({ situacao: 'abertas' })}`}><Wallet className="ico" /><b>Dar baixa</b><small>marcar parcela como paga</small></Link>
         <Link href={`${baseFin}/cobranca${q({})}`}><Send className="ico" /><b>Cobrar clientes</b><small>boletos e WhatsApp do mês</small></Link>
         <Link href={`${baseFin}/comissoes${q({ mes: mesCom })}`}><BadgePercent className="ico" /><b>Pagar comissões</b><small>fechamento do dia {DIA_CORTE}</small></Link>
+        <Link href={`${baseFin}/clientes`}><Building2 className="ico" /><b>Ficha do cliente</b><small>tudo o que cada um pagou e deve</small></Link>
+        <Link href={`${baseFin}/previsao${q({})}`}><TrendingUp className="ico" /><b>Previsão</b><small>o que entra nos próximos meses</small></Link>
         <Link href={`${baseFin}/contratos${q({ periodo: 'tudo' })}`}><FileText className="ico" /><b>Ver contratos</b><small>todos os contratos fechados</small></Link>
       </div>
 
@@ -196,7 +201,7 @@ export default async function ResumoFinanceiro({ searchParams }) {
             <div className="linhas-g">
               {atrasadas.slice(0, 6).map((p) => (
                 <div key={p.id} className="linha-g">
-                  <div><b>{p.contrato.cliente?.nome || p.contrato.cliente_nome}</b><small>{moeda(p.valor)} · venceu há {diasEntre(p.vencimento, hoje)} dia{diasEntre(p.vencimento, hoje) > 1 ? 's' : ''}</small></div>
+                  <div><Link href={`${baseFin}/clientes/${p.contrato.cliente?.id}`}><b>{p.contrato.cliente?.nome || p.contrato.cliente_nome}</b></Link><small>{moeda(p.valor)} · venceu há {diasEntre(p.vencimento, hoje)} dia{diasEntre(p.vencimento, hoje) > 1 ? 's' : ''}</small></div>
                   {p.contrato.cliente?.telefone
                     ? <a className="btn peq whats" href={linkWhatsApp(p.contrato.cliente.telefone, mensagemCobranca(p))} target="_blank" rel="noopener noreferrer">Cobrar</a>
                     : <span className="badge b-vermelho">{data(p.vencimento)}</span>}
@@ -213,7 +218,7 @@ export default async function ResumoFinanceiro({ searchParams }) {
             <div className="linhas-g">
               {semana.slice(0, 6).map((p) => (
                 <div key={p.id} className="linha-g">
-                  <div><b>{p.contrato.cliente?.nome || p.contrato.cliente_nome}</b><small>{moeda(p.valor)} · {p.status === 'a_emitir' ? 'boleto a emitir' : 'boleto emitido'}</small></div>
+                  <div><Link href={`${baseFin}/clientes/${p.contrato.cliente?.id}`}><b>{p.contrato.cliente?.nome || p.contrato.cliente_nome}</b></Link><small>{moeda(p.valor)} · {p.status === 'a_emitir' ? 'boleto a emitir' : 'boleto emitido'}</small></div>
                   <span className={`badge ${p.status === 'a_emitir' ? 'b-amarelo' : 'b-azul'}`}>{p.vencimento === hoje ? 'Hoje' : data(p.vencimento).slice(0, 5)}</span>
                 </div>
               ))}

@@ -1166,3 +1166,34 @@ a.b-hero { color: var(--on-destaque, #fff); }
 .fin-atalhos small { color: var(--muted); font-size: .84rem; }
 @media (max-width: 1100px) { .fin-atalhos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .fin-atalhos { grid-template-columns: 1fr; } .fin-tarefas .tarefa { width: 100%; } }
+.fin-atalhos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .fin-atalhos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .fin-atalhos { grid-template-columns: 1fr; } }
+.busca-fin { display: flex; align-items: center; gap: 8px; margin-top: 16px; max-width: 560px; padding: 6px 6px 6px 16px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); }
+.busca-fin .ico { width: 20px; height: 20px; color: var(--muted); flex: none; }
+.busca-fin input { flex: 1; min-width: 0; border: 0; background: transparent; padding: 8px 0; font-size: 1rem; color: var(--text); outline: none; box-shadow: none; }
+.busca-fin .btn { margin: 0; border-radius: 999px; }
+.voltar-fin { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+.voltar-fin .ico { width: 18px; height: 18px; }
+.ficha-cli { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.ficha-cli > div { display: grid; gap: 4px; }
+.ficha-contatos { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 6px; }
+.ficha-contatos a, .ficha-contatos span { display: inline-flex; align-items: center; gap: 6px; color: var(--text); }
+.ficha-contatos .ico { width: 17px; height: 17px; color: var(--muted); }
+.contrato-fin { margin-top: 8px; }
+.contrato-fin h2 .badge { font-size: .8rem; vertical-align: middle; }
+.parcela-fin .nome a { color: inherit; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
+.prev-meses { display: grid; gap: 18px; margin-bottom: 8px; }
+.prev-mes { display: grid; gap: 8px; }
+.prev-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.prev-topo b { font-size: 1.05rem; text-transform: capitalize; }
+.prev-topo .num { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; }
+.prev-mes.atual .prev-topo b::after { content: ' · este mês'; color: var(--muted); font-weight: 500; font-size: .9rem; text-transform: none; display: inline-block; margin-left: 4px; }
+.prev-barra { display: flex; gap: 2px; height: 14px; border-radius: 999px; background: var(--card-2); overflow: hidden; }
+.prev-barra span { display: block; height: 100%; }
+.prev-det { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .88rem; color: var(--muted); }
+.prev-det .ok { color: var(--verde); }
+.prev-det .aviso { color: var(--amarelo); }
+.prev-legenda { display: flex; gap: 16px; font-size: .85rem; color: var(--muted); }
+.prev-legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.gestao-main .cabecalho .btn { margin: 0; }

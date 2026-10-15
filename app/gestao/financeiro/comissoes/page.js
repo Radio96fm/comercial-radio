@@ -5,9 +5,10 @@ import { mesDaComissao, nomeMes, DIA_CORTE } from '@/lib/ganhos';
 import { hojeISO, somarMeses, moeda, data } from '@/lib/format';
 import { pagarComissao, desfazerComissao } from '../actions';
 import Filtros from '../Filtros';
+import BotaoPlanilha from '../BotaoPlanilha';
 
 export default async function Comissoes({ searchParams }) {
-  const { supabase } = await requireFinanceiro();
+  const { supabase, baseFin } = await requireFinanceiro();
   const atual = mesDaComissao(hojeISO());
   const meses = Array.from({ length: 12 }, (_, i) => somarMeses(`${atual}-01`, -i).slice(0, 7));
   const mes = meses.includes(searchParams?.mes) ? searchParams.mes : atual;
@@ -21,7 +22,7 @@ export default async function Comissoes({ searchParams }) {
 
   return (
     <>
-      <div className="cabecalho"><h1>Comissões</h1><span className="muted">Total de {nomeMes(mes)}: <b>{moeda(total)}</b></span></div>
+      <div className="cabecalho"><h1>Comissões</h1><span className="muted">Total de {nomeMes(mes)}: <b>{moeda(total)}</b></span><BotaoPlanilha href={`${baseFin}/exportar?${new URLSearchParams({ tipo: 'comissoes', mes, ...(vend ? { vendedor: vend } : {}) })}`} /></div>
       <Filtros vendedores={vendedores || []} sp={searchParams} semPeriodo
         extra={<div className="campo"><label>Fechamento</label><select name="mes" defaultValue={mes}>{meses.map((m) => <option key={m} value={m}>{nomeMes(m)}</option>)}</select></div>} />
       <p className="muted">Fechamento de {nomeMes(mes)}: parcelas pagas de {data(de)} a {data(ate)} (a comissão fecha no dia {DIA_CORTE}).</p>

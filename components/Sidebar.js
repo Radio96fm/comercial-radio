@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, MessageCircleQuestion, Timer, BadgePercent, Send,
+  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, MessageCircleQuestion, Timer, BadgePercent, Send, Building2, TrendingUp,
 } from 'lucide-react';
 
 // m = só para o gestor master
@@ -25,6 +25,8 @@ const FINANCEIRO = [
   ['/gestao/financeiro', LayoutDashboard, 'Resumo financeiro', true],
   ['/gestao/financeiro/comissoes', BadgePercent, 'Comissões'],
   ['/gestao/financeiro/parcelas', Wallet, 'Parcelas / boletos'],
+  ['/gestao/financeiro/clientes', Building2, 'Clientes'],
+  ['/gestao/financeiro/previsao', TrendingUp, 'Previsão'],
   ['/gestao/financeiro/cobranca', Send, 'Cobrança do mês'],
   ['/gestao/financeiro/contratos', FileText, 'Contratos fechados'],
 ];

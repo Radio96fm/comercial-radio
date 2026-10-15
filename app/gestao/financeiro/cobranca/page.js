@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { requireFinanceiro } from '@/lib/auth';
 import { mensagemCobranca } from '@/lib/financeiro';
 import { data, moeda, STATUS_PARCELA, hojeISO, somarDias, linkWhatsApp } from '@/lib/format';
@@ -5,11 +6,11 @@ import Filtros from '../Filtros';
 import EnviarTodos from './EnviarTodos';
 
 export default async function Cobranca({ searchParams }) {
-  const { supabase } = await requireFinanceiro();
+  const { supabase, baseFin } = await requireFinanceiro();
   const vend = searchParams?.vendedor || '';
   const hoje = hojeISO();
   let q = supabase.from('parcelas')
-    .select('id, numero, vencimento, valor, status, url_boleto, linha_digitavel, contrato:contratos!inner(numero, status, vendedor_id, cliente:clientes(nome, contato_nome, telefone), vendedor:profiles(nome), radio:radios(nome))')
+    .select('id, numero, vencimento, valor, status, url_boleto, linha_digitavel, contrato:contratos!inner(numero, status, vendedor_id, cliente:clientes(id, nome, contato_nome, telefone), vendedor:profiles(nome), radio:radios(nome))')
     .in('contrato.status', ['ativo', 'pendente']).in('status', ['a_emitir', 'emitido'])
     .lte('vencimento', somarDias(hoje, 31)).order('vencimento');
   if (vend) q = q.eq('contrato.vendedor_id', vend);
@@ -35,7 +36,7 @@ export default async function Cobranca({ searchParams }) {
             return (
               <div key={p.id} className="item">
                 <div className="info">
-                  <div className="nome">{cli?.nome}</div>
+                  <div className="nome"><Link href={`${baseFin}/clientes/${cli?.id}`}>{cli?.nome}</Link></div>
                   <div className="det">{p.numero}ª parcela · {moeda(p.valor)} · {p.contrato?.vendedor?.nome}</div>
                   <div className="det" style={{ color: atrasada ? 'var(--vermelho)' : undefined }}>Vence {data(p.vencimento)}{atrasada ? ' · EM ATRASO' : ''} · {STATUS_PARCELA[p.status]}{!p.url_boleto && !p.linha_digitavel ? ' · sem boleto anexado' : ''}</div>
                 </div>
