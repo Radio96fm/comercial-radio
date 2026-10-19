@@ -2,9 +2,9 @@ import Link from 'next/link';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
 import Tendencia from '@/components/Tendencia';
-import { calcularGanhos, faltaParaVencer, DIA_CORTE } from '@/lib/ganhos';
-import { data, hojeISO, moeda, somarDias } from '@/lib/format';
-import { CalendarClock, ChevronDown, FileCheck2, Flame, Lock, Medal, Rocket, Star, Target, TrendingUp, Trophy } from 'lucide-react';
+import { calcularGanhos, conquistasDe, DIA_CORTE } from '@/lib/ganhos';
+import { moeda } from '@/lib/format';
+import { CalendarClock, FileCheck2, Flame, Medal, Rocket, Target, TrendingUp, Trophy } from 'lucide-react';
 
 const MES_LONGO = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const mesLongo = (chave) => MES_LONGO[Number(chave.split('-')[1]) - 1];
@@ -20,17 +20,7 @@ export default async function GanhosPage() {
   const maior = Math.max(1, ...g.serie.map((m) => m.certo + m.previsto));
   const diff = g.atual - g.anterior;
   const pctTxt = String(g.pct).replace('.', ',');
-  const hoje = hojeISO();
-  const urgencia = (fim) => (fim <= somarDias(hoje, 30) ? 'b-vermelho' : fim <= somarDias(hoje, 60) ? 'b-amarelo' : 'b-azul');
-
-  const conquistas = [
-    { nome: 'Primeiro contrato', desc: 'Fechou o primeiro contrato', icone: Star, ok: g.ativos.length + g.pendentes.length > 0, falta: 'Feche seu primeiro contrato' },
-    { nome: 'Três clientes ativos', desc: 'Três contratos pagando você', icone: Medal, ok: g.ativos.length >= 3, falta: `Faltam ${Math.max(0, 3 - g.ativos.length)} contrato(s) ativo(s)` },
-    { nome: 'Dez clientes ativos', desc: 'Carteira de 10 contratos', icone: Trophy, ok: g.ativos.length >= 10, falta: `Faltam ${Math.max(0, 10 - g.ativos.length)} contrato(s) ativo(s)` },
-    { nome: 'Melhor mês', desc: 'Bateu o recorde de comissão', icone: Rocket, ok: g.atual > 0 && g.atual >= g.recorde && g.recorde > 0, falta: 'Bata seu melhor mês' },
-    { nome: 'Três meses seguidos', desc: 'Comissão em 3 meses seguidos', icone: Flame, ok: g.sequencia >= 3, falta: `${Math.max(0, 3 - g.sequencia)} mês(es) a mais` },
-    { nome: 'Em dia', desc: 'Nenhum boleto em atraso', icone: Target, ok: g.atrasadas.length === 0 && g.ativos.length > 0, falta: 'Cobre os boletos em atraso' },
-  ];
+  const conquistas = conquistasDe(g);
   const ganhas = conquistas.filter((c) => c.ok).length;
 
   let frase;
@@ -83,70 +73,22 @@ export default async function GanhosPage() {
           <p className="dica-ganhos">+ {moeda(g.previstoMes)} entram neste mês quando os clientes assinarem os contratos que estão aguardando.</p>
         )}
 
-        <div className="gbotoes">
-          <details className={`gbotao ${ganhas > 0 ? 'ouro' : ''}`}>
-            <summary>
-              <span className="gbotao-ico"><Medal size={20} /></span>
-              <span className="gbotao-txt"><b>Conquistas</b><small>{ganhas} de {conquistas.length} desbloqueadas</small></span>
-              <span className="gbotao-seta"><ChevronDown size={20} /></span>
-            </summary>
-            <div className="conquistas">
-              {conquistas.map((c) => (
-                <div key={c.nome} className={`conquista ${c.ok ? 'ok' : ''}`}>
-                  <span className="selo">{c.ok ? <c.icone size={20} /> : <Lock size={18} />}</span>
-                  <b>{c.nome}</b>
-                  <small>{c.ok ? c.desc : c.falta}</small>
-                </div>
-              ))}
-            </div>
-          </details>
-
-          <details className={`gbotao ${g.vencendo.length > 0 ? 'alerta-r' : ''}`}>
-            <summary>
-              <span className="gbotao-ico"><CalendarClock size={20} /></span>
-              <span className="gbotao-txt"><b>Hora de renovar</b><small>{g.vencendo.length ? `${g.vencendo.length} vencendo em breve` : 'Nenhum vencendo em breve'}</small></span>
-              <span className="gbotao-seta"><ChevronDown size={20} /></span>
-            </summary>
-            {!g.vencendo.length ? (
-              <div className="vazio">Avisamos aqui 45 dias antes do fim de contratos de até 3 meses, e 60 dias antes dos demais.</div>
-            ) : (
-              <div className="lista">
-                {g.vencendo.map((c) => (
-                  <Link key={c.id} href={`/app/contratos/${c.id}`} className="item renovar">
-                    <div className="info">
-                      <div className="nome">{c.cliente_nome}</div>
-                      <div className="det">{c.radio?.nome} · {c.programa?.nome || 'Plano personalizado'} · até {data(c.data_fim)}</div>
-                      <div className="det">Renovando, você continua ganhando <b>{moeda((Number(c.valor_mensal) * g.pct) / 100)}/mês</b></div>
-                    </div>
-                    <span className={`badge ${urgencia(c.data_fim)}`}>{faltaParaVencer(c.data_fim)}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </details>
-
-          <details className="gbotao">
-            <summary>
-              <span className="gbotao-ico"><FileCheck2 size={20} /></span>
-              <span className="gbotao-txt"><b>Contratos que pagam você</b><small>{g.ativos.length} ativos</small></span>
-              <span className="gbotao-seta"><ChevronDown size={20} /></span>
-            </summary>
-            {!g.ativos.length ? (
-              <div className="vazio">Nenhum contrato ativo ainda. O primeiro está logo ali!</div>
-            ) : (
-              <div className="lista">
-                {g.ativos.map((c) => (
-                  <Link key={c.id} href={`/app/contratos/${c.id}`} className="item">
-                    <div className="info">
-                      <div className="nome">{c.cliente_nome}</div>
-                      <div className="det">{moeda(c.valor_mensal)}/mês · até {data(c.data_fim)}</div>
-                    </div>
-                    <span className="chip-ganho">+{moeda((Number(c.valor_mensal) * g.pct) / 100)}<small>/mês</small></span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </details>
+        <div className="acoes-ganhos">
+          <Link href="/app/ganhos/conquistas" className={`acao-ganho ouro ${ganhas > 0 ? 'ativo' : ''}`}>
+            <span className="acao-ico"><Medal size={22} /></span>
+            <b>Conquistas</b>
+            <small>{ganhas} de {conquistas.length} desbloqueadas</small>
+          </Link>
+          <Link href="/app/ganhos/renovar" className={`acao-ganho ${g.vencendo.length > 0 ? 'alerta-r' : ''}`}>
+            <span className="acao-ico"><CalendarClock size={22} /></span>
+            <b>Hora de renovar</b>
+            <small>{g.vencendo.length ? `${g.vencendo.length} vencendo em breve` : 'Nenhum vencendo'}</small>
+          </Link>
+          <Link href="/app/ganhos/contratos" className="acao-ganho">
+            <span className="acao-ico"><FileCheck2 size={22} /></span>
+            <b>Contratos que pagam você</b>
+            <small>{g.ativos.length} ativos</small>
+          </Link>
         </div>
 
         <div className="secao-titulo"><h2>Mês a mês</h2></div>

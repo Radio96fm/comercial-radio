@@ -1339,3 +1339,17 @@ a.b-hero { color: var(--on-destaque, #fff); }
 .renovar-prazo b { font-size: 1rem; }
 .renovar-prazo span { font-size: .88rem; }
 .renovar-prazo textarea { min-height: 80px; }
+
+/* ganhos: botões em forma de quadradinhos (abrem a tela de detalhe) */
+.acoes-ganhos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0 22px; }
+.acao-ganho { display: flex; flex-direction: column; gap: 6px; min-height: 136px; padding: 12px 10px; border-radius: var(--radius-sm); background: var(--card); border: 1px solid var(--line-2); min-width: 0; color: var(--text); }
+.acao-ganho:active { transform: scale(.98); }
+.acao-ganho b { font-size: .86rem; line-height: 1.2; }
+.acao-ganho small { color: var(--muted); font-size: .75rem; line-height: 1.25; margin-top: auto; }
+.acao-ico { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--card-2); color: var(--text); }
+.acao-ganho.ouro { background: linear-gradient(160deg, rgba(251, 191, 36, .14), var(--card) 70%); border-color: rgba(251, 191, 36, .45); }
+.acao-ganho.ouro.ativo .acao-ico { background: var(--amarelo); color: #1c1917; }
+.acao-ganho.alerta-r { border-color: rgba(248, 113, 113, .45); }
+.acao-ganho.alerta-r .acao-ico { background: rgba(248, 113, 113, .18); color: var(--vermelho); }
+.conquistas.grande { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.conquistas.grande .conquista { min-height: 120px; }
