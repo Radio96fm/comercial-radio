@@ -547,19 +547,20 @@ details.mais-info summary { cursor: pointer; font-weight: 600; }
 .tendencia.sobe { background: rgba(74, 222, 128, .18); color: #4ade80; }
 .tendencia.cai { background: rgba(248, 113, 113, .18); color: #f87171; }
 .tendencia.igual { background: rgba(255, 255, 255, .1); color: #e5e5e5; }
-.grafico-ganhos { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; align-items: end; padding: 16px 10px 12px; }
-.grafico-ganhos .barra { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
-.grafico-ganhos .valor { font-size: .62rem; color: var(--muted); white-space: nowrap; min-height: 1em; }
-.grafico-ganhos .trilho { height: 130px; width: 100%; max-width: 30px; display: flex; align-items: flex-end; }
-.grafico-ganhos .trilho i { display: flex; flex-direction: column; width: 100%; background: linear-gradient(180deg, #fbbf24, #f97316); border-radius: 8px 8px 3px 3px; overflow: hidden; opacity: .55; }
-.grafico-ganhos .trilho em { display: block; width: 100%; background: rgba(255, 255, 255, .6); }
-.grafico-ganhos .atual .trilho i { opacity: 1; box-shadow: 0 0 18px rgba(251, 191, 36, .5); }
-.grafico-ganhos .atual .valor { color: #fde68a; font-weight: 700; }
-.grafico-ganhos .futuro .trilho i { opacity: .28; }
-.grafico-ganhos .mes { font-size: .72rem; color: var(--muted); }
-.grafico-ganhos .atual .mes { color: var(--text); font-weight: 800; }
-.legenda-ganhos { font-size: .8rem; margin-top: -4px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
-.legenda-ganhos .q { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-left: 6px; }
+.grafico-ganhos { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; align-items: end; padding: 18px 8px 12px; border-radius: 20px; background: radial-gradient(120% 80% at 50% 0%, rgba(251, 191, 36, .12), transparent 60%), var(--card); border: 1px solid rgba(251, 191, 36, .18); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 0 32px rgba(251, 191, 36, .06); }
+.coluna-mes { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.coluna-mes .valor { font-size: .68rem; font-weight: 700; color: var(--muted); white-space: nowrap; min-height: 1em; font-variant-numeric: tabular-nums; }
+.coluna-mes .trilho { height: 120px; width: 100%; max-width: 34px; display: flex; align-items: flex-end; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .05) 0 1px, transparent 1px 14px); border-radius: 10px; }
+.coluna-mes .trilho i { display: flex; flex-direction: column; width: 100%; background: linear-gradient(180deg, #fbbf24, #f97316); border-radius: 10px 10px 4px 4px; overflow: hidden; opacity: .6; min-height: 4px; }
+.coluna-mes .trilho em { display: block; width: 100%; background: rgba(255, 255, 255, .7); }
+.coluna-mes.atual .trilho i { opacity: 1; box-shadow: 0 0 22px rgba(251, 191, 36, .55); }
+.coluna-mes.atual .valor { color: #fde68a; }
+.coluna-mes.futuro .trilho i { opacity: .25; background: repeating-linear-gradient(135deg, #fbbf24 0 4px, transparent 4px 8px); }
+.coluna-mes .mes { font-size: .72rem; color: var(--muted); }
+.coluna-mes.atual .mes { color: var(--text); font-weight: 800; }
+.legenda-ganhos { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; font-size: .8rem; color: var(--muted); }
+.legenda-ganhos span { display: inline-flex; align-items: center; gap: 6px; }
+.legenda-ganhos .q { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
 .legenda-ganhos .q.forte { background: #f59e0b; }
 .legenda-ganhos .q.fraco { background: rgba(245, 158, 11, .35); }
 .legenda-ganhos .q.claro { background: rgba(255, 255, 255, .6); }

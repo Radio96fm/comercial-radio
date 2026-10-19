@@ -98,7 +98,7 @@ export default async function GanhosPage() {
           {g.serie.map((m) => {
             const total = m.certo + m.previsto;
             return (
-              <div key={m.chave} className={`barra ${m.atual ? 'atual' : ''} ${m.futuro ? 'futuro' : ''}`}>
+              <div key={m.chave} className={`coluna-mes ${m.atual ? 'atual' : ''} ${m.futuro ? 'futuro' : ''}`}>
                 <span className="valor">{total ? curto(total).replace('R$', '').trim() : ''}</span>
                 <div className="trilho">
                   <i style={{ height: `${Math.max(2, (total / maior) * 100)}%` }}>
@@ -110,7 +110,11 @@ export default async function GanhosPage() {
             );
           })}
         </div>
-        <p className="muted legenda-ganhos"><span className="q forte" /> recebido <span className="q fraco" /> já garantido pelos contratos <span className="q claro" /> aguardando assinatura</p>
+        <div className="legenda-ganhos">
+          <span><i className="q forte" /> recebido</span>
+          <span><i className="q fraco" /> garantido</span>
+          <span><i className="q claro" /> aguardando assinatura</span>
+        </div>
 
         <div className="secao-titulo"><h2><CalendarClock className="ico" /> Hora de renovar</h2><span className="muted">{g.vencendo.length}</span></div>
         {!g.vencendo.length ? (
