@@ -122,6 +122,15 @@ export async function iniciarVisita(_prev, fd) {
   redirect(`/app/visitas/${id}`);
 }
 
+// Renova o prazo de negociação (15 dias, depois mais 15 com aceite do comercial)
+export async function pedirProrrogacao(_prev, fd) {
+  const { supabase } = await getSessao();
+  const { data, error } = await supabase.rpc('pedir_prorrogacao', { p_visita: txt(fd, 'id'), p_motivo: txt(fd, 'motivo') });
+  if (error) return { erro: traduzErro(error) };
+  revalidatePath('/app', 'layout');
+  return { ok: data };
+}
+
 export async function mudarStatusVisita(fd) {
   const { supabase } = await getSessao();
   const id = txt(fd, 'id');

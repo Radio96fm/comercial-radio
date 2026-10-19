@@ -11,7 +11,7 @@ export default async function Visitas() {
   const [{ data: agora }, { data: minhas }] = await Promise.all([
     supabase
       .from('visitas')
-      .select('id, iniciada_em, vendedor_id, status, cliente:clientes(nome, segmento:segmentos(nome)), vendedor:profiles(nome)')
+      .select('id, iniciada_em, prazo_extra_dias, vendedor_id, status, cliente:clientes(nome, segmento:segmentos(nome)), vendedor:profiles(nome)')
       .in('status', ['em_andamento', 'proposta'])
       .order('iniciada_em', { ascending: false }),
     supabase
@@ -42,7 +42,7 @@ export default async function Visitas() {
                   <div className="det">
                     <b>{v.vendedor_id === perfil.id ? 'Você' : v.vendedor?.nome}</b> · {tempoDesde(v.iniciada_em)}
                   </div>
-                  {(() => { const p = prazoVisita(v.iniciada_em); return <div className={`det prazo-linha ${p.avisar ? 'alerta-p' : ''}`}>Exclusividade: {textoRestam(p.restam)}{p.restam > 0 ? ` (até ${p.ate})` : ''}</div>; })()}
+                  {(() => { const p = prazoVisita(v.iniciada_em, v.prazo_extra_dias); return <div className={`det prazo-linha ${p.avisar ? 'alerta-p' : ''}`}>Exclusividade: {textoRestam(p.restam)}{p.restam > 0 ? ` (até ${p.ate})` : ''}</div>; })()}
                 </div>
                 <span className={`badge ${COR[v.status]}`}>{STATUS_VISITA[v.status]}</span>
               </Link>
