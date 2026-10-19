@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 
-const PUBLICAS = ['/login', '/primeiro-acesso', '/cadastro', '/api/autentique'];
+const PUBLICAS = ['/login', '/celular', '/primeiro-acesso', '/cadastro', '/api/autentique'];
 
 export async function middleware(request) {
   let response = NextResponse.next({ request });
