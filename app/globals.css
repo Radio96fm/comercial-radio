@@ -1310,3 +1310,22 @@ a.b-hero { color: var(--on-destaque, #fff); }
   box-shadow: 0 14px 40px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .05);
 }
 .app-shell .bottomnav a.ativo { box-shadow: 0 0 22px rgba(242, 240, 235, .18); }
+
+/* ganhos: três botões que abrem cada seção (Conquistas, Hora de renovar, Contratos que pagam você) */
+.gbotoes { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 22px; }
+.gbotao { border-radius: var(--radius-sm); background: var(--card); border: 1px solid var(--line-2); overflow: hidden; }
+.gbotao[open] { border-color: rgba(251, 191, 36, .35); }
+.gbotao summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 14px; cursor: pointer; min-height: 60px; }
+.gbotao summary::-webkit-details-marker { display: none; }
+.gbotao-ico { flex: none; width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; background: var(--card-2); color: var(--text); }
+.gbotao-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gbotao-txt b { font-size: 1.02rem; }
+.gbotao-txt small { color: var(--muted); font-size: .85rem; }
+.gbotao-seta { flex: none; color: var(--muted); transition: transform .2s ease; }
+.gbotao[open] .gbotao-seta { transform: rotate(180deg); }
+.gbotao.ouro { background: linear-gradient(160deg, rgba(251, 191, 36, .14), var(--card) 70%); border-color: rgba(251, 191, 36, .45); }
+.gbotao.ouro .gbotao-ico { background: var(--amarelo); color: #1c1917; }
+.gbotao.alerta-r { border-color: rgba(248, 113, 113, .45); }
+.gbotao.alerta-r .gbotao-ico { background: rgba(248, 113, 113, .18); color: var(--vermelho); }
+.gbotao > .lista, .gbotao > .vazio, .gbotao > .conquistas { padding: 0 12px 12px; margin: 0; }
+.gbotao .conquistas { padding-top: 0; }
