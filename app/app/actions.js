@@ -122,6 +122,15 @@ export async function iniciarVisita(_prev, fd) {
   redirect(`/app/visitas/${id}`);
 }
 
+// Renova o prazo de negociação (15 dias, depois mais 15 com aceite do comercial)
+export async function pedirProrrogacao(_prev, fd) {
+  const { supabase } = await getSessao();
+  const { data, error } = await supabase.rpc('pedir_prorrogacao', { p_visita: txt(fd, 'id'), p_motivo: txt(fd, 'motivo') });
+  if (error) return { erro: traduzErro(error) };
+  revalidatePath('/app', 'layout');
+  return { ok: data };
+}
+
 export async function mudarStatusVisita(fd) {
   const { supabase } = await getSessao();
   const id = txt(fd, 'id');
@@ -153,6 +162,7 @@ export async function criarContrato(_prev, fd) {
   const data_inicio = txt(fd, 'data_inicio');
   const meses = parseInt(fd.get('meses'), 10);
   const primeiro_vencimento = txt(fd, 'primeiro_vencimento');
+  const exclusivo = fd.get('exclusivo') !== 'nao';
   const vendedor_id = isGestor && txt(fd, 'vendedor_id') ? txt(fd, 'vendedor_id') : perfil.id;
   let pedidos = [];
   try {
@@ -209,6 +219,7 @@ export async function criarContrato(_prev, fd) {
     partes.push(`Patrocínio do programa "${programa.nome}" (${desc}).`);
   }
   for (const i of itens) partes.push(`${i.quantidade} por mês: ${i.descricao}.`);
+  partes.push(exclusivo ? 'Com exclusividade: não haverá outro cliente do mesmo segmento neste programa no período.' : 'Sem exclusividade.');
 
   const vendedor = vendedor_id === perfil.id
     ? perfil
@@ -230,6 +241,7 @@ export async function criarContrato(_prev, fd) {
     valor_mensal,
     meses,
     dia_vencimento,
+    exclusivo,
     descricao_produto: partes.join('\n'),
     observacoes: txt(fd, 'observacoes'),
     // "Nome da agência" do contrato = o vendedor (dados de "Meus dados")

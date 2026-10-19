@@ -1329,3 +1329,9 @@ a.b-hero { color: var(--on-destaque, #fff); }
 .gbotao.alerta-r .gbotao-ico { background: rgba(248, 113, 113, .18); color: var(--vermelho); }
 .gbotao > .lista, .gbotao > .vazio, .gbotao > .conquistas { padding: 0 12px 12px; margin: 0; }
 .gbotao .conquistas { padding-top: 0; }
+
+/* prorrogação do prazo de negociação na visita */
+.renovar-prazo { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; padding: 14px; border-radius: var(--radius-sm); background: var(--card); border: 1px solid rgba(251, 191, 36, .35); }
+.renovar-prazo b { font-size: 1rem; }
+.renovar-prazo span { font-size: .88rem; }
+.renovar-prazo textarea { min-height: 80px; }

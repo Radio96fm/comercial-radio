@@ -4,9 +4,9 @@ import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
-import { mudarStatusVisita, salvarObsVisita } from '../../actions';
+import { mudarStatusVisita, salvarObsVisita, pedirProrrogacao } from '../../actions';
 import { dataHora, horario, moeda, linkWhatsApp, STATUS_VISITA, hojeISO } from '@/lib/format';
-import { prazoVisita, textoRestam, PRAZO_DIAS } from '@/lib/prazo';
+import { prazoVisita, textoRestam, PRAZO_DIAS, PRAZO_MAXIMO_DIAS } from '@/lib/prazo';
 
 export default async function VisitaPage({ params }) {
   const { supabase, perfil, isGestor } = await getSessao();
@@ -42,7 +42,10 @@ export default async function VisitaPage({ params }) {
   const podeEditar = isGestor || v.vendedor_id === perfil.id;
   const aberta = v.status === 'em_andamento' || v.status === 'proposta';
   const { data: liberada } = await supabase.from('visitas_liberadas').select('visita_id').eq('visita_id', v.id).maybeSingle();
-  const prazo = prazoVisita(v.iniciada_em);
+  const prazo = prazoVisita(v.iniciada_em, v.prazo_extra_dias);
+  const total = PRAZO_DIAS + v.prazo_extra_dias;
+  const { data: pedidoPendente } = await supabase.from('prorrogacoes').select('id').eq('visita_id', v.id).eq('status', 'pendente').maybeSingle();
+  const euNegocio = v.vendedor_id === perfil.id;
 
   return (
     <>
@@ -65,12 +68,26 @@ export default async function VisitaPage({ params }) {
               <span>
                 {prazo.vencido
                   ? 'A empresa está livre para os outros vendedores.'
-                  : `Até ${prazo.ate}, só ${v.vendedor_id === perfil.id ? 'você negocia' : `${v.vendedor?.nome} negocia`} com esta empresa (${PRAZO_DIAS} dias a partir da visita). Depois ela fica livre para os outros vendedores.`}
+                  : `Até ${prazo.ate}, só ${euNegocio ? 'você negocia' : `${v.vendedor?.nome} negocia`} com esta empresa (${total} dias a partir da visita). Depois ela fica livre para os outros vendedores.`}
               </span>
               {!prazo.vencido && (
-                <i style={{ width: `${Math.min(100, Math.max(4, ((PRAZO_DIAS - prazo.restam) / PRAZO_DIAS) * 100))}%` }} />
+                <i style={{ width: `${Math.min(100, Math.max(4, ((total - prazo.restam) / total) * 100))}%` }} />
               )}
             </div>
+          )}
+          {aberta && !liberada && prazo.vencido && podeEditar && euNegocio && v.prazo_extra_dias < PRAZO_MAXIMO_DIAS - PRAZO_DIAS && (
+            <FormAcao action={pedirProrrogacao} className="renovar-prazo">
+              <input type="hidden" name="id" value={v.id} />
+              <b>{v.prazo_extra_dias === 0 ? 'Precisa de mais tempo?' : 'Último pedido de mais 15 dias'}</b>
+              <span className="muted">{v.prazo_extra_dias === 0
+                ? 'Você pode renovar por mais 15 dias. Explique o motivo.'
+                : 'Este pedido vai para o comercial. Os 15 dias extras valem se ele aceitar. O prazo máximo é de 45 dias.'}</span>
+              <div className="campo"><textarea name="motivo" required minLength={5} placeholder="Motivo da renovação" /></div>
+              <BotaoEnviar className="btn sec" texto={v.prazo_extra_dias === 0 ? 'Renovar por 15 dias' : 'Pedir ao comercial'} enviando="..." />
+            </FormAcao>
+          )}
+          {aberta && !liberada && prazo.vencido && euNegocio && pedidoPendente && (
+            <div className="prazo-visita alerta-p"><b>Aguardando o comercial</b><span>O pedido de mais 15 dias foi enviado. Você continua sem exclusividade até a resposta.</span></div>
           )}
           {liberada && aberta && <div className="prazo-visita fim"><b>Exclusividade liberada pelo gestor</b><span>Outros vendedores já podem visitar esta empresa.</span></div>}
           {v.cliente.contato_nome && <div>{v.cliente.contato_nome}</div>}

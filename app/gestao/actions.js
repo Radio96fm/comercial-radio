@@ -382,6 +382,15 @@ export async function liberarVisita(fd) {
   revalidatePath('/gestao/negociacoes');
 }
 
+// o comercial aceita ou recusa o pedido de mais 15 dias de negociação
+export async function decidirProrrogacao(fd) {
+  const { supabase } = await requireGestor();
+  const { error } = await supabase.rpc('decidir_prorrogacao', { p_id: fd.get('id'), p_aceitar: fd.get('aceitar') === 'sim' });
+  if (error) throw new Error(error.message);
+  revalidatePath('/gestao/negociacoes');
+  revalidatePath(`/gestao/visitas/${fd.get('visita_id')}`);
+}
+
 // link único de cadastro dos vendedores (gerar um novo invalida o anterior)
 export async function novoConvite() {
   const { supabase } = await requireMaster();
