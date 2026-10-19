@@ -4,7 +4,7 @@ import Topo from '@/components/Topo';
 import Tendencia from '@/components/Tendencia';
 import { calcularGanhos, faltaParaVencer, DIA_CORTE } from '@/lib/ganhos';
 import { data, hojeISO, moeda, somarDias } from '@/lib/format';
-import { CalendarClock, FileCheck2, Rocket, TrendingUp, Trophy } from 'lucide-react';
+import { CalendarClock, FileCheck2, Flame, Lock, Medal, Rocket, Star, Target, TrendingUp, Trophy } from 'lucide-react';
 
 const MES_LONGO = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const mesLongo = (chave) => MES_LONGO[Number(chave.split('-')[1]) - 1];
@@ -23,6 +23,15 @@ export default async function GanhosPage() {
   const pctTxt = String(g.pct).replace('.', ',');
   const hoje = hojeISO();
   const urgencia = (fim) => (fim <= somarDias(hoje, 30) ? 'b-vermelho' : fim <= somarDias(hoje, 60) ? 'b-amarelo' : 'b-azul');
+
+  const conquistas = [
+    { nome: 'Primeiro contrato', desc: 'Fechou o primeiro contrato', icone: Star, ok: g.ativos.length + g.pendentes.length > 0, falta: 'Feche seu primeiro contrato' },
+    { nome: 'Três clientes ativos', desc: 'Três contratos pagando você', icone: Medal, ok: g.ativos.length >= 3, falta: `Faltam ${Math.max(0, 3 - g.ativos.length)} contrato(s) ativo(s)` },
+    { nome: 'Dez clientes ativos', desc: 'Carteira de 10 contratos', icone: Trophy, ok: g.ativos.length >= 10, falta: `Faltam ${Math.max(0, 10 - g.ativos.length)} contrato(s) ativo(s)` },
+    { nome: 'Melhor mês', desc: 'Bateu o recorde de comissão', icone: Rocket, ok: g.atual > 0 && g.atual >= g.recorde && g.recorde > 0, falta: 'Bata seu melhor mês' },
+    { nome: 'Três meses seguidos', desc: 'Comissão em 3 meses seguidos', icone: Flame, ok: g.sequencia >= 3, falta: `${Math.max(0, 3 - g.sequencia)} mês(es) a mais` },
+    { nome: 'Em dia', desc: 'Nenhum boleto em atraso', icone: Target, ok: g.atrasadas.length === 0 && g.ativos.length > 0, falta: 'Cobre os boletos em atraso' },
+  ];
 
   let frase;
   if (g.atual === 0 && g.anterior === 0) frase = <>Feche um contrato e veja sua comissão aparecer aqui. Cada venda rende <b>{pctTxt}%</b> para você!</>;
@@ -58,6 +67,31 @@ export default async function GanhosPage() {
         {g.previstoMes > 0 && (
           <p className="dica-ganhos">+ {moeda(g.previstoMes)} entram neste mês quando os clientes assinarem os contratos que estão aguardando.</p>
         )}
+
+        <div className="meta-ganhos">
+          {g.recorde > 0 && g.atual < g.recorde ? (
+            <>
+              <div className="meta-topo"><Target className="ico" /> <span>Falta <b>{moeda(g.recorde - g.atual)}</b> para bater seu melhor mês ({moeda(g.recorde)})</span></div>
+              <div className="meta-trilho"><i style={{ width: `${Math.min(100, (g.atual / g.recorde) * 100)}%` }} /></div>
+            </>
+          ) : (
+            <div className="meta-topo"><Trophy className="ico" /> <span>Você está no seu melhor mês ou perto dele. Mantenha o ritmo!</span></div>
+          )}
+          {g.sequencia > 0 && (
+            <div className="meta-topo"><Flame className="ico" /> <span>Sequência de <b>{g.sequencia} {g.sequencia === 1 ? 'mês' : 'meses'}</b> recebendo comissão</span></div>
+          )}
+        </div>
+
+        <div className="secao-titulo"><h2><Medal className="ico" /> Conquistas</h2><span className="muted">{conquistas.filter((c) => c.ok).length}/{conquistas.length}</span></div>
+        <div className="conquistas">
+          {conquistas.map((c) => (
+            <div key={c.nome} className={`conquista ${c.ok ? 'ok' : ''}`}>
+              <span className="selo">{c.ok ? <c.icone size={20} /> : <Lock size={18} />}</span>
+              <b>{c.nome}</b>
+              <small>{c.ok ? c.desc : c.falta}</small>
+            </div>
+          ))}
+        </div>
 
         <div className="secao-titulo"><h2>Mês a mês</h2></div>
         <div className="card grafico-ganhos">
