@@ -38,10 +38,10 @@ export default async function Visitas() {
               const conteudo = (
                 <>
                   <div className="info">
-                    <div className="nome">{v.cliente_nome}</div>
+                    <div className="nome empresa-visita">{v.cliente_nome}</div>
                     <div className="det">{v.segmento_nome}</div>
                     <div className="det">
-                      <b>{v.vendedor_id === perfil.id ? 'Você' : v.vendedor_nome}</b> · {tempoDesde(v.iniciada_em)}
+                      <b className="vendedor-visita">{v.vendedor_id === perfil.id ? 'Você' : v.vendedor_nome}</b> · {tempoDesde(v.iniciada_em)}
                     </div>
                     {(() => { const p = prazoVisita(v.iniciada_em, v.prazo_extra_dias); return <div className={`det prazo-linha ${p.avisar ? 'alerta-p' : ''}`}>Exclusividade: {textoRestam(p.restam)}{p.restam > 0 ? ` (até ${p.ate})` : ''}</div>; })()}
                   </div>
