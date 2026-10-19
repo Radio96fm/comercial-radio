@@ -24,7 +24,8 @@ function LoginForm() {
       setErro('E-mail ou senha incorretos.');
       return;
     }
-    router.replace('/');
+    // dentro da moldura de celular (/celular) abre sempre a versão do vendedor
+    router.replace(window.self !== window.top ? '/app' : '/');
     router.refresh();
   }
 
