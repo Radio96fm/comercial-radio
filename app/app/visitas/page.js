@@ -10,8 +10,8 @@ export default async function Visitas() {
   const { supabase, perfil } = await getSessao();
   const [{ data: agora }, { data: minhas }] = await Promise.all([
     supabase
-      .from('visitas')
-      .select('id, iniciada_em, prazo_extra_dias, vendedor_id, status, cliente:clientes(nome, segmento:segmentos(nome)), vendedor:profiles(nome)')
+      .from('visitas_equipe')
+      .select('id, iniciada_em, prazo_extra_dias, vendedor_id, status, cliente_nome, segmento_nome, vendedor_nome')
       .in('status', ['em_andamento', 'proposta'])
       .order('iniciada_em', { ascending: false }),
     supabase
@@ -34,19 +34,26 @@ export default async function Visitas() {
           <div className="vazio">Nenhuma visita em andamento.</div>
         ) : (
           <div className="lista">
-            {agora.map((v) => (
-              <Link key={v.id} href={`/app/visitas/${v.id}`} className="item">
-                <div className="info">
-                  <div className="nome">{v.cliente?.nome}</div>
-                  <div className="det">{v.cliente?.segmento?.nome}</div>
-                  <div className="det">
-                    <b>{v.vendedor_id === perfil.id ? 'Você' : v.vendedor?.nome}</b> · {tempoDesde(v.iniciada_em)}
+            {agora.map((v) => {
+              const conteudo = (
+                <>
+                  <div className="info">
+                    <div className="nome">{v.cliente_nome}</div>
+                    <div className="det">{v.segmento_nome}</div>
+                    <div className="det">
+                      <b>{v.vendedor_id === perfil.id ? 'Você' : v.vendedor_nome}</b> · {tempoDesde(v.iniciada_em)}
+                    </div>
+                    {(() => { const p = prazoVisita(v.iniciada_em, v.prazo_extra_dias); return <div className={`det prazo-linha ${p.avisar ? 'alerta-p' : ''}`}>Exclusividade: {textoRestam(p.restam)}{p.restam > 0 ? ` (até ${p.ate})` : ''}</div>; })()}
                   </div>
-                  {(() => { const p = prazoVisita(v.iniciada_em, v.prazo_extra_dias); return <div className={`det prazo-linha ${p.avisar ? 'alerta-p' : ''}`}>Exclusividade: {textoRestam(p.restam)}{p.restam > 0 ? ` (até ${p.ate})` : ''}</div>; })()}
-                </div>
-                <span className={`badge ${COR[v.status]}`}>{STATUS_VISITA[v.status]}</span>
-              </Link>
-            ))}
+                  <span className={`badge ${COR[v.status]}`}>{STATUS_VISITA[v.status]}</span>
+                </>
+              );
+              return v.vendedor_id === perfil.id ? (
+                <Link key={v.id} href={`/app/visitas/${v.id}`} className="item">{conteudo}</Link>
+              ) : (
+                <div key={v.id} className="item">{conteudo}</div>
+              );
+            })}
           </div>
         )}
 

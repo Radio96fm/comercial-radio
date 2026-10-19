@@ -12,8 +12,8 @@ export default async function HomeVendedor() {
     supabase.from('radios').select('id, nome, slogan, cor').order('ordem'),
     supabase.from('programas_ocupacao').select('radio_id, cotas_livres').eq('ativo', true),
     supabase
-      .from('visitas')
-      .select('id, iniciada_em, vendedor_id, cliente:clientes(nome), vendedor:profiles(nome)')
+      .from('visitas_equipe')
+      .select('id, iniciada_em, vendedor_id, cliente_nome, vendedor_nome')
       .eq('status', 'em_andamento')
       .order('iniciada_em', { ascending: false })
       .limit(5),
@@ -80,18 +80,25 @@ export default async function HomeVendedor() {
           <div className="vazio">Ninguém registrou visita no momento.</div>
         ) : (
           <div className="lista">
-            {visitas.map((v) => (
-              <Link key={v.id} href={`/app/visitas/${v.id}`} className="item">
-                <span className="icone-redondo"><Car size={20} /></span>
-                <div className="info">
-                  <div className="nome">{v.cliente?.nome}</div>
-                  <div className="det">
-                    {v.vendedor_id === perfil.id ? 'Você' : v.vendedor?.nome} · {tempoDesde(v.iniciada_em)}
+            {visitas.map((v) => {
+              const conteudo = (
+                <>
+                  <span className="icone-redondo"><Car size={20} /></span>
+                  <div className="info">
+                    <div className="nome">{v.cliente_nome}</div>
+                    <div className="det">
+                      {v.vendedor_id === perfil.id ? 'Você' : v.vendedor_nome} · {tempoDesde(v.iniciada_em)}
+                    </div>
                   </div>
-                </div>
-                <ChevronRight className="seta" size={20} />
-              </Link>
-            ))}
+                  {v.vendedor_id === perfil.id && <ChevronRight className="seta" size={20} />}
+                </>
+              );
+              return v.vendedor_id === perfil.id ? (
+                <Link key={v.id} href={`/app/visitas/${v.id}`} className="item">{conteudo}</Link>
+              ) : (
+                <div key={v.id} className="item">{conteudo}</div>
+              );
+            })}
           </div>
         )}
 
