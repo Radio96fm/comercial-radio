@@ -528,25 +528,39 @@ details.mais-info summary { cursor: pointer; font-weight: 600; }
 .ganhos-tiles div { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .ganhos-tiles span { color: var(--muted); font-size: .78rem; line-height: 1.2; }
 .ganhos-tiles b { font-size: 1.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* gamificação dos ganhos: meta, sequência e conquistas */
+.meta-ganhos { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 4px; padding: 14px; border-radius: var(--radius-sm); background: var(--card); border: 1px solid var(--line); }
+.meta-topo { display: flex; align-items: center; gap: 8px; font-size: .95rem; line-height: 1.35; }
+.meta-topo .ico { flex: none; width: 18px; height: 18px; color: var(--amarelo); }
+.meta-trilho { height: 10px; border-radius: 99px; background: var(--card-2); overflow: hidden; }
+.meta-trilho i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #fbbf24, #4ade80); transition: width .6s ease; }
+.conquistas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.conquista { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: var(--radius-sm); background: var(--card); border: 1px dashed var(--line-2); opacity: .6; min-width: 0; }
+.conquista.ok { opacity: 1; border: 1px solid rgba(251, 191, 36, .45); background: linear-gradient(160deg, rgba(251, 191, 36, .12), var(--card) 70%); }
+.conquista .selo { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--card-2); color: var(--muted); }
+.conquista.ok .selo { background: var(--amarelo); color: #1c1917; }
+.conquista b { font-size: .95rem; }
+.conquista small { color: var(--muted); font-size: .8rem; line-height: 1.3; }
 .dica-ganhos { margin: 10px 0 0; padding: 10px 12px; border-radius: var(--radius-sm); background: rgba(251, 191, 36, .1); color: #fde68a; font-size: .9rem; }
 .tendencia { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 999px; font-weight: 800; font-size: .92rem; }
 .tendencia .ico { width: 18px; height: 18px; }
 .tendencia.sobe { background: rgba(74, 222, 128, .18); color: #4ade80; }
 .tendencia.cai { background: rgba(248, 113, 113, .18); color: #f87171; }
 .tendencia.igual { background: rgba(255, 255, 255, .1); color: #e5e5e5; }
-.grafico-ganhos { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; align-items: end; padding: 16px 10px 12px; }
-.grafico-ganhos .barra { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
-.grafico-ganhos .valor { font-size: .62rem; color: var(--muted); white-space: nowrap; min-height: 1em; }
-.grafico-ganhos .trilho { height: 130px; width: 100%; max-width: 30px; display: flex; align-items: flex-end; }
-.grafico-ganhos .trilho i { display: flex; flex-direction: column; width: 100%; background: linear-gradient(180deg, #fbbf24, #f97316); border-radius: 8px 8px 3px 3px; overflow: hidden; opacity: .55; }
-.grafico-ganhos .trilho em { display: block; width: 100%; background: rgba(255, 255, 255, .6); }
-.grafico-ganhos .atual .trilho i { opacity: 1; box-shadow: 0 0 18px rgba(251, 191, 36, .5); }
-.grafico-ganhos .atual .valor { color: #fde68a; font-weight: 700; }
-.grafico-ganhos .futuro .trilho i { opacity: .28; }
-.grafico-ganhos .mes { font-size: .72rem; color: var(--muted); }
-.grafico-ganhos .atual .mes { color: var(--text); font-weight: 800; }
-.legenda-ganhos { font-size: .8rem; margin-top: -4px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
-.legenda-ganhos .q { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-left: 6px; }
+.grafico-ganhos { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; align-items: end; padding: 18px 8px 12px; border-radius: 20px; background: radial-gradient(120% 80% at 50% 0%, rgba(251, 191, 36, .12), transparent 60%), var(--card); border: 1px solid rgba(251, 191, 36, .18); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 0 32px rgba(251, 191, 36, .06); }
+.coluna-mes { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.coluna-mes .valor { font-size: .68rem; font-weight: 700; color: var(--muted); white-space: nowrap; min-height: 1em; font-variant-numeric: tabular-nums; }
+.coluna-mes .trilho { height: 120px; width: 100%; max-width: 34px; display: flex; align-items: flex-end; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .05) 0 1px, transparent 1px 14px); border-radius: 10px; }
+.coluna-mes .trilho i { display: flex; flex-direction: column; width: 100%; background: linear-gradient(180deg, #fbbf24, #f97316); border-radius: 10px 10px 4px 4px; overflow: hidden; opacity: .6; min-height: 4px; }
+.coluna-mes .trilho em { display: block; width: 100%; background: rgba(255, 255, 255, .7); }
+.coluna-mes.atual .trilho i { opacity: 1; box-shadow: 0 0 22px rgba(251, 191, 36, .55); }
+.coluna-mes.atual .valor { color: #fde68a; }
+.coluna-mes.futuro .trilho i { opacity: .25; background: repeating-linear-gradient(135deg, #fbbf24 0 4px, transparent 4px 8px); }
+.coluna-mes .mes { font-size: .72rem; color: var(--muted); }
+.coluna-mes.atual .mes { color: var(--text); font-weight: 800; }
+.legenda-ganhos { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; font-size: .8rem; color: var(--muted); }
+.legenda-ganhos span { display: inline-flex; align-items: center; gap: 6px; }
+.legenda-ganhos .q { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
 .legenda-ganhos .q.forte { background: #f59e0b; }
 .legenda-ganhos .q.fraco { background: rgba(245, 158, 11, .35); }
 .legenda-ganhos .q.claro { background: rgba(255, 255, 255, .6); }
@@ -1084,11 +1098,9 @@ details.material summary::-webkit-details-marker { display: none; }
 details.material.desligado { opacity: .55; }
 .material-corpo { margin-top: 10px; }
 .material-corpo pre { white-space: pre-wrap; font: inherit; font-size: .92rem; max-height: 320px; overflow: auto; background: var(--card-2); padding: 10px 12px; border-radius: 10px; margin: 0 0 10px; }
-.atalho-ia { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin: 4px 0 18px; border-radius: 18px; background: var(--card); border: 1px solid var(--line-2); color: var(--text); }
-.atalho-ia .icone { flex: none; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--destaque, #9db8ff); color: var(--on-destaque, #0b1636); }
-.atalho-ia .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.atalho-ia .txt b { font-size: 1.08rem; }
-.atalho-ia .txt small { color: var(--muted); font-size: .88rem; }
+/* atalho discreto para o assistente de IA, no fim da tela inicial */
+.atalho-ia { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 18px 0 4px; padding: 10px 14px; color: var(--muted); font-size: .92rem; text-decoration: none; }
+.atalho-ia svg:last-child { opacity: .6; }
 .bolha.resposta { white-space: normal; }
 /* prazo de exclusividade da visita */
 .prazo-visita { margin: 12px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line-2); display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; }
@@ -1272,3 +1284,48 @@ a.b-hero { color: var(--on-destaque, #fff); }
 .sig-passos .ok { color: var(--verde); font-weight: 600; }
 .sig-passos .perigo { color: var(--vermelho); font-weight: 600; }
 .sig-passos .ico { width: 16px; height: 16px; }
+
+/* ---------------------------------------------------------------------
+   Painel do vendedor: camada visual "HUD" (escuro). Escopada em .app-shell,
+   que só existe no painel do vendedor; o gestor não é afetado.
+   --------------------------------------------------------------------- */
+.app-shell {
+  background:
+    radial-gradient(80% 45% at 85% -5%, rgba(251, 191, 36, .14), transparent 70%),
+    radial-gradient(70% 40% at 0% 25%, rgba(74, 222, 128, .10), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px) 0 0 / 100% 28px,
+    linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px) 0 0 / 28px 100%,
+    var(--bg);
+}
+[data-theme="light"] .app-shell { background: none; }
+.app-shell .rotulo-secao { display: flex; align-items: center; gap: 8px; }
+.app-shell .rotulo-secao::before { content: ""; width: 14px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #fbbf24, #4ade80); box-shadow: 0 0 10px rgba(251, 191, 36, .6); }
+.app-shell .radio-btn::after {
+  content: ""; position: absolute; left: 20px; right: 20px; top: 0; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--cor), transparent); box-shadow: 0 0 14px var(--cor);
+}
+.app-shell .bottomnav {
+  background: rgba(14, 14, 14, .78);
+  border-color: rgba(251, 191, 36, .22);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+.app-shell .bottomnav a.ativo { box-shadow: 0 0 22px rgba(242, 240, 235, .18); }
+
+/* ganhos: três botões que abrem cada seção (Conquistas, Hora de renovar, Contratos que pagam você) */
+.gbotoes { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 22px; }
+.gbotao { border-radius: var(--radius-sm); background: var(--card); border: 1px solid var(--line-2); overflow: hidden; }
+.gbotao[open] { border-color: rgba(251, 191, 36, .35); }
+.gbotao summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 14px; cursor: pointer; min-height: 60px; }
+.gbotao summary::-webkit-details-marker { display: none; }
+.gbotao-ico { flex: none; width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; background: var(--card-2); color: var(--text); }
+.gbotao-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gbotao-txt b { font-size: 1.02rem; }
+.gbotao-txt small { color: var(--muted); font-size: .85rem; }
+.gbotao-seta { flex: none; color: var(--muted); transition: transform .2s ease; }
+.gbotao[open] .gbotao-seta { transform: rotate(180deg); }
+.gbotao.ouro { background: linear-gradient(160deg, rgba(251, 191, 36, .14), var(--card) 70%); border-color: rgba(251, 191, 36, .45); }
+.gbotao.ouro .gbotao-ico { background: var(--amarelo); color: #1c1917; }
+.gbotao.alerta-r { border-color: rgba(248, 113, 113, .45); }
+.gbotao.alerta-r .gbotao-ico { background: rgba(248, 113, 113, .18); color: var(--vermelho); }
+.gbotao > .lista, .gbotao > .vazio, .gbotao > .conquistas { padding: 0 12px 12px; margin: 0; }
+.gbotao .conquistas { padding-top: 0; }
