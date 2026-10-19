@@ -48,12 +48,6 @@ export default async function HomeVendedor() {
           </Link>
         )}
 
-        <Link href="/app/assistente" className="atalho-ia">
-          <span className="icone"><Sparkles size={22} /></span>
-          <span className="txt"><b>Tirar dúvida com a IA</b><small>Vagas, preços, programas: pergunte por texto ou voz</small></span>
-          <ChevronRight size={22} />
-        </Link>
-
         <p className="rotulo-secao">Escolha a rádio</p>
         {(radios || []).map((r) => {
           const info = livresPorRadio[r.id] || { programas: 0, comVaga: 0, cotas: 0 };
@@ -100,6 +94,12 @@ export default async function HomeVendedor() {
             ))}
           </div>
         )}
+
+        <Link href="/app/assistente" className="atalho-ia">
+          <Sparkles size={18} />
+          <span>Tirar dúvida com a IA</span>
+          <ChevronRight size={18} />
+        </Link>
       </main>
     </>
   );
