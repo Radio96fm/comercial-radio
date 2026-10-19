@@ -33,6 +33,7 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
   const [meses, setMeses] = useState(Math.max(3, minimoInicial));
   const [vencimento, setVencimento] = useState(() => { const d = somarMeses(hoje, 1); return `${d.slice(0, 8)}10`; });
   const [vendedorId, setVendedorId] = useState(meuId);
+  const [exclusivo, setExclusivo] = useState(true);
   const [obsManual, setObsManual] = useState(null);
 
   const radio = radios.find((r) => r.id === radioId);
@@ -161,6 +162,17 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
         </div>
       </div>
       {fim && <p className="muted" style={{ marginTop: -8 }}>Termina em <b>{data(fim)}</b>. Os boletos vencem todo dia {vencimento ? Number(vencimento.slice(8, 10)) : ''}.</p>}
+
+      {/* ------- exclusividade ------- */}
+      <div className="campo" style={{ marginTop: 14 }}>
+        <label>Com exclusividade?</label>
+        <div className="seg4">
+          <button type="button" className={exclusivo ? 'ativo' : ''} onClick={() => setExclusivo(true)}><b>Sim</b>exclusivo</button>
+          <button type="button" className={!exclusivo ? 'ativo' : ''} onClick={() => setExclusivo(false)}><b>Não</b>sem exclusividade</button>
+        </div>
+        <input type="hidden" name="exclusivo" value={exclusivo ? 'sim' : 'nao'} />
+        <div className="ajuda">Com exclusividade, nenhum outro cliente do mesmo segmento entra neste programa no período.</div>
+      </div>
 
       {/* ------- observações ------- */}
       <h2 className="passo">3. O que o cliente tem direito</h2>

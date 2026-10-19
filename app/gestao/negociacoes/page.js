@@ -8,9 +8,9 @@ import { PRAZO_DIAS, prazoVisita, textoRestam } from '@/lib/prazo';
 export default async function Negociacoes() {
   const { supabase } = await requireGestor();
   const [{ data: visitas }, { data: liberadas }] = await Promise.all([
-    supabase.from('visitas').select('id, status, iniciada_em, cliente:clientes(id, nome, cidade), vendedor:profiles(nome)')
+    supabase.from('visitas').select('id, status, iniciada_em, prazo_extra_dias, cliente:clientes(id, nome, cidade), vendedor:profiles(nome)')
       .in('status', ['em_andamento', 'proposta', 'fechado'])
-      .gt('iniciada_em', new Date(Date.now() - PRAZO_DIAS * 86400000).toISOString())
+      .gt('iniciada_em', new Date(Date.now() - (PRAZO_DIAS + 30) * 86400000).toISOString())
       .order('iniciada_em'),
     supabase.from('visitas_liberadas').select('visita_id'),
   ]);
@@ -27,7 +27,7 @@ export default async function Negociacoes() {
       {!travas.length ? <div className="vazio">Nenhuma empresa travada agora.</div> : (
         <div className="lista">
           {travas.map((v) => {
-            const p = prazoVisita(v.iniciada_em);
+            const p = prazoVisita(v.iniciada_em, v.prazo_extra_dias);
             return (
               <div key={v.id} className="item">
                 <div className="info">
