@@ -1284,3 +1284,29 @@ a.b-hero { color: var(--on-destaque, #fff); }
 .sig-passos .ok { color: var(--verde); font-weight: 600; }
 .sig-passos .perigo { color: var(--vermelho); font-weight: 600; }
 .sig-passos .ico { width: 16px; height: 16px; }
+
+/* ---------------------------------------------------------------------
+   Painel do vendedor: camada visual "HUD" (escuro). Escopada em .app-shell,
+   que só existe no painel do vendedor; o gestor não é afetado.
+   --------------------------------------------------------------------- */
+.app-shell {
+  background:
+    radial-gradient(80% 45% at 85% -5%, rgba(251, 191, 36, .14), transparent 70%),
+    radial-gradient(70% 40% at 0% 25%, rgba(74, 222, 128, .10), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px) 0 0 / 100% 28px,
+    linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px) 0 0 / 28px 100%,
+    var(--bg);
+}
+[data-theme="light"] .app-shell { background: none; }
+.app-shell .rotulo-secao { display: flex; align-items: center; gap: 8px; }
+.app-shell .rotulo-secao::before { content: ""; width: 14px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #fbbf24, #4ade80); box-shadow: 0 0 10px rgba(251, 191, 36, .6); }
+.app-shell .radio-btn::after {
+  content: ""; position: absolute; left: 20px; right: 20px; top: 0; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--cor), transparent); box-shadow: 0 0 14px var(--cor);
+}
+.app-shell .bottomnav {
+  background: rgba(14, 14, 14, .78);
+  border-color: rgba(251, 191, 36, .22);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+.app-shell .bottomnav a.ativo { box-shadow: 0 0 22px rgba(242, 240, 235, .18); }
