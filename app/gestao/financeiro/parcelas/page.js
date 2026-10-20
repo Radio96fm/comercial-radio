@@ -3,6 +3,7 @@ import { lerPeriodo } from '@/lib/financeiro';
 import { moeda, hojeISO } from '@/lib/format';
 import Filtros from '../Filtros';
 import ParcelaItem from '../ParcelaItem';
+import { radioFin } from '@/lib/radioFin';
 import BotaoPlanilha from '../BotaoPlanilha';
 
 const SITUACOES = [['', 'Todas'], ['abertas', 'Em aberto'], ['atrasadas', 'Em atraso'], ['a_emitir', 'Boleto a emitir'], ['pagas', 'Pagas']];
@@ -15,9 +16,10 @@ export default async function ParcelasFin({ searchParams }) {
   // atrasadas não dependem do período
   const per = lerPeriodo(searchParams);
   let q = supabase.from('parcelas')
-    .select('id, numero, vencimento, valor, status, pago_em, url_boleto, linha_digitavel, contrato:contratos!inner(id, numero, status, vendedor_id, cliente:clientes(id, nome, contato_nome, telefone, email), vendedor:profiles(nome), radio:radios(nome))')
+    .select('id, numero, vencimento, valor, status, pago_em, url_boleto, linha_digitavel, contrato:contratos!inner(id, numero, status, vendedor_id, radio_id, cliente:clientes(id, nome, contato_nome, telefone, email), vendedor:profiles(nome), radio:radios(nome))')
     .neq('contrato.status', 'cancelado').order('vencimento').limit(400);
   if (vend) q = q.eq('contrato.vendedor_id', vend);
+  if (radioFin()) q = q.eq('contrato.radio_id', radioFin());
   if (sit === 'atrasadas') q = q.in('status', ['a_emitir', 'emitido']).lt('vencimento', hoje);
   else {
     if (sit === 'pagas') q = q.eq('status', 'pago').gte('pago_em', per.de).lte('pago_em', per.ate);

@@ -1,9 +1,10 @@
 import { opcoesPeriodo } from '@/lib/financeiro';
+import FormAuto from '@/components/FormAuto';
 
-// Filtros por vendedor e período (formulário simples, muda a URL)
+// Filtros por vendedor e período: aplicam sozinhos ao mudar
 export default function Filtros({ vendedores, sp, extra, semPeriodo, periodos }) {
   return (
-    <form method="get" className="card filtros-fin">
+    <FormAuto className="card filtros-fin">
       <div className="campo"><label>Vendedor</label>
         <select name="vendedor" defaultValue={sp?.vendedor || ''}>
           <option value="">Todos</option>
@@ -18,7 +19,6 @@ export default function Filtros({ vendedores, sp, extra, semPeriodo, periodos })
         </div>
       )}
       {extra}
-      <button className="btn">Filtrar</button>
-    </form>
+    </FormAuto>
   );
 }

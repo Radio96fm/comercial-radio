@@ -1272,3 +1272,8 @@ a.b-hero { color: var(--on-destaque, #fff); }
 .sig-passos .ok { color: var(--verde); font-weight: 600; }
 .sig-passos .perigo { color: var(--vermelho); font-weight: 600; }
 .sig-passos .ico { width: 16px; height: 16px; }
+.seletor-radio { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); margin-right: auto; flex-wrap: wrap; }
+.seletor-radio button { display: inline-flex; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: .9rem; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+.seletor-radio button i { width: 10px; height: 10px; border-radius: 50%; background: var(--cor); }
+.seletor-radio button.ativo { background: var(--destaque); color: var(--on-destaque); }
+.seletor-radio button:not(.ativo):hover { color: var(--text); background: var(--card-2); }

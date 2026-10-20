@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { requireFinanceiro } from '@/lib/auth';
+import FormAuto from '@/components/FormAuto';
+import { radioFin } from '@/lib/radioFin';
 import { hojeISO, moeda } from '@/lib/format';
 
 const ABERTA = ['a_emitir', 'emitido'];
@@ -13,9 +15,11 @@ export default async function ClientesFin({ searchParams }) {
   const hoje = hojeISO();
   const busca = String(searchParams?.busca || '').trim();
   const filtro = searchParams?.ver || '';
-  const { data: contratos } = await supabase.from('contratos')
+  let qc = supabase.from('contratos')
     .select('id, status, valor_mensal, cliente:clientes(id, nome, razao_social, documento, cidade, telefone), vendedor:profiles(nome), parcelas(valor, status, vencimento)')
     .neq('status', 'cancelado');
+  if (radioFin()) qc = qc.eq('radio_id', radioFin());
+  const { data: contratos } = await qc;
 
   const mapa = new Map();
   (contratos || []).forEach((c) => {
@@ -47,13 +51,13 @@ export default async function ClientesFin({ searchParams }) {
   return (
     <>
       <div className="cabecalho"><h1>Clientes</h1><span className="muted">{mapa.size} clientes com contrato · {comAtraso} com atraso</span></div>
-      <form method="get" className="card filtros-fin">
+      <FormAuto className="card filtros-fin">
         <div className="campo" style={{ flex: 2 }}><label>Procurar cliente</label><input name="busca" defaultValue={busca} placeholder="Nome, razão social ou CNPJ" /></div>
         <div className="campo"><label>Mostrar</label>
           <select name="ver" defaultValue={filtro}><option value="">Todos</option><option value="atraso">Só com atraso</option><option value="ativos">Só com contrato ativo</option></select>
         </div>
         <button className="btn"><Search className="ico" />Procurar</button>
-      </form>
+      </FormAuto>
       {!lista.length ? <div className="vazio">Nenhum cliente encontrado.</div> : (
         <div className="tabela"><table>
           <thead><tr><th>Cliente</th><th>Vendedor</th><th>Por mês (ativos)</th><th>Já pagou</th><th>Em aberto</th><th>Em atraso</th></tr></thead>

@@ -3,6 +3,7 @@ import { requireFinanceiro } from '@/lib/auth';
 import { nomeMes } from '@/lib/ganhos';
 import { hojeISO, somarDias, somarMeses, moeda } from '@/lib/format';
 import Filtros from '../Filtros';
+import { radioFin } from '@/lib/radioFin';
 
 const soma = (l) => l.reduce((s, p) => s + Number(p.valor), 0);
 const FAIXAS = [[1, 15, 'Até 15 dias'], [16, 30, '16 a 30 dias'], [31, 60, '31 a 60 dias'], [61, 99999, 'Mais de 60 dias']];
@@ -21,11 +22,14 @@ export default async function Previsao({ searchParams }) {
     .neq('status', 'cancelado').neq('contrato.status', 'cancelado').lte('vencimento', fim)
     .or(`vencimento.gte.${mes0},status.in.(a_emitir,emitido)`);
   if (vend) qp = qp.eq('contrato.vendedor_id', vend);
+  const radio = radioFin();
+  if (radio) qp = qp.eq('contrato.radio_id', radio);
   let qc = supabase.from('contratos').select('valor_mensal, data_fim, cliente_nome').eq('status', 'ativo').gte('data_fim', mes0).lte('data_fim', fim);
   if (vend) qc = qc.eq('vendedor_id', vend);
+  if (radio) qc = qc.eq('radio_id', radio);
   const [{ data: parcelas }, { data: terminam }, { data: radios }, { data: vendedores }] = await Promise.all([
     qp, qc,
-    supabase.from('radios').select('id, nome, cor').order('ordem'),
+    radio ? supabase.from('radios').select('id, nome, cor').eq('id', radio) : supabase.from('radios').select('id, nome, cor').order('ordem'),
     supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
   ]);
   const lista = parcelas || [];

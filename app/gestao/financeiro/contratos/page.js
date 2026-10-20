@@ -6,6 +6,7 @@ import { configAutentique, situacaoDocumento, marcarAssinado } from '@/lib/auten
 import { data, moeda, STATUS_CONTRATO } from '@/lib/format';
 import Filtros from '../Filtros';
 import BotaoPlanilha from '../BotaoPlanilha';
+import { radioFin } from '@/lib/radioFin';
 
 const COR = { pendente: 'b-amarelo', ativo: 'b-verde', encerrado: 'b-cinza', cancelado: 'b-vermelho' };
 const ASSIN = [['', 'Todas'], ['assinados', 'Assinados'], ['aguardando', 'Aguardando assinatura'], ['sem', 'Não enviados']];
@@ -21,6 +22,7 @@ export default async function ContratosFin({ searchParams }) {
     .gte('created_at', `${per.de}T00:00:00`).lte('created_at', `${per.ate}T23:59:59`)
     .order('created_at', { ascending: false }).limit(300);
   if (vend) q = q.eq('vendedor_id', vend);
+  if (radioFin()) q = q.eq('radio_id', radioFin());
   if (st) q = q.eq('status', st);
   const [{ data: contratos }, { data: vendedores }] = await Promise.all([
     q, supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),

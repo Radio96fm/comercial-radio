@@ -8,6 +8,7 @@ import { mesDaComissao, nomeMes, DIA_CORTE } from '@/lib/ganhos';
 import { hojeISO, somarDias, somarMeses, moeda, data, linkWhatsApp } from '@/lib/format';
 import Tendencia from '@/components/Tendencia';
 import Filtros from './Filtros';
+import { radioFin } from '@/lib/radioFin';
 
 const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 const soma = (l) => (l || []).reduce((s, p) => s + Number(p.valor), 0);
@@ -29,20 +30,23 @@ export default async function ResumoFinanceiro({ searchParams }) {
   const inicioSerie = somarMeses(`${mesAtual}-01`, -5);
   const fimMes = somarDias(somarMeses(`${mesAtual}-01`, 1), -1);
   const mesCom = mesDaComissao(hoje);
+  const radio = radioFin();
 
   const parcelas = (campos) => {
     let q = supabase.from('parcelas').select(campos).neq('status', 'cancelado').neq('contrato.status', 'cancelado');
     if (vend) q = q.eq('contrato.vendedor_id', vend);
+    if (radio) q = q.eq('contrato.radio_id', radio);
     return q;
   };
   let qContratos = supabase.from('contratos')
     .select('id, numero, status, valor_mensal, data_fim, cliente_nome, radio_id, created_at, vendedor:profiles(nome), parcelas(valor, status)')
     .in('status', ['ativo', 'pendente']);
   if (vend) qContratos = qContratos.eq('vendedor_id', vend);
+  if (radio) qContratos = qContratos.eq('radio_id', radio);
 
   const [{ data: vendedores }, { data: radios }, { data: contratos }, { data: serieP }, { data: abertas }, { data: pagasPer }, comissoes] = await Promise.all([
     supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
-    supabase.from('radios').select('id, nome, cor').order('ordem'),
+    (radio ? supabase.from('radios').select('id, nome, cor').eq('id', radio) : supabase.from('radios').select('id, nome, cor').order('ordem')),
     qContratos,
     // tudo que venceu ou foi pago nos últimos 6 meses (gráfico)
     parcelas('valor, status, vencimento, pago_em, contrato:contratos!inner(status, vendedor_id)')

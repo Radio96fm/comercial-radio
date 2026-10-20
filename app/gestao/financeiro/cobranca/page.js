@@ -4,6 +4,7 @@ import { mensagemCobranca } from '@/lib/financeiro';
 import { data, moeda, STATUS_PARCELA, hojeISO, somarDias, linkWhatsApp } from '@/lib/format';
 import Filtros from '../Filtros';
 import EnviarTodos from './EnviarTodos';
+import { radioFin } from '@/lib/radioFin';
 
 export default async function Cobranca({ searchParams }) {
   const { supabase, baseFin } = await requireFinanceiro();
@@ -14,6 +15,7 @@ export default async function Cobranca({ searchParams }) {
     .in('contrato.status', ['ativo', 'pendente']).in('status', ['a_emitir', 'emitido'])
     .lte('vencimento', somarDias(hoje, 31)).order('vencimento');
   if (vend) q = q.eq('contrato.vendedor_id', vend);
+  if (radioFin()) q = q.eq('contrato.radio_id', radioFin());
   const [{ data: parcelas }, { data: vendedores }] = await Promise.all([
     q, supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
   ]);

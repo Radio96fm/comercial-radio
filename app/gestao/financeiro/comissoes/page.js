@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { headers } from 'next/headers';
-import { FileDown, ChevronRight, Check, CalendarRange, ArrowLeft } from 'lucide-react';
+import { FileDown, ChevronRight, Check, ArrowLeft } from 'lucide-react';
 import { requireFinanceiro } from '@/lib/auth';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import FormAcao from '@/components/FormAcao';
@@ -10,6 +10,7 @@ import { hojeISO, moeda, data, linkWhatsApp } from '@/lib/format';
 import { pagarComissao, desfazerComissao, salvarNotaFiscal, desfazerNotaFiscal } from '../actions';
 import BotaoPlanilha from '../BotaoPlanilha';
 import EnviarRelatorio from './EnviarRelatorio';
+import FormAuto from '@/components/FormAuto';
 
 const pctTxt = (v) => `${String(v.pct).replace('.', ',')}%`;
 
@@ -29,7 +30,8 @@ export default async function Comissoes({ searchParams }) {
   const total = lista.reduce((s, v) => s + v.comissao, 0);
   const recebido = lista.reduce((s, v) => s + v.recebido, 0);
   const faltam = lista.filter((v) => v.etapa !== 'paga' && v.comissao > 0);
-  const atalhos = fechamentos(5, 1);
+  const atalhos = fechamentos(0, 5);
+  const anteriores = fechamentos(-12, -1).reverse();
   const um = vend ? lista[0] : null;
 
   return (
@@ -48,17 +50,22 @@ export default async function Comissoes({ searchParams }) {
             </Link>
           ))}
         </div>
-        <form method="get" className="filtros-fin">
+        <FormAuto className="filtros-fin">
           <div className="campo"><label>Vendedor</label>
             <select name="vendedor" defaultValue={vend}>
               <option value="">Todos os vendedores</option>
               {(vendedores || []).map((v) => <option key={v.id} value={v.id}>{v.nome}</option>)}
             </select>
           </div>
-          <div className="campo"><label>De</label><input type="date" name="de" defaultValue={per.de} /></div>
-          <div className="campo"><label>Até</label><input type="date" name="ate" defaultValue={per.ate} /></div>
-          <button className="btn"><CalendarRange className="ico" />Filtrar</button>
-        </form>
+          <div className="campo"><label>De</label><input type="date" name="de" defaultValue={per.de} key={`de${per.de}`} /></div>
+          <div className="campo"><label>Até</label><input type="date" name="ate" defaultValue={per.ate} key={`ate${per.ate}`} /></div>
+          <div className="campo"><label>Fechamentos anteriores</label>
+            <select name="mes" defaultValue="" key={`m${per.de}${per.ate}`}>
+              <option value="">Escolher...</option>
+              {anteriores.map((f) => <option key={f.mes} value={f.mes}>{f.rotulo} ({f.faixa})</option>)}
+            </select>
+          </div>
+        </FormAuto>
       </div>
 
       <div className="com-resumo">

@@ -1,5 +1,6 @@
 import { requireFinanceiro } from '@/lib/auth';
 import { lerPeriodo, periodoComissao, comissoesNoPeriodo } from '@/lib/financeiro';
+import { radioFin } from '@/lib/radioFin';
 import { hojeISO, data, STATUS_PARCELA, STATUS_CONTRATO } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -35,6 +36,7 @@ export async function GET(req) {
       .select('numero, cliente_nome, status, data_inicio, data_fim, valor_mensal, meses, created_at, cliente:clientes(documento), vendedor:profiles(nome), programa:programas(nome), radio:radios(nome), parcelas(status)')
       .gte('created_at', `${per.de}T00:00:00`).lte('created_at', `${per.ate}T23:59:59`).order('numero');
     if (vend) q = q.eq('vendedor_id', vend);
+    if (radioFin()) q = q.eq('radio_id', radioFin());
     if (sp.status) q = q.eq('status', sp.status);
     const { data: lista } = await q;
     linhas = [['Nº', 'Cliente', 'CNPJ/CPF', 'Vendedor', 'Rádio', 'Programa', 'Valor mensal', 'Meses', 'Valor total', 'Início', 'Fim', 'Parcelas pagas', 'Situação']];
@@ -50,6 +52,7 @@ export async function GET(req) {
       .select('numero, vencimento, valor, status, pago_em, linha_digitavel, url_boleto, contrato:contratos!inner(numero, status, vendedor_id, cliente_nome, cliente:clientes(documento, telefone, email), vendedor:profiles(nome), radio:radios(nome))')
       .neq('contrato.status', 'cancelado').order('vencimento');
     if (vend) q = q.eq('contrato.vendedor_id', vend);
+    if (radioFin()) q = q.eq('contrato.radio_id', radioFin());
     if (sit === 'atrasadas') q = q.in('status', ['a_emitir', 'emitido']).lt('vencimento', hoje);
     else {
       if (sit === 'pagas') q = q.eq('status', 'pago').gte('pago_em', per.de).lte('pago_em', per.ate);
