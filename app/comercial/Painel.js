@@ -2,7 +2,7 @@
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import {
-  Rocket, Handshake, Hourglass, UserX, CalendarClock, FileSignature, Filter, Car, Radio, Trophy, ChevronRight, LayoutDashboard, LogOut, TrendingUp, TrendingDown, Target, Medal,
+  Rocket, Handshake, Hourglass, UserX, CalendarClock, FileSignature, Filter, Car, Radio, Trophy, ChevronRight, LayoutDashboard, LogOut, TrendingUp, TrendingDown, Target, Medal, Briefcase, Users,
 } from 'lucide-react';
 import { data, STATUS_VISITA } from '@/lib/format';
 import { plural, primeiro, BotaoTemaPainel, Folha, Bloco, Titulo, Numeros, Linha, VerTudo } from '../diretor/Pecas';
@@ -63,6 +63,7 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
           <BotaoTemaPainel />
           {demo ? <span className="dir-demo">Demonstração</span> : (
             <>
+              <Link href="/app" className="dir-btn-topo" aria-label="Vender"><Briefcase size={20} /><span>Vender</span></Link>
               <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
               <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
             </>
@@ -125,6 +126,28 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
 
           {blocos.map((b) => <Bloco key={b.id} b={b} abrir={setAberto} />)}
         </div>
+
+        <section className="dir-so-pc" aria-label="Equipe">
+          <h2><Users size={18} />Equipe em {mes.nome}</h2>
+          <table className="dir-tabela">
+            <thead>
+              <tr><th>Vendedor</th><th>Vendas</th><th>Visitas</th><th>Em negociação</th><th>Conversão 30d</th><th>Carteira</th><th>Última visita</th></tr>
+            </thead>
+            <tbody>
+              {e.lista.map((x) => (
+                <tr key={x.id}>
+                  <td>{x.nome}</td>
+                  <td className="num">{x.vendasMes}</td>
+                  <td className="num">{x.visitasMes}</td>
+                  <td className="num">{x.negociando}</td>
+                  <td className="num">{x.conversao === null ? '—' : `${x.conversao}%`}</td>
+                  <td className="num">{x.carteira}</td>
+                  <td>{x.semVisitaDias === null ? 'Sem visita no mês' : x.semVisitaDias === 0 ? 'Hoje' : `Há ${dias(x.semVisitaDias)}`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
 
         <p className="dir-rodape">Toque em um quadro para ver os detalhes. Os números se atualizam sozinhos.</p>
       </main>
