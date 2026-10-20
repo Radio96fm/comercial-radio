@@ -1,31 +1,20 @@
 'use client';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import {
-  Wallet, FileCheck2, CalendarClock, AlertTriangle, Users, Trophy, Car, Radio, Rocket, ChevronRight, X, LayoutDashboard, LogOut, TrendingUp, TrendingDown,
+  Wallet, FileCheck2, CalendarClock, AlertTriangle, Users, Trophy, Car, Radio, Rocket, ChevronRight, LayoutDashboard, LogOut, TrendingUp, TrendingDown,
 } from 'lucide-react';
 import { moeda, data } from '@/lib/format';
+import { plural, primeiro, BotaoTemaPainel, Folha, Bloco, Titulo, Numeros, Linha, VerTudo } from './Pecas';
 
 // R$ 107.240 (sem centavos: leitura rápida)
 const real = (v) => moeda(Math.round(v)).replace(/,\d\d$/, '');
 const mil = (v) => (v >= 1000 ? `${(v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: v >= 100000 ? 0 : 1 })} mil` : Math.round(v).toLocaleString('pt-BR'));
-const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
-const primeiro = (nome = '') => nome.split(' ')[0];
-
-// demonstração (link público de apresentação): sem botões que levam ao sistema
-const Demo = createContext(false);
 
 export default function Painel({ dados, ola, dataLonga, demo = false }) {
   const [aberto, setAberto] = useState(null);
+  const fechar = useCallback(() => setAberto(null), []);
   const { faturamento: f, contratos: c, vencendo: v, atraso: a, equipe: e, grade: g } = dados;
-
-  useEffect(() => {
-    if (!aberto) return undefined;
-    const fechar = (ev) => ev.key === 'Escape' && setAberto(null);
-    document.addEventListener('keydown', fechar);
-    document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', fechar); document.body.style.overflow = ''; };
-  }, [aberto]);
 
   const blocos = [
     {
@@ -73,12 +62,15 @@ export default function Painel({ dados, ola, dataLonga, demo = false }) {
           <img src="/logos/96fm.png" alt="96 FM" />
           <img src="/logos/agro.png" alt="Rádio do Agro" />
         </div>
-        {demo ? <span className="dir-demo">Demonstração</span> : (
-          <div className="dir-acoes">
-            <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
-            <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
-          </div>
-        )}
+        <div className="dir-acoes">
+          <BotaoTemaPainel />
+          {demo ? <span className="dir-demo">Demonstração</span> : (
+            <>
+              <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
+              <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
+            </>
+          )}
+        </div>
       </header>
 
       <main className="dir-conteudo">
@@ -106,65 +98,15 @@ export default function Painel({ dados, ola, dataLonga, demo = false }) {
             <div className="dir-hero-sub"><b>{f.pctMes}%</b> do previsto no mês ({real(f.mes.previsto)})</div>
           </button>
 
-          {blocos.map((b) => (
-            <button key={b.id} type="button" className={`dir-bloco t-${b.tom}`} onClick={() => setAberto(b.id)}>
-              <div className="dir-bloco-topo"><span className={`dir-ico t-${b.tom}`}><b.Ico size={24} /></span><ChevronRight className="dir-seta" /></div>
-              <span className="dir-rotulo">{b.rotulo}</span>
-              <b className={`dir-num num ${b.pequeno ? 'menor' : ''}`}>{b.valor}</b>
-              {b.barra !== undefined && <div className="dir-trilho fino"><i style={{ width: `${b.barra}%` }} /></div>}
-              <span className="dir-sub">{b.sub}</span>
-              {b.extra && <span className="dir-extra">{b.extra}</span>}
-            </button>
-          ))}
+          {blocos.map((b) => <Bloco key={b.id} b={b} abrir={setAberto} />)}
         </div>
 
         <p className="dir-rodape">Toque em um quadro para ver os detalhes. Os números se atualizam sozinhos.</p>
       </main>
 
-      {aberto && (
-        <div className="dir-fundo" onClick={() => setAberto(null)} role="presentation">
-          <div className="dir-folha" role="dialog" aria-modal="true" onClick={(ev) => ev.stopPropagation()}>
-            <div className="dir-pegador" />
-            <button type="button" className="dir-fechar" onClick={() => setAberto(null)} aria-label="Fechar"><X size={22} /></button>
-            <Demo.Provider value={demo}><Detalhe id={aberto} dados={dados} /></Demo.Provider>
-          </div>
-        </div>
-      )}
+      <Folha aberto={aberto} fechar={fechar} demo={demo}><Detalhe id={aberto} dados={dados} /></Folha>
     </>
   );
-}
-
-function Titulo({ Ico, tom, children, sub }) {
-  return (
-    <div className="dir-d-titulo">
-      <span className={`dir-ico t-${tom}`}><Ico size={24} /></span>
-      <div><h2>{children}</h2>{sub && <small>{sub}</small>}</div>
-    </div>
-  );
-}
-
-function Numeros({ itens }) {
-  return (
-    <div className="dir-d-numeros">
-      {itens.map(([rotulo, valor, tom]) => (
-        <div key={rotulo} className={tom ? `t-${tom}` : ''}><b className="num">{valor}</b><span>{rotulo}</span></div>
-      ))}
-    </div>
-  );
-}
-
-function Linha({ titulo, sub, valor, valorSub, tom }) {
-  return (
-    <div className="dir-d-linha">
-      <div><b>{titulo}</b>{sub && <small>{sub}</small>}</div>
-      <div className={`dir-d-valor ${tom ? `t-${tom}` : ''}`}><b className="num">{valor}</b>{valorSub && <small>{valorSub}</small>}</div>
-    </div>
-  );
-}
-
-function VerTudo({ href, children }) {
-  if (useContext(Demo)) return null;
-  return <Link href={href} className="dir-ver">{children}<ChevronRight size={18} /></Link>;
 }
 
 function Detalhe({ id, dados }) {

@@ -29,7 +29,7 @@ function LoginForm() {
     if (window.self !== window.top) {
       let topo = '';
       try { topo = window.top.location.pathname; } catch {}
-      destino = topo.startsWith('/celular/diretor') ? '/diretor' : '/app';
+      destino = topo.startsWith('/celular/diretor') ? '/diretor' : topo.startsWith('/celular/comercial') ? '/comercial' : '/app';
     }
     router.replace(destino);
     router.refresh();

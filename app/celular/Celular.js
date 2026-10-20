@@ -14,6 +14,7 @@ export default function Celular({ inicio = '/app', rotulo = 'versão do vendedor
   const [aparelho, setAparelho] = useState(aparelhos[0]);
   const [escala, setEscala] = useState(1);
   const [hora, setHora] = useState('');
+  const [fundoClaro, setFundoClaro] = useState(claro);
   const a = APARELHOS[aparelho];
   const larguraTotal = a.largura + a.borda * 2;
   const alturaTotal = a.altura + a.borda * 2;
@@ -34,6 +35,16 @@ export default function Celular({ inicio = '/app', rotulo = 'versão do vendedor
     relogio();
     const t = setInterval(relogio, 15000);
     return () => clearInterval(t);
+  }, []);
+
+  // o painel avisa quando troca entre modo claro e escuro (a barra do aparelho acompanha)
+  useEffect(() => {
+    const ouvir = (ev) => {
+      if (ev.origin !== window.location.origin || !ev.data?.painelTema) return;
+      setFundoClaro(ev.data.painelTema === 'claro');
+    };
+    window.addEventListener('message', ouvir);
+    return () => window.removeEventListener('message', ouvir);
   }, []);
 
   const ir = (caminho) => { if (frame.current) frame.current.src = caminho; };
@@ -65,7 +76,7 @@ export default function Celular({ inicio = '/app', rotulo = 'versão do vendedor
 
       <div className="cel-area">
         <div
-          className={`cel-aparelho ${claro ? 'cel-claro' : ''}`}
+          className={`cel-aparelho ${fundoClaro ? 'cel-claro' : ''}`}
           style={{
             width: larguraTotal,
             height: alturaTotal,

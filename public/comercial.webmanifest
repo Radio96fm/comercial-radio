@@ -1,0 +1,10 @@
+{
+  "name": "Painel Comercial · 96 FM & Rádio do Agro",
+  "short_name": "Comercial",
+  "start_url": "/comercial",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f2ee",
+  "theme_color": "#f4f2ee",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
