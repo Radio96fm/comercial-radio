@@ -18,7 +18,8 @@ function saudacao() {
 
 // Painel do diretor comercial: desempenho e liderança da equipe de vendas.
 // De propósito, nenhuma consulta daqui busca valores em R$ ou parcelas.
-export default async function PainelComercial() {
+export default async function PainelComercial({ searchParams }) {
+  const radioId = searchParams?.radio || null;
   const { supabase, perfil } = await requireGestor();
   const hoje = hojeISO();
   const inicioAnt = somarMeses(`${hoje.slice(0, 7)}-01`, -1);
@@ -29,7 +30,7 @@ export default async function PainelComercial() {
     supabase.from('contratos')
       .select('id, status, data_fim, created_at, cliente_nome, radio_id, vendedor_id, vendedor:profiles(nome), programa:programas(nome, radio_id)')
       .in('status', ['ativo', 'pendente']),
-    supabase.from('contratos').select('id, vendedor_id, created_at').neq('status', 'cancelado').gte('created_at', `${inicioAnt}T00:00:00`),
+    supabase.from('contratos').select('id, vendedor_id, created_at, radio_id, programa:programas(radio_id)').neq('status', 'cancelado').gte('created_at', `${inicioAnt}T00:00:00`),
     supabase.from('profiles').select('id, nome, papel').in('papel', ['vendedor', 'gestor', 'comercial']).eq('ativo', true).order('nome'),
     supabase.from('visitas').select('id, vendedor_id, status, iniciada_em, prazo_extra_dias, cliente:clientes(nome), vendedor:profiles(nome)')
       .or(`iniciada_em.gte.${desde}T00:00:00,status.in.(em_andamento,proposta)`),
@@ -37,8 +38,8 @@ export default async function PainelComercial() {
     supabase.from('programas_ocupacao').select('radio_id, nome, cotas_total, cotas_ocupadas, cotas_livres').eq('ativo', true).order('horario_inicio', { nullsFirst: false }),
   ]);
 
-  const dados = montarComercial({ hoje, radios, contratos, novos, vendedores, visitas, liberadas, programas });
+  const dados = montarComercial({ hoje, radios, contratos, novos, vendedores, visitas, liberadas, programas, radioId });
   const dataLonga = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (l) => l.toUpperCase());
 
-  return <Painel dados={dados} ola={`${saudacao()}, ${perfil.nome.split(' ')[0]}!`} dataLonga={dataLonga} />;
+  return <Painel dados={dados} ola={`${saudacao()}, ${perfil.nome.split(' ')[0]}!`} dataLonga={dataLonga} base="/comercial" />;
 }

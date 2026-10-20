@@ -9,10 +9,10 @@ import { plural, primeiro, BotaoTemaPainel, Folha, Bloco, Titulo, Numeros, Linha
 
 const dias = (n) => (n === 1 ? '1 dia' : `${n} dias`);
 
-export default function Painel({ dados, ola, dataLonga, demo = false }) {
+export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
   const [aberto, setAberto] = useState(null);
   const fechar = useCallback(() => setAberto(null), []);
-  const { mes, vendas: vd, visitas: vs, funil: fu, negociacoes: ng, renovar: rn, assinatura: as, equipe: e, grade: g, prioridades } = dados;
+  const { mes, vendas: vd, visitas: vs, funil: fu, negociacoes: ng, renovar: rn, assinatura: as, equipe: e, grade: g, prioridades, radio } = dados;
 
   const blocos = [
     {
@@ -76,6 +76,13 @@ export default function Painel({ dados, ola, dataLonga, demo = false }) {
           <h1>{ola}</h1>
           <p>Painel Comercial · desempenho da equipe</p>
         </div>
+
+        <nav className="dir-radios" aria-label="Escolher rádio">
+          {[{ id: null, nome: 'As duas rádios' }, ...radio.opcoes].map((r) => (
+            <Link key={r.id || 'todas'} href={r.id ? `${base}?radio=${r.id}` : base} className={(r.id || null) === radio.atual ? 'ativa' : ''}>{r.nome}</Link>
+          ))}
+        </nav>
+        {radio.atual && <p className="dir-radios-nota">Visitas e negociações não têm rádio cadastrada, então aparecem nas duas.</p>}
 
         {prioridades.length > 0 && (
           <section className="dir-foco">

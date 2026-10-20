@@ -274,3 +274,12 @@ body:has(.dir) { background: #f4f2ee; }
 .dir-funil b { grid-column: 2; grid-row: 1 / span 2; font-size: 1.5rem; color: var(--tom); min-width: 2ch; text-align: right; }
 .dir-funil-barra { grid-column: 1; height: 14px; border-radius: 99px; background: var(--card-2); overflow: hidden; }
 .dir-funil-barra i { display: block; height: 100%; border-radius: 99px; background: var(--tom); }
+
+/* Painel Comercial: escolher rádio (as duas juntas ou uma só) */
+.dir-radios { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 2px 14px; }
+.dir-radios a {
+  display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line-2); color: var(--text); font: 600 .92rem var(--font); text-decoration: none;
+}
+.dir-radios a.ativa { background: var(--text); border-color: var(--text); color: var(--bg); }
+.dir-radios-nota { margin: -6px 4px 14px; font-size: .85rem; color: var(--muted); }
