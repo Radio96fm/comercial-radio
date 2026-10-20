@@ -282,6 +282,9 @@ function Topo({ demo }) {
   );
 }
 
+// Logo de cada rádio, no canto do botão da tela de escolha
+const LOGO_RADIO = { '96 FM': '/logos/96fm.png', 'Rádio do Agro': '/logos/agro.png' };
+
 // Tela de escolha: um botão grande por rádio, com o resumo dentro. Tocar abre o painel daquela rádio.
 function Escolha({ ola, dataLonga, base, resumos, demo }) {
   return (
@@ -298,6 +301,7 @@ function Escolha({ ola, dataLonga, base, resumos, demo }) {
             const d = r.dados;
             return (
               <Link key={r.id} href={`${base}?radio=${r.id}`} className="dir-radio-card" style={{ '--cor': r.cor }}>
+                {LOGO_RADIO[r.nome] && <img className="dir-radio-logo" src={LOGO_RADIO[r.nome]} alt={r.nome} />}
                 <span className="dir-radio-nome">{r.nome}</span>
                 <span className="dir-radio-mensal num">{real(d.faturamento.mensal)}<small>/mês</small></span>
                 <span className="dir-radio-linha">{plural(d.contratos.ativos, 'contrato ativo', 'contratos ativos')} · {plural(d.contratos.novosMes, 'venda', 'vendas')} no mês</span>

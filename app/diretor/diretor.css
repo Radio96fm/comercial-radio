@@ -310,3 +310,6 @@ body:has(.dir) { background: #f4f2ee; }
   border-radius: 999px; background: var(--card); border: 1px solid var(--line-2); color: var(--text);
   font: 600 .92rem var(--font); text-decoration: none;
 }
+.dir-radio-card { position: relative; }
+.dir-radio-logo { position: absolute; top: 24px; right: 22px; height: 44px; width: auto; max-width: 42%; object-fit: contain; }
+@media (min-width: 700px) { .dir-radio-logo { top: 30px; right: 28px; height: 56px; } }
