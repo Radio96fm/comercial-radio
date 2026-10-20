@@ -199,3 +199,4 @@
 
 /* fundo claro também ao "puxar" a tela além do fim (iPhone) */
 body:has(.dir) { background: #f4f2ee; }
+.dir-demo { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--c-azul); background: var(--c-azul-bg); padding: 7px 12px; border-radius: 999px; }

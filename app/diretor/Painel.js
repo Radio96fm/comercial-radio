@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Wallet, FileCheck2, CalendarClock, AlertTriangle, Users, Trophy, Car, Radio, Rocket, ChevronRight, X, LayoutDashboard, LogOut, TrendingUp, TrendingDown,
@@ -12,7 +12,10 @@ const mil = (v) => (v >= 1000 ? `${(v / 1000).toLocaleString('pt-BR', { maximumF
 const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 const primeiro = (nome = '') => nome.split(' ')[0];
 
-export default function Painel({ dados, ola, dataLonga }) {
+// demonstração (link público de apresentação): sem botões que levam ao sistema
+const Demo = createContext(false);
+
+export default function Painel({ dados, ola, dataLonga, demo = false }) {
   const [aberto, setAberto] = useState(null);
   const { faturamento: f, contratos: c, vencendo: v, atraso: a, equipe: e, grade: g } = dados;
 
@@ -70,10 +73,12 @@ export default function Painel({ dados, ola, dataLonga }) {
           <img src="/logos/96fm.png" alt="96 FM" />
           <img src="/logos/agro.png" alt="Rádio do Agro" />
         </div>
-        <div className="dir-acoes">
-          <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
-          <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
-        </div>
+        {demo ? <span className="dir-demo">Demonstração</span> : (
+          <div className="dir-acoes">
+            <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
+            <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
+          </div>
+        )}
       </header>
 
       <main className="dir-conteudo">
@@ -121,7 +126,7 @@ export default function Painel({ dados, ola, dataLonga }) {
           <div className="dir-folha" role="dialog" aria-modal="true" onClick={(ev) => ev.stopPropagation()}>
             <div className="dir-pegador" />
             <button type="button" className="dir-fechar" onClick={() => setAberto(null)} aria-label="Fechar"><X size={22} /></button>
-            <Detalhe id={aberto} dados={dados} />
+            <Demo.Provider value={demo}><Detalhe id={aberto} dados={dados} /></Demo.Provider>
           </div>
         </div>
       )}
@@ -158,6 +163,7 @@ function Linha({ titulo, sub, valor, valorSub, tom }) {
 }
 
 function VerTudo({ href, children }) {
+  if (useContext(Demo)) return null;
   return <Link href={href} className="dir-ver">{children}<ChevronRight size={18} /></Link>;
 }
 
