@@ -332,3 +332,24 @@ body:has(.dir) { background: #f4f2ee; }
   .dir-app > .sidebar { display: flex; }
   .dir-app-main { padding: 28px 32px; max-width: 1280px; width: 100%; }
 }
+
+/* Visão geral do computador (cartões, programas por rádio e pendências) */
+.dir-so-celular { display: block; }
+@media (min-width: 900px) { .dir-so-celular { display: none; } }
+.dir-pc-visao { display: none; }
+@media (min-width: 900px) { .dir-pc-visao { display: block; } }
+.dir-pc-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+.dir-pc-card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; }
+.dir-pc-card small { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.dir-pc-card .num { font-size: 2rem; line-height: 1.1; }
+.dir-pc-card span { font-size: .88rem; color: var(--muted); }
+.dir-pc-ocupacao { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.dir-pc-ocupacao .dir-trilho { width: 140px; }
+.dir-pc-baixo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+.dir-pc-painel { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px 18px; }
+.dir-pc-painel h3 { margin: 0 0 6px; font-size: 1rem; }
+.dir-pc-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 0; border: 0; border-top: 1px solid var(--line); background: none; color: inherit; font: inherit; text-align: left; }
+.dir-pc-item span { display: flex; flex-direction: column; min-width: 0; }
+.dir-pc-item small { font-size: .82rem; color: var(--muted); }
+.dir-pc-botao { cursor: pointer; }
+.dir-pc-botao svg { color: var(--muted); flex: none; }
