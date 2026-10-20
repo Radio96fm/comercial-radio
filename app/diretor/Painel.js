@@ -11,10 +11,10 @@ import { plural, primeiro, BotaoTemaPainel, Folha, Bloco, Titulo, Numeros, Linha
 const real = (v) => moeda(Math.round(v)).replace(/,\d\d$/, '');
 const mil = (v) => (v >= 1000 ? `${(v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: v >= 100000 ? 0 : 1 })} mil` : Math.round(v).toLocaleString('pt-BR'));
 
-export default function Painel({ dados, ola, dataLonga, demo = false }) {
+export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
   const [aberto, setAberto] = useState(null);
   const fechar = useCallback(() => setAberto(null), []);
-  const { faturamento: f, contratos: c, vencendo: v, atraso: a, equipe: e, grade: g } = dados;
+  const { faturamento: f, contratos: c, vencendo: v, atraso: a, equipe: e, grade: g, radio } = dados;
 
   const blocos = [
     {
@@ -79,6 +79,13 @@ export default function Painel({ dados, ola, dataLonga, demo = false }) {
           <h1>{ola}</h1>
           <p>Painel do Diretor · 96 FM e Rádio do Agro</p>
         </div>
+
+        <nav className="dir-radios" aria-label="Escolher rádio">
+          {[{ id: null, nome: 'As duas rádios' }, ...radio.opcoes].map((r) => (
+            <Link key={r.id || 'todas'} href={r.id ? `${base}?radio=${r.id}` : base} className={(r.id || null) === radio.atual ? 'ativa' : ''}>{r.nome}</Link>
+          ))}
+        </nav>
+        {radio.atual && <p className="dir-radios-nota">Visitas não têm rádio cadastrada, então a equipe na rua aparece nas duas.</p>}
 
         <div className="dir-grade">
           <button type="button" className="dir-bloco dir-hero" onClick={() => setAberto('faturamento')}>
