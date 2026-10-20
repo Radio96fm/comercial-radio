@@ -87,9 +87,10 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
             ))}
           </nav>
           {radio.atual && <p className="dir-radios-nota">Visitas e negociações não têm rádio cadastrada, então aparecem nas duas.</p>}
-  
+
+          <Visao dados={dados} abrir={setAberto} />
           {prioridades.length > 0 && (
-            <section className="dir-foco">
+            <section className="dir-foco dir-so-celular">
               <h2><Target size={18} />Pede sua atenção hoje</h2>
               <div className="dir-foco-lista">
                 {prioridades.map((p) => (
@@ -103,7 +104,7 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
             </section>
           )}
   
-          <div className="dir-grade">
+          <div className="dir-grade dir-so-celular">
             <button type="button" className="dir-bloco dir-hero" onClick={() => setAberto('ranking')}>
               <div className="dir-bloco-topo"><span className="dir-ico t-verde"><Rocket size={26} /></span><span className="dir-rotulo">Vendas da equipe em {mes.nome}</span><ChevronRight className="dir-seta" /></div>
               <div className="dir-hero-num num">{vd.mes}<span>{vd.mes === 1 ? 'contrato novo' : 'contratos novos'}</span></div>
@@ -159,6 +160,79 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
 
       <Folha aberto={aberto} fechar={fechar} demo={demo}><Detalhe id={aberto} dados={dados} /></Folha>
     </>
+  );
+}
+
+// Visão geral do computador: cotas, programas por rádio e o que pede atenção.
+// Só números de vendas e grade, sem nenhum valor em R$.
+function Visao({ dados, abrir }) {
+  const { grade: g, equipe: e, assinatura: as, negociacoes: ng, renovar: rn, prioridades } = dados;
+  const emVisita = ng.lista.filter((n) => n.status === 'em_andamento');
+  const naRua = new Set(emVisita.map((n) => n.vendedor_id)).size;
+  const cards = [
+    ['Cotas ocupadas hoje', `${g.ocupadas}/${g.cotas}`, `${g.livres} livres para vender`],
+    ['Contratos ativos', e.carteira, 'carteira da equipe hoje'],
+    ['Aguardando assinatura', as.length, plural(as.length, 'contrato', 'contratos')],
+    ['Em visita agora', emVisita.length, plural(naRua, 'vendedor na rua', 'vendedores na rua')],
+  ];
+
+  return (
+    <div className="dir-pc-visao">
+      <div className="dir-pc-cards">
+        {cards.map(([rotulo, valor, sub]) => (
+          <div key={rotulo} className="dir-pc-card"><small>{rotulo}</small><b className="num">{valor}</b><span>{sub}</span></div>
+        ))}
+      </div>
+
+      {g.radios.map((r) => (
+        <div key={r.id}>
+          <h2 className="dir-d-sec"><i className="dir-bolinha" style={{ background: r.cor }} />{r.nome}</h2>
+          <table className="dir-tabela">
+            <thead><tr><th>Programa</th><th>Ocupação</th><th>Situação</th></tr></thead>
+            <tbody>
+              {r.programas.map((p) => (
+                <tr key={p.nome}>
+                  <td>{p.nome}</td>
+                  <td>
+                    <div className="dir-pc-ocupacao">
+                      <div className="dir-trilho fino"><i style={{ width: `${p.total ? ((p.total - p.livres) / p.total) * 100 : 0}%` }} /></div>
+                      <span className="num">{p.total - p.livres} de {p.total}</span>
+                    </div>
+                  </td>
+                  <td><span className={`dir-tag ${p.livres > 0 ? (p.livres === 1 ? 'amarelo' : 'verde') : 'vermelho'}`}>{p.livres > 0 ? plural(p.livres, 'vaga', 'vagas') : 'Lotado'}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+
+      <div className="dir-pc-baixo">
+        <div className="dir-pc-painel">
+          <h3>Vencendo em 30 dias</h3>
+          {!rn.lista.length && <p className="dir-d-vazio">Nenhum contrato vence nos próximos 30 dias.</p>}
+          {rn.lista.slice(0, 5).map((x) => (
+            <div key={x.id} className="dir-pc-item"><span>{x.cliente}<small>{x.vendedor} · {x.programa}</small></span><b className="num">{data(x.fim).slice(0, 5)}</b></div>
+          ))}
+        </div>
+        <div className="dir-pc-painel">
+          <h3>Em visita agora</h3>
+          {!emVisita.length && <p className="dir-d-vazio">Nenhum vendedor em visita agora.</p>}
+          {emVisita.slice(0, 5).map((n) => (
+            <div key={n.id} className="dir-pc-item"><span>{n.cliente}<small>{n.vendedor}</small></span><b>{n.dias === 0 ? 'hoje' : `há ${dias(n.dias)}`}</b></div>
+          ))}
+        </div>
+        <div className="dir-pc-painel">
+          <h3>Pede sua atenção hoje</h3>
+          {!prioridades.length && <p className="dir-d-vazio">Nada urgente hoje.</p>}
+          {prioridades.map((p) => (
+            <button key={p.id} type="button" className={`dir-pc-item dir-pc-botao t-${p.tom}`} onClick={() => abrir(p.abre)}>
+              <span>{p.titulo}<small>{p.sub}</small></span><ChevronRight size={18} />
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
