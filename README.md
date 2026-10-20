@@ -4,6 +4,7 @@ Sistema do departamento comercial: programas, cotas de patrocínio, carteira de 
 
 - **App do vendedor** (`/app`): feito para o celular, com botões grandes e poucas telas.
 - **Painel do gestor** (`/gestao`): programas, usuários, contratos, modelo de contrato, parcelas e histórico.
+- **Painel do Diretor** (`/diretor`): resumo para o dono das emissoras em blocos grandes (iPhone e iPad), com o login do gestor master. Para apresentar no computador: `/celular/diretor` (moldura de iPhone ou iPad).
 
 Tecnologia: Next.js 14 (site) + Supabase (banco de dados, login e atualização ao vivo) + Vercel (hospedagem).
 
