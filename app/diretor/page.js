@@ -41,8 +41,10 @@ export default async function PainelDiretor({ searchParams }) {
     supabase.from('programas_ocupacao').select('radio_id, nome, cotas_total, cotas_ocupadas, cotas_livres').eq('ativo', true).order('horario_inicio', { nullsFirst: false }),
   ]);
 
-  const dados = montarPainel({ hoje, radios, contratos, novosMes, parcelas, abertas, vendedores, visitas, programas, radioId });
+  const args = { hoje, radios, contratos, novosMes, parcelas, abertas, vendedores, visitas, programas };
+  const dados = montarPainel({ ...args, radioId });
+  const resumos = (radios || []).map((r) => ({ ...r, dados: montarPainel({ ...args, radioId: r.id }) }));
   const dataLonga = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (l) => l.toUpperCase());
 
-  return <Painel dados={dados} ola={`${saudacao()}, ${perfil.nome.split(' ')[0]}!`} dataLonga={dataLonga} base="/diretor" />;
+  return <Painel dados={dados} ola={`${saudacao()}, ${perfil.nome.split(' ')[0]}!`} dataLonga={dataLonga} base="/diretor" resumos={resumos} />;
 }

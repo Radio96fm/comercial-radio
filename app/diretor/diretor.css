@@ -283,3 +283,30 @@ body:has(.dir) { background: #f4f2ee; }
 }
 .dir-radios a.ativa { background: var(--text); border-color: var(--text); color: var(--bg); }
 .dir-radios-nota { margin: -6px 4px 14px; font-size: .85rem; color: var(--muted); }
+
+/* Painel do Diretor: tela de escolha, um botão grande por rádio */
+.dir-radio-cards { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 700px) { .dir-radio-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; } }
+.dir-radio-card {
+  display: flex; flex-direction: column; gap: 8px; min-height: calc(50dvh - 90px); padding: 22px; box-sizing: border-box;
+  background: var(--card); border: 1px solid var(--line); border-top: 8px solid var(--cor); border-radius: 28px;
+  box-shadow: 0 1px 2px var(--sombra), 0 6px 18px var(--sombra); color: var(--text); text-decoration: none;
+  transition: transform .12s;
+}
+.dir-radio-card:active { transform: scale(.98); }
+.dir-radio-card:focus-visible { outline: 3px solid var(--c-azul); outline-offset: 2px; }
+@media (min-width: 700px) { .dir-radio-card { min-height: 360px; padding: 28px; } }
+.dir-radio-nome { font-size: 1.7rem; font-weight: 700; }
+.dir-radio-mensal { font-size: 2.6rem; font-weight: 700; line-height: 1.05; color: var(--cor); overflow-wrap: anywhere; }
+.dir-radio-mensal small { font-size: .45em; color: var(--muted); font-weight: 600; margin-left: 4px; }
+.dir-radio-linha { color: var(--muted); font-size: 1rem; line-height: 1.35; }
+.dir-radio-linha b { color: var(--text); }
+.dir-radio-abrir {
+  margin-top: auto; display: flex; align-items: center; justify-content: space-between;
+  padding-top: 14px; border-top: 1px solid var(--line); font-weight: 700; font-size: 1.05rem;
+}
+.dir-voltar {
+  display: inline-flex; align-items: center; gap: 2px; height: 44px; padding: 0 16px 0 8px; margin: 0 0 14px;
+  border-radius: 999px; background: var(--card); border: 1px solid var(--line-2); color: var(--text);
+  font: 600 .92rem var(--font); text-decoration: none;
+}

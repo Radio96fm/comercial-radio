@@ -16,7 +16,10 @@ function saudacao() {
 // Mesmo painel do /diretor, com dados fictícios e sem login (para apresentar por link)
 export default function Page({ searchParams }) {
   const hoje = hojeISO();
-  const dados = montarPainel({ ...dadosDemoDiretor(hoje), radioId: searchParams?.radio || null });
+  const amostra = dadosDemoDiretor(hoje);
+  const radioId = searchParams?.radio || null;
+  const dados = montarPainel({ ...amostra, radioId });
+  const resumos = amostra.radios.map((r) => ({ ...r, dados: montarPainel({ ...amostra, radioId: r.id }) }));
   const dataLonga = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (l) => l.toUpperCase());
-  return <Painel dados={dados} ola={`${saudacao()}, Emmanoel!`} dataLonga={dataLonga} base="/demo-diretor" demo />;
+  return <Painel dados={dados} ola={`${saudacao()}, Emmanoel!`} dataLonga={dataLonga} base="/demo-diretor" resumos={resumos} demo />;
 }
