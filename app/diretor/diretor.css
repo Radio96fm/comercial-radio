@@ -323,3 +323,12 @@ body:has(.dir) { background: #f4f2ee; }
 .dir-tabela th:first-child, .dir-tabela td:first-child { text-align: left; }
 .dir-tabela th { font-size: .8rem; font-weight: 600; color: var(--muted); }
 .dir-tabela tr:last-child td { border-bottom: 0; }
+
+/* Painel do comercial no computador: menu lateral igual ao da gestão; no celular, só os blocos */
+.dir-app > .sidebar { display: none; }
+.dir-app-main { min-width: 0; }
+@media (min-width: 900px) {
+  .dir-app { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100dvh; }
+  .dir-app > .sidebar { display: flex; }
+  .dir-app-main { padding: 28px 32px; max-width: 1280px; width: 100%; }
+}

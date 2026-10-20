@@ -54,106 +54,144 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
 
   return (
     <>
-      <header className="dir-topo">
-        <div className="dir-logos">
-          <img src="/logos/96fm.png" alt="96 FM" />
-          <img src="/logos/agro.png" alt="Rádio do Agro" />
-        </div>
-        <div className="dir-acoes">
-          <BotaoTemaPainel />
-          {demo ? <span className="dir-demo">Demonstração</span> : (
-            <>
-              <Link href="/app" className="dir-btn-topo" aria-label="Vender"><Briefcase size={20} /><span>Vender</span></Link>
-              <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
-              <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
-            </>
-          )}
-        </div>
-      </header>
-
-      <main className="dir-conteudo">
-        <div className="dir-ola">
-          <small>{dataLonga}</small>
-          <h1>{ola}</h1>
-          <p>Painel Comercial · desempenho da equipe</p>
-        </div>
-
-        <nav className="dir-radios" aria-label="Escolher rádio">
-          {[{ id: null, nome: 'As duas rádios' }, ...radio.opcoes].map((r) => (
-            <Link key={r.id || 'todas'} href={r.id ? `${base}?radio=${r.id}` : base} className={(r.id || null) === radio.atual ? 'ativa' : ''}>{r.nome}</Link>
-          ))}
-        </nav>
-        {radio.atual && <p className="dir-radios-nota">Visitas e negociações não têm rádio cadastrada, então aparecem nas duas.</p>}
-
-        {prioridades.length > 0 && (
-          <section className="dir-foco">
-            <h2><Target size={18} />Pede sua atenção hoje</h2>
-            <div className="dir-foco-lista">
-              {prioridades.map((p) => (
-                <button key={p.id} type="button" className={`dir-foco-item t-${p.tom}`} onClick={() => setAberto(p.abre)}>
-                  <i />
-                  <span><b>{p.titulo}</b><small>{p.sub}</small></span>
-                  <ChevronRight className="dir-seta" />
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <div className="dir-grade">
-          <button type="button" className="dir-bloco dir-hero" onClick={() => setAberto('ranking')}>
-            <div className="dir-bloco-topo"><span className="dir-ico t-verde"><Rocket size={26} /></span><span className="dir-rotulo">Vendas da equipe em {mes.nome}</span><ChevronRight className="dir-seta" /></div>
-            <div className="dir-hero-num num">{vd.mes}<span>{vd.mes === 1 ? 'contrato novo' : 'contratos novos'}</span></div>
-            <div className="dir-hero-mes">
-              <div className="dir-hero-sub">{vs.mes} visitas · {fu.conversao}% de conversão · {ng.lista.length} em negociação</div>
-              {(vd.mes > 0 || vd.antAteHoje > 0) && (
-                <span className={`dir-var ${dif >= 0 ? 'sobe' : 'desce'}`}>{dif >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}{dif >= 0 ? '+' : ''}{dif} vs {mes.anterior} até hoje</span>
-              )}
-            </div>
-            {top.length > 0 && (
-              <div className="dir-podio">
-                {top.map((x, i) => (
-                  <div key={x.id} className={i === 0 ? 'primeiro' : ''}>
-                    <span className="dir-pos">{i + 1}º</span>
-                    <b>{primeiro(x.nome)}</b>
-                    <small>{plural(x.vendasMes, 'venda', 'vendas')} · {plural(x.visitasMes, 'visita', 'visitas')}</small>
-                  </div>
+      <div className="dir-app">
+        <Menu demo={demo} base={base} />
+        <div className="dir-app-main">
+        <header className="dir-topo">
+          <div className="dir-logos">
+            <img src="/logos/96fm.png" alt="96 FM" />
+            <img src="/logos/agro.png" alt="Rádio do Agro" />
+          </div>
+          <div className="dir-acoes">
+            <BotaoTemaPainel />
+            {demo ? <span className="dir-demo">Demonstração</span> : (
+              <>
+                <Link href="/app" className="dir-btn-topo" aria-label="Vender"><Briefcase size={20} /><span>Vender</span></Link>
+                <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
+                <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
+              </>
+            )}
+          </div>
+        </header>
+  
+        <main className="dir-conteudo">
+          <div className="dir-ola">
+            <small>{dataLonga}</small>
+            <h1>{ola}</h1>
+            <p>Painel Comercial · desempenho da equipe</p>
+          </div>
+  
+          <nav className="dir-radios" aria-label="Escolher rádio">
+            {[{ id: null, nome: 'As duas rádios' }, ...radio.opcoes].map((r) => (
+              <Link key={r.id || 'todas'} href={r.id ? `${base}?radio=${r.id}` : base} className={(r.id || null) === radio.atual ? 'ativa' : ''}>{r.nome}</Link>
+            ))}
+          </nav>
+          {radio.atual && <p className="dir-radios-nota">Visitas e negociações não têm rádio cadastrada, então aparecem nas duas.</p>}
+  
+          {prioridades.length > 0 && (
+            <section className="dir-foco">
+              <h2><Target size={18} />Pede sua atenção hoje</h2>
+              <div className="dir-foco-lista">
+                {prioridades.map((p) => (
+                  <button key={p.id} type="button" className={`dir-foco-item t-${p.tom}`} onClick={() => setAberto(p.abre)}>
+                    <i />
+                    <span><b>{p.titulo}</b><small>{p.sub}</small></span>
+                    <ChevronRight className="dir-seta" />
+                  </button>
                 ))}
               </div>
-            )}
-            <div className="dir-hero-sub">Toque para ver o ranking completo</div>
-          </button>
+            </section>
+          )}
+  
+          <div className="dir-grade">
+            <button type="button" className="dir-bloco dir-hero" onClick={() => setAberto('ranking')}>
+              <div className="dir-bloco-topo"><span className="dir-ico t-verde"><Rocket size={26} /></span><span className="dir-rotulo">Vendas da equipe em {mes.nome}</span><ChevronRight className="dir-seta" /></div>
+              <div className="dir-hero-num num">{vd.mes}<span>{vd.mes === 1 ? 'contrato novo' : 'contratos novos'}</span></div>
+              <div className="dir-hero-mes">
+                <div className="dir-hero-sub">{vs.mes} visitas · {fu.conversao}% de conversão · {ng.lista.length} em negociação</div>
+                {(vd.mes > 0 || vd.antAteHoje > 0) && (
+                  <span className={`dir-var ${dif >= 0 ? 'sobe' : 'desce'}`}>{dif >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}{dif >= 0 ? '+' : ''}{dif} vs {mes.anterior} até hoje</span>
+                )}
+              </div>
+              {top.length > 0 && (
+                <div className="dir-podio">
+                  {top.map((x, i) => (
+                    <div key={x.id} className={i === 0 ? 'primeiro' : ''}>
+                      <span className="dir-pos">{i + 1}º</span>
+                      <b>{primeiro(x.nome)}</b>
+                      <small>{plural(x.vendasMes, 'venda', 'vendas')} · {plural(x.visitasMes, 'visita', 'visitas')}</small>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="dir-hero-sub">Toque para ver o ranking completo</div>
+            </button>
+  
+            {blocos.map((b) => <Bloco key={b.id} b={b} abrir={setAberto} />)}
+          </div>
+  
+          <section className="dir-so-pc" aria-label="Equipe">
+            <h2><Users size={18} />Equipe em {mes.nome}</h2>
+            <table className="dir-tabela">
+              <thead>
+                <tr><th>Vendedor</th><th>Vendas</th><th>Visitas</th><th>Em negociação</th><th>Conversão 30d</th><th>Carteira</th><th>Última visita</th></tr>
+              </thead>
+              <tbody>
+                {e.lista.map((x) => (
+                  <tr key={x.id}>
+                    <td>{x.nome}</td>
+                    <td className="num">{x.vendasMes}</td>
+                    <td className="num">{x.visitasMes}</td>
+                    <td className="num">{x.negociando}</td>
+                    <td className="num">{x.conversao === null ? '—' : `${x.conversao}%`}</td>
+                    <td className="num">{x.carteira}</td>
+                    <td>{x.semVisitaDias === null ? 'Sem visita no mês' : x.semVisitaDias === 0 ? 'Hoje' : `Há ${dias(x.semVisitaDias)}`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
 
-          {blocos.map((b) => <Bloco key={b.id} b={b} abrir={setAberto} />)}
+          <p className="dir-rodape">Toque em um quadro para ver os detalhes. Os números se atualizam sozinhos.</p>
+        </main>
         </div>
-
-        <section className="dir-so-pc" aria-label="Equipe">
-          <h2><Users size={18} />Equipe em {mes.nome}</h2>
-          <table className="dir-tabela">
-            <thead>
-              <tr><th>Vendedor</th><th>Vendas</th><th>Visitas</th><th>Em negociação</th><th>Conversão 30d</th><th>Carteira</th><th>Última visita</th></tr>
-            </thead>
-            <tbody>
-              {e.lista.map((x) => (
-                <tr key={x.id}>
-                  <td>{x.nome}</td>
-                  <td className="num">{x.vendasMes}</td>
-                  <td className="num">{x.visitasMes}</td>
-                  <td className="num">{x.negociando}</td>
-                  <td className="num">{x.conversao === null ? '—' : `${x.conversao}%`}</td>
-                  <td className="num">{x.carteira}</td>
-                  <td>{x.semVisitaDias === null ? 'Sem visita no mês' : x.semVisitaDias === 0 ? 'Hoje' : `Há ${dias(x.semVisitaDias)}`}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-
-        <p className="dir-rodape">Toque em um quadro para ver os detalhes. Os números se atualizam sozinhos.</p>
-      </main>
+      </div>
 
       <Folha aberto={aberto} fechar={fechar} demo={demo}><Detalhe id={aberto} dados={dados} /></Folha>
     </>
+  );
+}
+
+// Menu lateral do computador (só o que é de comercial, sem financeiro nem R$)
+function Menu({ demo, base }) {
+  return (
+    <aside className="sidebar">
+      <div className="marca-gestao">
+        <div className="emissoras-mini">
+          <img src="/logos/96fm.png" alt="96 FM" />
+          <img src="/logos/agro.png" alt="Rádio do Agro" />
+        </div>
+        <b>Painel Comercial</b>
+      </div>
+      <nav className="nav-g">
+        <Link href={base} className="ativo"><Target className="ico" />Painel</Link>
+        {!demo && (
+          <>
+            <Link href="/gestao/negociacoes"><Handshake className="ico" />Negociações</Link>
+            <Link href="/gestao/programas"><Radio className="ico" />Programas</Link>
+            <Link href="/app"><Briefcase className="ico" />Vender</Link>
+          </>
+        )}
+      </nav>
+      {!demo && (
+        <div className="rodape">
+          <div className="sep" />
+          <form action="/sair" method="post">
+            <button className="btn peq cinza" style={{ margin: '10px 0 0', width: '100%' }}><LogOut className="ico" />Sair</button>
+          </form>
+        </div>
+      )}
+    </aside>
   );
 }
 
