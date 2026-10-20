@@ -1,41 +1,20 @@
 'use client';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import {
-  Wallet, FileCheck2, CalendarClock, AlertTriangle, Users, Trophy, Car, Radio, Rocket, ChevronRight, X, LayoutDashboard, LogOut, TrendingUp, TrendingDown, Moon, Sun,
+  Wallet, FileCheck2, CalendarClock, AlertTriangle, Users, Trophy, Car, Radio, Rocket, ChevronRight, ChevronLeft, LayoutDashboard, LogOut, TrendingUp, TrendingDown,
 } from 'lucide-react';
 import { moeda, data } from '@/lib/format';
+import { plural, primeiro, BotaoTemaPainel, Folha, Bloco, Titulo, Numeros, Linha, VerTudo } from './Pecas';
 
 // R$ 107.240 (sem centavos: leitura rápida)
 const real = (v) => moeda(Math.round(v)).replace(/,\d\d$/, '');
 const mil = (v) => (v >= 1000 ? `${(v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: v >= 100000 ? 0 : 1 })} mil` : Math.round(v).toLocaleString('pt-BR'));
-const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
-const primeiro = (nome = '') => nome.split(' ')[0];
 
-// demonstração (link público de apresentação): sem botões que levam ao sistema
-const Demo = createContext(false);
-
-export default function Painel({ dados, ola, dataLonga, demo = false }) {
+export default function Painel({ dados, ola, dataLonga, base, resumos, demo = false }) {
   const [aberto, setAberto] = useState(null);
-  // claro (padrão) ou escuro; a escolha fica salva neste aparelho
-  const [tema, setTema] = useState('claro');
-  useEffect(() => {
-    try { if (localStorage.getItem('tema-diretor') === 'escuro') setTema('escuro'); } catch {}
-  }, []);
-  function alternarTema() {
-    const novo = tema === 'claro' ? 'escuro' : 'claro';
-    setTema(novo);
-    try { localStorage.setItem('tema-diretor', novo); } catch {}
-  }
-  const { faturamento: f, contratos: c, vencendo: v, atraso: a, equipe: e, grade: g } = dados;
-
-  useEffect(() => {
-    if (!aberto) return undefined;
-    const fechar = (ev) => ev.key === 'Escape' && setAberto(null);
-    document.addEventListener('keydown', fechar);
-    document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', fechar); document.body.style.overflow = ''; };
-  }, [aberto]);
+  const fechar = useCallback(() => setAberto(null), []);
+  const { faturamento: f, contratos: c, vencendo: v, atraso: a, equipe: e, grade: g, radio } = dados;
 
   const blocos = [
     {
@@ -75,33 +54,24 @@ export default function Painel({ dados, ola, dataLonga, demo = false }) {
   ];
 
   const sobe = f.variacao !== null && f.variacao >= 0;
+  const nomeRadio = radio.opcoes.find((r) => r.id === radio.atual)?.nome;
+
+  // sem rádio escolhida: a tela de escolha, com um botão grande por rádio (sem somar as duas)
+  if (!radio.atual) return <Escolha ola={ola} dataLonga={dataLonga} base={base} resumos={resumos} demo={demo} />;
 
   return (
-    <div className="dir-tela" data-tema={tema}>
-      <header className="dir-topo">
-        <div className="dir-logos">
-          <img src="/logos/96fm.png" alt="96 FM" />
-          <img src="/logos/agro.png" alt="Rádio do Agro" />
-        </div>
-        <div className="dir-acoes">
-          <button type="button" className="dir-btn-topo" onClick={alternarTema} aria-label={tema === 'claro' ? 'Usar modo escuro' : 'Usar modo claro'}>
-            {tema === 'claro' ? <Moon size={20} /> : <Sun size={20} />}
-          </button>
-          {demo ? <span className="dir-demo">Demonstração</span> : (
-            <>
-              <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
-              <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
-            </>
-          )}
-        </div>
-      </header>
+    <>
+      <Topo demo={demo} />
 
       <main className="dir-conteudo">
         <div className="dir-ola">
           <small>{dataLonga}</small>
           <h1>{ola}</h1>
-          <p>Painel do Diretor · 96 FM e Rádio do Agro</p>
+          <p>Painel do Diretor · {nomeRadio}</p>
         </div>
+
+        <Link href={base} className="dir-voltar"><ChevronLeft size={18} />Rádios</Link>
+        <p className="dir-radios-nota">Visitas não têm rádio cadastrada, então a equipe na rua aparece nas duas.</p>
 
         <div className="dir-grade">
           <button type="button" className="dir-bloco dir-hero" onClick={() => setAberto('faturamento')}>
@@ -121,65 +91,15 @@ export default function Painel({ dados, ola, dataLonga, demo = false }) {
             <div className="dir-hero-sub"><b>{f.pctMes}%</b> do previsto no mês ({real(f.mes.previsto)})</div>
           </button>
 
-          {blocos.map((b) => (
-            <button key={b.id} type="button" className={`dir-bloco t-${b.tom}`} onClick={() => setAberto(b.id)}>
-              <div className="dir-bloco-topo"><span className={`dir-ico t-${b.tom}`}><b.Ico size={24} /></span><ChevronRight className="dir-seta" /></div>
-              <span className="dir-rotulo">{b.rotulo}</span>
-              <b className={`dir-num num ${b.pequeno ? 'menor' : ''}`}>{b.valor}</b>
-              {b.barra !== undefined && <div className="dir-trilho fino"><i style={{ width: `${b.barra}%` }} /></div>}
-              <span className="dir-sub">{b.sub}</span>
-              {b.extra && <span className="dir-extra">{b.extra}</span>}
-            </button>
-          ))}
+          {blocos.map((b) => <Bloco key={b.id} b={b} abrir={setAberto} />)}
         </div>
 
         <p className="dir-rodape">Toque em um quadro para ver os detalhes. Os números se atualizam sozinhos.</p>
       </main>
 
-      {aberto && (
-        <div className="dir-fundo" onClick={() => setAberto(null)} role="presentation">
-          <div className="dir-folha" role="dialog" aria-modal="true" onClick={(ev) => ev.stopPropagation()}>
-            <div className="dir-pegador" />
-            <button type="button" className="dir-fechar" onClick={() => setAberto(null)} aria-label="Fechar"><X size={22} /></button>
-            <Demo.Provider value={demo}><Detalhe id={aberto} dados={dados} /></Demo.Provider>
-          </div>
-        </div>
-      )}
-    </div>
+      <Folha aberto={aberto} fechar={fechar} demo={demo}><Detalhe id={aberto} dados={dados} /></Folha>
+    </>
   );
-}
-
-function Titulo({ Ico, tom, children, sub }) {
-  return (
-    <div className="dir-d-titulo">
-      <span className={`dir-ico t-${tom}`}><Ico size={24} /></span>
-      <div><h2>{children}</h2>{sub && <small>{sub}</small>}</div>
-    </div>
-  );
-}
-
-function Numeros({ itens }) {
-  return (
-    <div className="dir-d-numeros">
-      {itens.map(([rotulo, valor, tom]) => (
-        <div key={rotulo} className={tom ? `t-${tom}` : ''}><b className="num">{valor}</b><span>{rotulo}</span></div>
-      ))}
-    </div>
-  );
-}
-
-function Linha({ titulo, sub, valor, valorSub, tom }) {
-  return (
-    <div className="dir-d-linha">
-      <div><b>{titulo}</b>{sub && <small>{sub}</small>}</div>
-      <div className={`dir-d-valor ${tom ? `t-${tom}` : ''}`}><b className="num">{valor}</b>{valorSub && <small>{valorSub}</small>}</div>
-    </div>
-  );
-}
-
-function VerTudo({ href, children }) {
-  if (useContext(Demo)) return null;
-  return <Link href={href} className="dir-ver">{children}<ChevronRight size={18} /></Link>;
 }
 
 function Detalhe({ id, dados }) {
@@ -340,4 +260,59 @@ function Detalhe({ id, dados }) {
     );
   }
   return null;
+}
+
+function Topo({ demo }) {
+  return (
+    <header className="dir-topo">
+      <div className="dir-logos">
+        <img src="/logos/96fm.png" alt="96 FM" />
+        <img src="/logos/agro.png" alt="Rádio do Agro" />
+      </div>
+      <div className="dir-acoes">
+        <BotaoTemaPainel />
+        {demo ? <span className="dir-demo">Demonstração</span> : (
+          <>
+            <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
+            <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
+          </>
+        )}
+      </div>
+    </header>
+  );
+}
+
+// Logo de cada rádio, no canto do botão da tela de escolha
+const LOGO_RADIO = { '96 FM': '/logos/96fm.png', 'Rádio do Agro': '/logos/agro.png' };
+
+// Tela de escolha: um botão grande por rádio, com o resumo dentro. Tocar abre o painel daquela rádio.
+function Escolha({ ola, dataLonga, base, resumos, demo }) {
+  return (
+    <>
+      <Topo demo={demo} />
+      <main className="dir-conteudo">
+        <div className="dir-ola">
+          <small>{dataLonga}</small>
+          <h1>{ola}</h1>
+          <p>Escolha uma rádio para ver o painel</p>
+        </div>
+        <div className="dir-radio-cards">
+          {resumos.map((r) => {
+            const d = r.dados;
+            return (
+              <Link key={r.id} href={`${base}?radio=${r.id}`} className="dir-radio-card" style={{ '--cor': r.cor }}>
+                {LOGO_RADIO[r.nome] && <img className="dir-radio-logo" src={LOGO_RADIO[r.nome]} alt={r.nome} />}
+                <span className="dir-radio-nome">{r.nome}</span>
+                <span className="dir-radio-mensal num">{real(d.faturamento.mensal)}<small>/mês</small></span>
+                <span className="dir-radio-linha">{plural(d.contratos.ativos, 'contrato ativo', 'contratos ativos')} · {plural(d.contratos.novosMes, 'venda', 'vendas')} no mês</span>
+                <span className="dir-radio-linha">Recebido em {d.faturamento.mes.rotulo}: <b className="num">{real(d.faturamento.mes.recebido)}</b></span>
+                <span className="dir-radio-linha">{d.atraso.parcelas ? `Em atraso: ${real(d.atraso.valor)}` : 'Nenhuma parcela em atraso'}</span>
+                <span className="dir-radio-abrir">Abrir painel <ChevronRight size={22} /></span>
+              </Link>
+            );
+          })}
+        </div>
+      </main>
+    </>
+  );
 }

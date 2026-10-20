@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, MessageCircleQuestion, Timer, BadgePercent, Send, Building2, TrendingUp, Crown,
+  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, MessageCircleQuestion, Timer, BadgePercent, Send, Building2, TrendingUp, Crown, Target,
 } from 'lucide-react';
 
 // m = só para o gestor master
@@ -93,6 +93,7 @@ export default function Sidebar({ master }) {
       <div className="rodape">
         <div className="sep" />
         {master && <Link href="/diretor"><Crown className="ico" />Painel do Diretor</Link>}
+        <Link href="/comercial"><Target className="ico" />Painel Comercial</Link>
         <Link href="/app"><Smartphone className="ico" />Abrir app do vendedor</Link>
         <form action="/sair" method="post">
           <button className="btn peq cinza" style={{ margin: '10px 0 0', width: '100%' }}><LogOut className="ico" />Sair</button>
