@@ -2,7 +2,7 @@
    Painel do Diretor: sempre claro, blocos grandes, pensado para iPhone
    (2 colunas) e iPad (2 colunas em pé, 4 deitado).
    ===================================================================== */
-.dir {
+.dir, .dir-tela {
   --bg: #f4f2ee;
   --card: #ffffff;
   --card-2: #f1efea;
@@ -20,28 +20,31 @@
   --c-roxo: #7c3aed;    --c-roxo-bg: #efe7fe;
   --c-neutro: #17150f;  --c-neutro-bg: #efede7;
   --c-cinza: #8a857a;
+  --topo-bg: rgba(244, 242, 238, .9);
+  --on-accent: #ffffff;
+  --hero-bg: linear-gradient(160deg, #ffffff 40%, #eef8f1);
   color-scheme: light;
   min-height: 100dvh;
   background: var(--bg);
   color: var(--text);
   padding-bottom: env(safe-area-inset-bottom);
 }
-.dir .t-verde { --tom: var(--c-verde); --tom-bg: var(--c-verde-bg); }
-.dir .t-laranja { --tom: var(--c-laranja); --tom-bg: var(--c-laranja-bg); }
-.dir .t-amarelo { --tom: var(--c-amarelo); --tom-bg: var(--c-amarelo-bg); }
-.dir .t-vermelho { --tom: var(--c-vermelho); --tom-bg: var(--c-vermelho-bg); }
-.dir .t-azul { --tom: var(--c-azul); --tom-bg: var(--c-azul-bg); }
-.dir .t-ouro { --tom: var(--c-ouro); --tom-bg: var(--c-ouro-bg); }
-.dir .t-roxo { --tom: var(--c-roxo); --tom-bg: var(--c-roxo-bg); }
-.dir .t-neutro { --tom: var(--c-neutro); --tom-bg: var(--c-neutro-bg); }
-.dir .t-cinza { --tom: var(--c-cinza); --tom-bg: var(--card-2); }
+.dir-tela .t-verde { --tom: var(--c-verde); --tom-bg: var(--c-verde-bg); }
+.dir-tela .t-laranja { --tom: var(--c-laranja); --tom-bg: var(--c-laranja-bg); }
+.dir-tela .t-amarelo { --tom: var(--c-amarelo); --tom-bg: var(--c-amarelo-bg); }
+.dir-tela .t-vermelho { --tom: var(--c-vermelho); --tom-bg: var(--c-vermelho-bg); }
+.dir-tela .t-azul { --tom: var(--c-azul); --tom-bg: var(--c-azul-bg); }
+.dir-tela .t-ouro { --tom: var(--c-ouro); --tom-bg: var(--c-ouro-bg); }
+.dir-tela .t-roxo { --tom: var(--c-roxo); --tom-bg: var(--c-roxo-bg); }
+.dir-tela .t-neutro { --tom: var(--c-neutro); --tom-bg: var(--c-neutro-bg); }
+.dir-tela .t-cinza { --tom: var(--c-cinza); --tom-bg: var(--card-2); }
 
 /* topo */
 .dir-topo {
   position: sticky; top: 0; z-index: 5;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
-  background: rgba(244, 242, 238, .9); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  background: var(--topo-bg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line);
 }
 .dir-logos { display: flex; align-items: center; gap: 10px; }
@@ -94,7 +97,7 @@
 @media (min-width: 700px) { .dir-num { font-size: 3.2rem; } .dir-num.menor { font-size: 2.1rem; } .dir-sub { font-size: .98rem; } }
 
 /* bloco grande do faturamento */
-.dir-hero { grid-column: 1 / -1; min-height: 0; background: linear-gradient(160deg, #ffffff 40%, #eef8f1); }
+.dir-hero { grid-column: 1 / -1; min-height: 0; background: var(--hero-bg); }
 @media (min-width: 1000px) { .dir-hero { grid-column: span 2; grid-row: span 2; } }
 .dir-hero .dir-rotulo { font-size: .9rem; }
 .dir-hero-num { font-size: 2.7rem; font-weight: 700; line-height: 1.05; color: var(--c-verde); overflow-wrap: anywhere; }
@@ -165,12 +168,12 @@
 .dir-pos { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--card-2); font-size: .8rem; font-weight: 700; flex: none; }
 .dir-ver {
   display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 18px;
-  height: 52px; border-radius: 16px; background: var(--text); color: #fff; font-weight: 700;
+  height: 52px; border-radius: 16px; background: var(--text); color: var(--on-accent); font-weight: 700;
 }
 .dir-lider { display: flex; align-items: center; gap: 14px; background: var(--c-ouro-bg); border-radius: 20px; padding: 16px; }
 .dir-lider b { display: block; font-size: 1.2rem; }
 .dir-lider small { color: var(--c-ouro); font-weight: 600; }
-.dir-avatar { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: var(--c-ouro); color: #fff; font: 700 1.4rem var(--font-display); flex: none; }
+.dir-avatar { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: var(--c-ouro); color: #fff; font: 700 1.4rem var(--font-display); flex: none; color: var(--on-accent); }
 
 .dir-barras { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; height: 170px; align-items: end; }
 .dir-barras > div { display: flex; flex-direction: column; align-items: center; height: 100%; gap: 4px; }
@@ -178,7 +181,7 @@
 .dir-barra-trilho { position: relative; flex: 1; width: 100%; max-width: 46px; }
 .dir-barra-trilho span { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 8px 8px 4px 4px; }
 .dir-barra-trilho .prev { background: var(--card-2); border: 1px dashed var(--line-2); }
-.dir-barra-trilho .rec { background: #9fd5b0; left: 6px; right: 6px; }
+.dir-barra-trilho .rec { background: color-mix(in srgb, var(--c-verde) 45%, transparent); left: 6px; right: 6px; }
 .dir-barras .atual .rec { background: var(--c-verde); }
 .dir-barras em { font-style: normal; font-size: .8rem; color: var(--muted); }
 .dir-barras .atual em { color: var(--text); font-weight: 700; }
@@ -190,7 +193,7 @@
 .dir-d-radio { background: var(--card-2); border-radius: 18px; padding: 14px; margin-bottom: 10px; }
 .dir-d-radio-topo { display: flex; justify-content: space-between; align-items: center; }
 .dir-d-radio-topo b { display: flex; align-items: center; gap: 8px; }
-.dir-d-radio .dir-trilho { background: #fff; }
+.dir-d-radio .dir-trilho { background: var(--card); }
 .dir-d-prog { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; font-size: .92rem; }
 .dir-tag { font-size: .78rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
 .dir-tag.verde { background: var(--c-verde-bg); color: var(--c-verde); }
@@ -199,4 +202,30 @@
 
 /* fundo claro também ao "puxar" a tela além do fim (iPhone) */
 body:has(.dir) { background: #f4f2ee; }
-.dir-demo { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--c-azul); background: var(--c-azul-bg); padding: 7px 12px; border-radius: 999px; }
+body:has(.dir-tela[data-tema="escuro"]) { background: #0a0a0a; }
+
+/* modo escuro: o botão de lua/sol do topo troca só o painel, não o resto do site */
+.dir-tela { min-height: 100dvh; background: var(--bg); color: var(--text); padding-bottom: env(safe-area-inset-bottom); }
+.dir-tela[data-tema="escuro"] {
+  --bg: #0a0a0a;
+  --card: #151515;
+  --card-2: #1d1d1d;
+  --text: #f5f5f5;
+  --muted: #a3a3a3;
+  --line: #262626;
+  --line-2: #333333;
+  --c-verde: #4ade80;    --c-verde-bg: rgba(74, 222, 128, .13);
+  --c-laranja: #fb923c;  --c-laranja-bg: rgba(251, 146, 60, .14);
+  --c-amarelo: #fbbf24;  --c-amarelo-bg: rgba(251, 191, 36, .14);
+  --c-vermelho: #f87171; --c-vermelho-bg: rgba(248, 113, 113, .14);
+  --c-azul: #8fa0ff;     --c-azul-bg: rgba(61, 123, 255, .16);
+  --c-ouro: #facc15;     --c-ouro-bg: rgba(250, 204, 21, .13);
+  --c-roxo: #c084fc;     --c-roxo-bg: rgba(192, 132, 252, .14);
+  --c-neutro: #f5f5f5;   --c-neutro-bg: #1d1d1d;
+  --c-cinza: #8a857a;
+  --topo-bg: rgba(10, 10, 10, .9);
+  --on-accent: #0a0a0a;
+  --hero-bg: linear-gradient(160deg, #151515 40%, #0f1f16);
+  color-scheme: dark;
+}
+.dir-demo { display: inline-flex; align-items: center; height: 44px; font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; color: var(--c-azul); background: var(--c-azul-bg); padding: 0 14px; border-radius: 999px; }

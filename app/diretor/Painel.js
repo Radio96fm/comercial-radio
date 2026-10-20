@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  Wallet, FileCheck2, CalendarClock, AlertTriangle, Users, Trophy, Car, Radio, Rocket, ChevronRight, X, LayoutDashboard, LogOut, TrendingUp, TrendingDown,
+  Wallet, FileCheck2, CalendarClock, AlertTriangle, Users, Trophy, Car, Radio, Rocket, ChevronRight, X, LayoutDashboard, LogOut, TrendingUp, TrendingDown, Moon, Sun,
 } from 'lucide-react';
 import { moeda, data } from '@/lib/format';
 
@@ -17,6 +17,16 @@ const Demo = createContext(false);
 
 export default function Painel({ dados, ola, dataLonga, demo = false }) {
   const [aberto, setAberto] = useState(null);
+  // claro (padrão) ou escuro; a escolha fica salva neste aparelho
+  const [tema, setTema] = useState('claro');
+  useEffect(() => {
+    try { if (localStorage.getItem('tema-diretor') === 'escuro') setTema('escuro'); } catch {}
+  }, []);
+  function alternarTema() {
+    const novo = tema === 'claro' ? 'escuro' : 'claro';
+    setTema(novo);
+    try { localStorage.setItem('tema-diretor', novo); } catch {}
+  }
   const { faturamento: f, contratos: c, vencendo: v, atraso: a, equipe: e, grade: g } = dados;
 
   useEffect(() => {
@@ -67,18 +77,23 @@ export default function Painel({ dados, ola, dataLonga, demo = false }) {
   const sobe = f.variacao !== null && f.variacao >= 0;
 
   return (
-    <>
+    <div className="dir-tela" data-tema={tema}>
       <header className="dir-topo">
         <div className="dir-logos">
           <img src="/logos/96fm.png" alt="96 FM" />
           <img src="/logos/agro.png" alt="Rádio do Agro" />
         </div>
-        {demo ? <span className="dir-demo">Demonstração</span> : (
-          <div className="dir-acoes">
-            <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
-            <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
-          </div>
-        )}
+        <div className="dir-acoes">
+          <button type="button" className="dir-btn-topo" onClick={alternarTema} aria-label={tema === 'claro' ? 'Usar modo escuro' : 'Usar modo claro'}>
+            {tema === 'claro' ? <Moon size={20} /> : <Sun size={20} />}
+          </button>
+          {demo ? <span className="dir-demo">Demonstração</span> : (
+            <>
+              <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
+              <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
+            </>
+          )}
+        </div>
       </header>
 
       <main className="dir-conteudo">
@@ -130,7 +145,7 @@ export default function Painel({ dados, ola, dataLonga, demo = false }) {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
