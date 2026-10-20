@@ -24,8 +24,14 @@ function LoginForm() {
       setErro('E-mail ou senha incorretos.');
       return;
     }
-    // dentro da moldura de celular (/celular) abre sempre a versão do vendedor
-    router.replace(window.self !== window.top ? '/app' : '/');
+    // dentro da moldura de celular (/celular) abre a versão daquela apresentação
+    let destino = '/';
+    if (window.self !== window.top) {
+      let topo = '';
+      try { topo = window.top.location.pathname; } catch {}
+      destino = topo.startsWith('/celular/diretor') ? '/diretor' : '/app';
+    }
+    router.replace(destino);
     router.refresh();
   }
 
