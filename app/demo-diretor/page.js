@@ -4,8 +4,19 @@ import { dadosDemoDiretor } from '@/lib/demoDiretor';
 import Painel from '../diretor/Painel';
 
 export const metadata = {
-  title: 'Demonstração · Painel do Diretor',
+  title: 'Painel do Diretor',
   robots: { index: false, follow: false },
+  // Instalável no iPhone: Safari > Compartilhar > Adicionar à Tela de Início
+  manifest: '/demo-diretor.webmanifest',
+  icons: { icon: '/icon.svg', apple: '/apple-touch-icon-diretor.png' },
+  appleWebApp: { capable: true, title: 'Diretor', statusBarStyle: 'default' },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#f4f2ee',
 };
 
 function saudacao() {
