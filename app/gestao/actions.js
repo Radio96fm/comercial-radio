@@ -397,3 +397,30 @@ export async function novoConvite() {
   await supabase.rpc('convite_vendedor', { p_novo: true });
   revalidatePath('/gestao/vendedores');
 }
+
+// ------------------------------------------------------------------ propostas em PDF
+const TABELA_PROPOSTA = { programa: 'programas', radio: 'radios' };
+
+export async function salvarPropostaPdf({ tipo, id, caminho }) {
+  const { supabase } = await requireGestor();
+  const tabela = TABELA_PROPOSTA[tipo];
+  if (!tabela || !String(caminho || '').startsWith(`${tipo}/${id}/`)) return { erro: 'Arquivo inválido.' };
+  const { data: antes } = await supabase.from(tabela).select('proposta_pdf').eq('id', id).maybeSingle();
+  const { error } = await supabase.from(tabela).update({ proposta_pdf: caminho, proposta_atualizada_em: new Date().toISOString() }).eq('id', id);
+  if (error) return { erro: erroAmigavel(error) };
+  if (antes?.proposta_pdf && antes.proposta_pdf !== caminho) await supabase.storage.from('propostas').remove([antes.proposta_pdf]);
+  revalidatePath('/gestao/propostas');
+  return { ok: true };
+}
+
+export async function removerPropostaPdf({ tipo, id }) {
+  const { supabase } = await requireGestor();
+  const tabela = TABELA_PROPOSTA[tipo];
+  if (!tabela) return { erro: 'Inválido.' };
+  const { data: antes } = await supabase.from(tabela).select('proposta_pdf').eq('id', id).maybeSingle();
+  const { error } = await supabase.from(tabela).update({ proposta_pdf: null, proposta_atualizada_em: new Date().toISOString() }).eq('id', id);
+  if (error) return { erro: erroAmigavel(error) };
+  if (antes?.proposta_pdf) await supabase.storage.from('propostas').remove([antes.proposta_pdf]);
+  revalidatePath('/gestao/propostas');
+  return { ok: true };
+}

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
 import Topo from '@/components/Topo';
-import { moeda, statusPrograma } from '@/lib/format';
+import { moeda, statusPrograma, hojeISO } from '@/lib/format';
 import { MODALIDADE } from '@/lib/pacote';
 import { marcaDaRadio } from '@/lib/marca';
 
@@ -25,8 +25,9 @@ function Horario({ p }) {
   return <div><b className={extra ? 'texto' : ''}>{extra || 'Horário a definir'}</b><span>{diasCurto(dias)}</span></div>;
 }
 
-export default async function RadioPage({ params }) {
+export default async function RadioPage({ params, searchParams }) {
   const { supabase } = await getSessao();
+  const visitaId = typeof searchParams?.visita === 'string' ? searchParams.visita : '';
   const { data: radio } = await supabase.from('radios').select('*').eq('id', params.id).maybeSingle();
   if (!radio) notFound();
 
@@ -48,13 +49,32 @@ export default async function RadioPage({ params }) {
   });
   const temMarcado = linhasAvulso.some((l) => l.determinada != null);
 
+  // dentro de uma visita: mostra a empresa e marca os programas em que o segmento dela já está ocupado
+  const { data: visita } = visitaId
+    ? await supabase.from('visitas').select('id, cliente:clientes(id, nome, segmento_id, segmento:segmentos(nome))').eq('id', visitaId).maybeSingle()
+    : { data: null };
+  let ocupadoSeg = new Set();
+  if (visita) {
+    const hoje = hojeISO();
+    const { data: oc } = await supabase.from('contratos').select('programa_id')
+      .eq('segmento_id', visita.cliente.segmento_id).in('status', ['pendente', 'ativo']).gte('data_fim', hoje).not('programa_id', 'is', null);
+    ocupadoSeg = new Set((oc || []).map((c) => c.programa_id));
+  }
+  const qv = visita ? `?visita=${visita.id}` : '';
+
   const marca = marcaDaRadio(radio.nome);
   const comVaga = (programas || []).filter((p) => p.cotas_livres > 0).length;
 
   return (
     <>
-      <Topo titulo={radio.nome} voltar="/app" cor={radio.cor} />
+      <Topo titulo={radio.nome} voltar={visita ? `/app/visitas/${visita.id}` : '/app'} cor={radio.cor} />
       <main className="conteudo">
+        {visita && (
+          <div className="visita-banner">
+            <div className="t"><small>Visita em andamento · escolha o programa</small><b>{visita.cliente.nome}</b></div>
+            <span className="badge b-azul">{visita.cliente.segmento?.nome}</span>
+          </div>
+        )}
         <div className="cabeca-radio">
           {marca.logo && <img src={marca.logo} alt="" />}
           <div className="t">
@@ -72,9 +92,9 @@ export default async function RadioPage({ params }) {
         {!programas?.length && <div className="vazio">Nenhum programa cadastrado nesta rádio.</div>}
         <div className="lista-programas">
           {(programas || []).map((p) => {
-            const st = statusPrograma(p.cotas_livres, p.cotas_total);
+            const st = ocupadoSeg.has(p.id) ? { cor: 'vermelho', texto: 'Segmento ocupado' } : statusPrograma(p.cotas_livres, p.cotas_total);
             return (
-              <Link key={p.id} href={`/app/programa/${p.id}`} className="prog-linha" style={{ '--cor': radio.cor, '--st': COR_STATUS[st.cor] }}>
+              <Link key={p.id} href={`/app/programa/${p.id}${qv}`} className="prog-linha" style={{ '--cor': radio.cor, '--st': COR_STATUS[st.cor] }}>
                 <div className="topo-p">
                   <div className="nome">{p.nome}</div>
                   <span className="seta"><ChevronRight className="ico" /></span>
@@ -126,7 +146,7 @@ export default async function RadioPage({ params }) {
           </details>
         )}
 
-        <Link href={`/app/radio/${radio.id}/montar`} className="btn grande btn-radio" style={{ '--cor': radio.cor }}>
+        <Link href={`/app/radio/${radio.id}/montar${visita ? `?cliente=${visita.cliente.id}&visita=${visita.id}` : ''}`} className="btn grande btn-radio" style={{ '--cor': radio.cor }}>
           <Sparkles className="ico" strokeWidth={2.4} /> Montar plano personalizado
         </Link>
       </main>

@@ -9,7 +9,7 @@ import { moeda, data, somarMeses, somarDias } from '@/lib/format';
 import { nomeItem, MODALIDADE, textoDireito } from '@/lib/pacote';
 import { valorNoPeriodo, temPrecoPorPeriodo } from '@/lib/periodo';
 
-const MESES = [1, 3, 6, 12];
+const MESES = [3, 6, 12];
 
 export default function FormContrato({ clientes, programas, planos, precos, radios, ocupados, vendedores, isGestor, meuId, hoje, inicial, linkNovoCliente, linkMeusDados }) {
   const [estado, acao] = useFormState(criarContrato, null);
@@ -33,7 +33,6 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
   const [meses, setMeses] = useState(Math.max(3, minimoInicial));
   const [vencimento, setVencimento] = useState(() => { const d = somarMeses(hoje, 1); return `${d.slice(0, 8)}10`; });
   const [vendedorId, setVendedorId] = useState(meuId);
-  const [exclusivo, setExclusivo] = useState(true);
   const [obsManual, setObsManual] = useState(null);
 
   const radio = radios.find((r) => r.id === radioId);
@@ -141,7 +140,7 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
       {/* ------- período e vencimento ------- */}
       <h2 className="passo">2. Período</h2>
       <input type="hidden" name="meses" value={meses} />
-      <div className="seg4">
+      <div className="seg4" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {MESES.map((m) => (
           <button type="button" key={m} className={Number(meses) === m ? 'ativo' : ''} disabled={m < minimo} onClick={() => setMeses(m)}>
             <b>{m}</b>{m === 1 ? 'mês' : 'meses'}
@@ -163,16 +162,7 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
       </div>
       {fim && <p className="muted" style={{ marginTop: -8 }}>Termina em <b>{data(fim)}</b>. Os boletos vencem todo dia {vencimento ? Number(vencimento.slice(8, 10)) : ''}.</p>}
 
-      {/* ------- exclusividade ------- */}
-      <div className="campo" style={{ marginTop: 14 }}>
-        <label>Com exclusividade?</label>
-        <div className="seg4">
-          <button type="button" className={exclusivo ? 'ativo' : ''} onClick={() => setExclusivo(true)}><b>Sim</b>exclusivo</button>
-          <button type="button" className={!exclusivo ? 'ativo' : ''} onClick={() => setExclusivo(false)}><b>Não</b>sem exclusividade</button>
-        </div>
-        <input type="hidden" name="exclusivo" value={exclusivo ? 'sim' : 'nao'} />
-        <div className="ajuda">Com exclusividade, nenhum outro cliente do mesmo segmento entra neste programa no período.</div>
-      </div>
+      {prog && <div className="alerta info" style={{ marginTop: 14 }}>Programa com exclusividade: nenhum outro cliente do mesmo segmento entra neste programa no período.</div>}
 
       {/* ------- observações ------- */}
       <h2 className="passo">3. O que o cliente tem direito</h2>
