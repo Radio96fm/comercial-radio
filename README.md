@@ -15,6 +15,8 @@ Tecnologia: Next.js 14 (site) + Supabase (banco de dados, login e atualização 
 - Contratos *Aguardando assinatura* e *Ativos* ocupam vaga. *Cancelados* e *Encerrados* liberam a vaga.
 - Cada cliente tem um vendedor responsável. Só o gestor transfere clientes entre vendedores.
 - Tudo o que cada usuário faz fica registrado em **Histórico**.
+- **Visita:** começa com o nome da empresa e o nome do contato na empresa. Enquanto o vendedor digita, aparecem as empresas parecidas de toda a base (mesmo escritas errado), com quem atende, a visita com validade e o fim do contrato vigente. Não dá para cadastrar empresa com o mesmo nome ou o mesmo CPF/CNPJ de outra, e só um vendedor visita a mesma empresa.
+- **Fluxo da venda:** visita → rádio → programa/plano → proposta em PDF pelo WhatsApp → cliente aprovou → cadastro completo → contrato (3, 6 ou 12 meses; programa sempre com exclusividade). Os PDFs das propostas ficam em **Propostas em PDF** no painel (`supabase/migracao-visita-proposta.sql`).
 
 ## Segurança
 

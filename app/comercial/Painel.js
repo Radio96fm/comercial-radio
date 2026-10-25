@@ -2,7 +2,7 @@
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import {
-  Rocket, Handshake, Hourglass, UserX, CalendarClock, FileSignature, Filter, Car, Radio, Trophy, ChevronRight, LayoutDashboard, LogOut, TrendingUp, TrendingDown, Target, Medal, Briefcase, Users,
+  Rocket, Handshake, Hourglass, UserX, CalendarClock, FileSignature, Filter, Car, Radio, Trophy, ChevronRight, LayoutDashboard, LogOut, TrendingUp, TrendingDown, Target, Medal, Briefcase, Users, FileUp,
 } from 'lucide-react';
 import { data, STATUS_VISITA } from '@/lib/format';
 import { plural, primeiro, BotaoTemaPainel, Folha, Bloco, Titulo, Numeros, Linha, VerTudo } from '../diretor/Pecas';
@@ -66,6 +66,7 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
             <BotaoTemaPainel />
             {demo ? <span className="dir-demo">Demonstração</span> : (
               <>
+                <Link href="/gestao/propostas" className="dir-btn-topo" aria-label="Propostas em PDF"><FileUp size={20} /><span>Propostas</span></Link>
                 <Link href="/app" className="dir-btn-topo" aria-label="Vender"><Briefcase size={20} /><span>Vender</span></Link>
                 <Link href="/gestao" className="dir-btn-topo" aria-label="Painel completo"><LayoutDashboard size={20} /><span>Painel completo</span></Link>
                 <form action="/sair" method="post"><button className="dir-btn-topo" aria-label="Sair"><LogOut size={20} /></button></form>
@@ -253,6 +254,7 @@ function Menu({ demo, base }) {
           <>
             <Link href="/gestao/negociacoes"><Handshake className="ico" />Negociações</Link>
             <Link href="/gestao/programas"><Radio className="ico" />Programas</Link>
+            <Link href="/gestao/propostas"><FileUp className="ico" />Propostas em PDF</Link>
             <Link href="/app"><Briefcase className="ico" />Vender</Link>
           </>
         )}

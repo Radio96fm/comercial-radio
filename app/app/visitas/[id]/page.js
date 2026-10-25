@@ -4,11 +4,13 @@ import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
-import { mudarStatusVisita, salvarObsVisita, pedirProrrogacao } from '../../actions';
-import { dataHora, horario, moeda, linkWhatsApp, STATUS_VISITA, hojeISO } from '@/lib/format';
+import { ArrowUpRight, Check, FileText, Send } from 'lucide-react';
+import { mudarStatusVisita, salvarObsVisita, pedirProrrogacao, aprovarProposta } from '../../actions';
+import { marcaDaRadio } from '@/lib/marca';
+import { dataHora, linkWhatsApp, STATUS_VISITA } from '@/lib/format';
 import { prazoVisita, textoRestam, PRAZO_DIAS, PRAZO_MAXIMO_DIAS } from '@/lib/prazo';
 
-export default async function VisitaPage({ params }) {
+export default async function VisitaPage({ params, searchParams }) {
   const { supabase, perfil, isGestor } = await getSessao();
   const { data: v } = await supabase
     .from('visitas')
@@ -19,25 +21,23 @@ export default async function VisitaPage({ params }) {
   // gestor olhando a visita de outro vendedor: abre a versão só de leitura do painel
   if (isGestor && v.vendedor_id !== perfil.id) redirect(`/gestao/visitas/${v.id}`);
 
-  const hoje = hojeISO();
-  const [{ data: programas }, { data: ocupados }, { data: radiosVisita }] = await Promise.all([
-    supabase.from('programas_ocupacao').select('*').eq('ativo', true).gt('cotas_livres', 0).order('radio_nome').order('horario_inicio'),
-    supabase
-      .from('contratos')
-      .select('programa_id')
-      .eq('segmento_id', v.cliente.segmento_id)
-      .in('status', ['pendente', 'ativo'])
-      .lte('data_inicio', hoje)
-      .gte('data_fim', hoje),
+  const [{ data: radiosVisita }, { data: ocupacao }, { data: escolhido }, { data: plano }] = await Promise.all([
     supabase.from('radios').select('id, nome, cor').order('ordem'),
+    supabase.from('programas_ocupacao').select('radio_id, cotas_livres').eq('ativo', true),
+    v.programa_id ? supabase.from('programas').select('id, nome, radio_id, radio:radios(nome, cor)').eq('id', v.programa_id).maybeSingle() : Promise.resolve({ data: null }),
+    v.plano_id ? supabase.from('programa_planos').select('id, nome').eq('id', v.plano_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
-  const bloqueados = new Set((ocupados || []).map((c) => c.programa_id));
-  const disponiveis = (programas || []).filter((p) => !bloqueados.has(p.id));
-  const porRadio = {};
-  disponiveis.forEach((p) => {
-    porRadio[p.radio_nome] = porRadio[p.radio_nome] || { cor: p.radio_cor, itens: [] };
-    porRadio[p.radio_nome].itens.push(p);
+  const livres = {};
+  (ocupacao || []).forEach((p) => {
+    livres[p.radio_id] = livres[p.radio_id] || { programas: 0, comVaga: 0 };
+    livres[p.radio_id].programas += 1;
+    if (p.cotas_livres > 0) livres[p.radio_id].comVaga += 1;
   });
+  // etapas: 1 rádio e programa, 2 proposta, 3 aprovação, 4 cadastro e contrato
+  const etapa = !escolhido ? 1 : !v.proposta_enviada_em ? 2 : !v.proposta_aprovada_em ? 3 : 4;
+  const contato = v.contato_nome || v.cliente.contato_nome;
+  const telefone = v.contato_telefone || v.cliente.telefone;
+  const erro = typeof searchParams?.erro === 'string' ? searchParams.erro : '';
 
   const podeEditar = isGestor || v.vendedor_id === perfil.id;
   const aberta = v.status === 'em_andamento' || v.status === 'proposta';
@@ -90,52 +90,76 @@ export default async function VisitaPage({ params }) {
             <div className="prazo-visita alerta-p"><b>Aguardando o comercial</b><span>O pedido de mais 15 dias foi enviado. Você continua sem exclusividade até a resposta.</span></div>
           )}
           {liberada && aberta && <div className="prazo-visita fim"><b>Exclusividade liberada pelo gestor</b><span>Outros vendedores já podem visitar esta empresa.</span></div>}
-          {v.cliente.contato_nome && <div>{v.cliente.contato_nome}</div>}
-          {v.cliente.telefone && (
+          {contato && <div style={{ marginTop: 6 }}>Contato: <b>{contato}</b>{v.contato_cargo ? ` · ${v.contato_cargo}` : ''}</div>}
+          {telefone && (
             <div className="acoes" style={{ marginTop: 10 }}>
-              <a className="btn peq sec" href={`tel:${v.cliente.telefone.replace(/\D/g, '')}`}>Ligar</a>
-              <a className="btn peq whats" href={linkWhatsApp(v.cliente.telefone, '')} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+              <a className="btn peq sec" href={`tel:${telefone.replace(/\D/g, '')}`}>Ligar</a>
+              <a className="btn peq whats" href={linkWhatsApp(telefone, '')} target="_blank" rel="noopener noreferrer">WhatsApp</a>
             </div>
           )}
           <div style={{ marginTop: 10 }}><Link href={`/app/clientes/${v.cliente.id}`}>Ver ficha completa do cliente ›</Link></div>
         </div>
 
-        {podeEditar && aberta && (
-          <div className="grid2" style={{ marginBottom: 14 }}>
-            {(radiosVisita || []).map((r) => (
-              <Link key={r.id} className="btn btn-radio" style={{ '--cor': r.cor, marginTop: 0 }} href={`/app/radio/${r.id}/montar?cliente=${v.cliente.id}&visita=${v.id}`}>
-                Montar plano {r.nome}
-              </Link>
-            ))}
-          </div>
-        )}
+        {erro && <div className="alerta erro">{erro}</div>}
 
-        <div className="secao-titulo"><h2>Programas que este cliente pode patrocinar</h2></div>
-        <p className="muted">
-          Já filtrado: só aparecem programas com vaga e sem outro patrocinador do segmento <b>{v.cliente.segmento?.nome}</b>.
-        </p>
-        {!disponiveis.length && <div className="vazio">Nenhum programa disponível para este segmento no momento.</div>}
-        {Object.entries(porRadio).map(([radio, g]) => (
-          <div key={radio} style={{ marginBottom: 14 }}>
-            <h3 style={{ color: g.cor }}>{radio}</h3>
-            <div className="lista">
-              {g.itens.map((p) => (
-                <div key={p.id} className="item">
-                  <div className="info">
-                    <div className="nome">{p.nome}</div>
-                    <div className="det">{p.dias}{horario(p) ? ` · ${horario(p)}` : ''}</div>
-                    <div className="det">{moeda(p.valor_cota)}/mês · {p.cotas_livres} vaga{p.cotas_livres > 1 ? 's' : ''}</div>
-                  </div>
-                  {podeEditar && aberta && (
-                    <Link className="btn peq verde" href={`/app/contratos/novo?programa=${p.id}&cliente=${v.cliente.id}&visita=${v.id}`}>
-                      Fechar
-                    </Link>
-                  )}
-                </div>
+        {podeEditar && aberta && (
+          <>
+            <div className="etapas">
+              {['Rádio e programa', 'Proposta', 'Aprovação', 'Cadastro e contrato'].map((t, i) => (
+                <span key={t} className={i + 1 < etapa ? 'feita' : i + 1 === etapa ? 'atual' : ''}>{i + 1 < etapa && <Check size={12} />} {t}</span>
               ))}
             </div>
-          </div>
-        ))}
+
+            {escolhido && (
+              <div className="card proposta-resumo" style={{ '--cor': escolhido.radio?.cor }}>
+                <div className="radio-n">{escolhido.radio?.nome}</div>
+                <h2 style={{ margin: '2px 0' }}>{escolhido.nome}</h2>
+                {plano && <div className="muted">{plano.nome}</div>}
+                {v.proposta_enviada_em && <p className="muted" style={{ margin: '8px 0 0' }}><FileText size={14} /> Proposta enviada em {dataHora(v.proposta_enviada_em)}</p>}
+                {v.proposta_aprovada_em && <p style={{ margin: '6px 0 0', color: 'var(--verde)' }}><Check size={14} /> Aprovada pelo cliente em {dataHora(v.proposta_aprovada_em)}</p>}
+              </div>
+            )}
+
+            {etapa === 2 && (
+              <Link href={`/app/visitas/${v.id}/proposta`} className="btn grande verde"><Send className="ico" /> Enviar proposta comercial</Link>
+            )}
+            {etapa === 3 && (
+              <>
+                <p className="passo-guia">O cliente aprovou a proposta?</p>
+                <form action={aprovarProposta}>
+                  <input type="hidden" name="id" value={v.id} />
+                  <BotaoEnviar className="btn grande verde" texto="Cliente aprovou: fazer cadastro completo" enviando="..." />
+                </form>
+                <Link href={`/app/visitas/${v.id}/proposta`} className="btn sec" style={{ marginTop: 10, width: '100%' }}>Reenviar proposta</Link>
+              </>
+            )}
+            {etapa === 4 && (
+              <Link href={`/app/visitas/${v.id}/cadastro`} className="btn grande verde">Cadastro completo e contrato</Link>
+            )}
+
+            {etapa === 1 ? <p className="rotulo-secao">Escolha a rádio</p> : <p className="rotulo-secao" style={{ marginTop: 18 }}>Trocar de programa</p>}
+            {(radiosVisita || []).map((r) => {
+              const marca = marcaDaRadio(r.nome);
+              const info = livres[r.id] || { programas: 0, comVaga: 0 };
+              if (etapa > 1) {
+                return <Link key={r.id} href={`/app/radio/${r.id}?visita=${v.id}`} className="btn sec" style={{ width: '100%', marginBottom: 8 }}>Programas da {r.nome}</Link>;
+              }
+              return (
+                <Link key={r.id} href={`/app/radio/${r.id}?visita=${v.id}`} className="radio-btn" style={{ '--cor': r.cor, '--cor2': marca.cor2 || r.cor }}>
+                  <div className="topo-r">
+                    {marca.logo && <img src={marca.logo} alt="" className="logo-r" />}
+                    <div className="nome">{r.nome}</div>
+                    <span className="seta"><ArrowUpRight size={24} strokeWidth={2.4} /></span>
+                  </div>
+                  <div className="numeros">
+                    <div><b>{info.programas}</b><span>programas</span></div>
+                    <div><b>{info.comVaga}</b><span>com vaga</span></div>
+                  </div>
+                </Link>
+              );
+            })}
+          </>
+        )}
 
         {podeEditar && (
           <>
@@ -150,20 +174,13 @@ export default async function VisitaPage({ params }) {
               <>
                 <div className="secao-titulo"><h2>Resultado da visita</h2></div>
                 <div className="acoes">
-                  {v.status !== 'proposta' && (
-                    <form action={mudarStatusVisita}>
-                      <input type="hidden" name="id" value={v.id} />
-                      <input type="hidden" name="status" value="proposta" />
-                      <BotaoEnviar className="btn grande sec" texto="Enviei proposta" enviando="..." />
-                    </form>
-                  )}
                   <form action={mudarStatusVisita}>
                     <input type="hidden" name="id" value={v.id} />
                     <input type="hidden" name="status" value="perdido" />
                     <BotaoEnviar className="btn grande cinza" texto="Não fechou" enviando="..." confirmar="Encerrar esta visita como 'não fechou'?" />
                   </form>
                 </div>
-                <p className="muted" style={{ marginTop: 10 }}>Quando você fecha um contrato a partir desta tela, a visita é marcada como “Fechado” automaticamente.</p>
+                <p className="muted" style={{ marginTop: 10 }}>Quando o contrato é criado a partir desta visita, ela é marcada como “Fechado” automaticamente.</p>
               </>
             )}
             {!aberta && (

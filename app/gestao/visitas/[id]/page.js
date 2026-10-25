@@ -32,7 +32,7 @@ export default async function VisitaGestor({ params }) {
       </div>
       <div className="card" style={{ maxWidth: 760 }}>
         <p style={{ marginTop: 0 }}>Vendedor: <b>{v.vendedor?.nome}</b> · iniciada em {dataHora(v.iniciada_em)}</p>
-        <p className="muted">{v.cliente?.segmento?.nome}{v.cliente?.cidade ? ` · ${v.cliente.cidade}` : ''}{v.cliente?.contato_nome ? ` · contato: ${v.cliente.contato_nome}` : ''}</p>
+        <p className="muted">{v.cliente?.segmento?.nome}{v.cliente?.cidade ? ` · ${v.cliente.cidade}` : ''}{(v.contato_nome || v.cliente?.contato_nome) ? ` · contato: ${v.contato_nome || v.cliente.contato_nome}${v.contato_cargo ? ` (${v.contato_cargo})` : ''}` : ''}</p>
         <div className={`prazo-visita ${!travada ? 'fim' : p.avisar ? 'alerta-p' : ''}`}>
           <b>{liberada ? 'Exclusividade liberada pelo gestor' : !aberta ? 'Visita encerrada' : p.vencido ? 'Prazo de exclusividade encerrado' : `Exclusividade: ${textoRestam(p.restam)} (até ${p.ate})`}</b>
           <span>{travada ? `Nenhum outro vendedor consegue visitar ou vender para esta empresa até o fim dos ${total} dias.` : 'A empresa está livre para os outros vendedores (a menos que tenha contrato ativo).'}</span>
