@@ -5,12 +5,18 @@ import Topo from '@/components/Topo';
 import { Ban, Building2, Check, Clock, Mic, PenLine } from 'lucide-react';
 import { data, horario, moeda, statusPrograma, STATUS_CONTRATO, hojeISO } from '@/lib/format';
 import { PERIODOS, nomePeriodo, valorNoPeriodo, temPrecoPorPeriodo, buscarCondicoesAtivas } from '@/lib/periodo';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Send } from 'lucide-react';
+import { escolherProgramaVisita } from '../../actions';
+import BotaoEnviar from '@/components/BotaoEnviar';
 
-export default async function ProgramaPage({ params }) {
+export default async function ProgramaPage({ params, searchParams }) {
   const { supabase, perfil } = await getSessao();
   const { data: p } = await supabase.from('programas_ocupacao').select('*').eq('id', params.id).maybeSingle();
   if (!p) notFound();
+  const visitaId = typeof searchParams?.visita === 'string' ? searchParams.visita : '';
+  const { data: visita } = visitaId
+    ? await supabase.from('visitas').select('id, cliente:clientes(nome, segmento_id, segmento:segmentos(nome))').eq('id', visitaId).maybeSingle()
+    : { data: null };
 
   const [{ data: planos }, { data: condicoes }] = await Promise.all([
     supabase.from('programa_planos').select('id, nome, descricao, valor, valor_1, valor_3, valor_6, valor_12').eq('programa_id', p.id).order('ordem'),
@@ -31,6 +37,17 @@ export default async function ProgramaPage({ params }) {
   const vigentes = (contratos || []).filter((c) => c.data_inicio <= hoje);
   const futuros = (contratos || []).filter((c) => c.data_inicio > hoje);
   const st = statusPrograma(p.cotas_livres, p.cotas_total);
+  // na visita: o segmento da empresa já tem patrocinador aqui? (programa é sempre com exclusividade)
+  const segOcupado = visita ? [...vigentes, ...futuros].find((c) => c.segmento?.id === visita.cliente.segmento_id) : null;
+  const podeEscolher = visita && p.cotas_livres > 0 && !segOcupado;
+  const Escolher = ({ plano, texto }) => (
+    <form action={escolherProgramaVisita}>
+      <input type="hidden" name="visita" value={visita.id} />
+      <input type="hidden" name="programa" value={p.id} />
+      {plano && <input type="hidden" name="plano" value={plano} />}
+      <BotaoEnviar className="btn verde" texto={<><Send className="ico" /> {texto}</>} enviando="..." />
+    </form>
+  );
 
   const Linha = ({ c }) => (
     <div className="item patrocinador">
@@ -49,8 +66,17 @@ export default async function ProgramaPage({ params }) {
 
   return (
     <>
-      <Topo titulo={p.nome} voltar={`/app/radio/${p.radio_id}`} cor={p.radio_cor} />
+      <Topo titulo={p.nome} voltar={`/app/radio/${p.radio_id}${visita ? `?visita=${visita.id}` : ''}`} cor={p.radio_cor} />
       <main className="conteudo">
+        {visita && (
+          <div className="visita-banner">
+            <div className="t"><small>Visita em andamento</small><b>{visita.cliente.nome}</b></div>
+            <span className="badge b-azul">{visita.cliente.segmento?.nome}</span>
+          </div>
+        )}
+        {segOcupado && (
+          <div className="alerta erro">O segmento {visita.cliente.segmento?.nome} já tem patrocinador neste programa ({segOcupado.cliente_nome}, até {data(segOcupado.data_fim)}). Escolha outro programa.</div>
+        )}
         {(condicoes || []).map((c) => (
           <div key={c.id} className="cond-destaque"><Sparkles size={18} className="ico" /><div><small>Condição especial</small><b>{c.texto}</b></div></div>
         ))}
@@ -106,7 +132,7 @@ export default async function ProgramaPage({ params }) {
                       </div>
                     </div>
                   )}
-                  {p.cotas_livres > 0 && (
+                  {visita ? (podeEscolher && <Escolher plano={x.id} texto={planos.length > 1 ? `Proposta com ${x.nome}` : 'Fazer proposta deste plano'} />) : p.cotas_livres > 0 && (
                     <Link href={`/app/contratos/novo?programa=${p.id}&plano=${x.id}`} className="btn cinza">
                       {planos.length > 1 ? `Escolher ${x.nome}` : 'Fechar este plano'}
                     </Link>
@@ -130,7 +156,9 @@ export default async function ProgramaPage({ params }) {
         )}
 
         <div className="rodape-acao">
-          {p.cotas_livres > 0 ? (
+          {visita ? (podeEscolher ? (!planos?.length && <Escolher texto="Fazer proposta deste programa" />) : !segOcupado && (
+            <div className="alerta erro" style={{ marginBottom: 0 }}>Programa lotado. Veja acima quando cada contrato termina.</div>
+          )) : p.cotas_livres > 0 ? (
             <Link href={`/app/contratos/novo?programa=${p.id}`} className="btn grande" style={{ boxShadow: '0 10px 30px rgba(0,0,0,.6)' }}>
               <PenLine className="ico" strokeWidth={2.4} /> Fechar contrato
             </Link>

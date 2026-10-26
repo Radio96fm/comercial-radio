@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, MessageCircleQuestion, Timer, BadgePercent, Send, Building2, TrendingUp, Crown, Target,
+  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, MessageCircleQuestion, Timer, BadgePercent, Send, Building2, TrendingUp, Crown, Target, FileUp,
 } from 'lucide-react';
 
 // m = só para o gestor master
@@ -10,6 +10,7 @@ const ITENS = [
   ['/gestao', LayoutDashboard, 'Visão geral', true],
   ['/gestao/perguntar', MessageCircleQuestion, 'Perguntar à IA'],
   ['/gestao/programas', Radio, 'Programas'],
+  ['/gestao/propostas', FileUp, 'Propostas em PDF'],
   ['/gestao/precos', Receipt, 'Tabela de preços'],
   ['/gestao/contratos', FileText, 'Contratos'],
   ['/gestao/clientes', Users, 'Clientes'],

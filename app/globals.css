@@ -1353,3 +1353,22 @@ a.b-hero { color: var(--on-destaque, #fff); }
 .acao-ganho.alerta-r .acao-ico { background: rgba(248, 113, 113, .18); color: var(--vermelho); }
 .conquistas.grande { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 .conquistas.grande .conquista { min-height: 120px; }
+
+/* ------------------------------------------------ fluxo da visita */
+.passo { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; margin: 22px 0 10px; }
+.passo .ico { width: 20px; height: 20px; color: var(--muted); }
+.item.travada { opacity: .8; }
+.etapas { display: flex; gap: 6px; margin: 4px 0 16px; overflow-x: auto; padding-bottom: 2px; }
+.etapas span { flex: 1 0 auto; text-align: center; font-size: .8rem; font-weight: 600; padding: 7px 10px; border-radius: 999px; background: var(--card-2); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.etapas span.feita { color: var(--verde); border-color: rgba(74, 222, 128, .35); }
+.etapas span.atual { background: var(--text); color: var(--bg); border-color: var(--text); }
+.visita-banner { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--card-2); border: 1px solid var(--line-2); margin-bottom: 14px; }
+.visita-banner .t { flex: 1; min-width: 0; }
+.visita-banner small { display: block; color: var(--muted); font-size: .82rem; }
+.visita-banner b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.escolha-programa { margin-top: 12px; }
+.proposta-resumo { border-left: 4px solid var(--cor, var(--azul)); }
+.proposta-resumo .radio-n { color: var(--cor, var(--muted)); font-weight: 700; font-size: .9rem; }
+.pdf-linha { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line); margin: 12px 0; }
+.pdf-linha .t { flex: 1; min-width: 0; }
+.pdf-linha small { display: block; color: var(--muted); }

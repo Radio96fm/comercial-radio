@@ -106,20 +106,129 @@ export async function atualizarCliente(_prev, fd) {
 }
 
 // ---------------------------------------------------------------- visitas
+// banco ainda sem a atualização do fluxo novo (migracao-visita-proposta.sql)
+const semFuncao = (error) => /could not find the function|does not exist|schema cache/i.test(error?.message || '');
+
+const dataBR = (iso) => (iso ? iso.split('-').reverse().join('/') : '');
+
+// texto do aviso de empresa já cadastrada (vendedor, visita com validade e contrato vigente)
+export async function avisoEmpresa(e) {
+  let msg = `A empresa "${e.nome}" já está cadastrada.`;
+  if (e.situacao === 'negociando') msg += ` Em visitação por ${e.dono_nome}${e.visita_em ? ` desde ${dataBR(e.visita_em)}` : ''}, com exclusividade até ${dataBR(e.expira_em || e.ate)} (faltam ${e.dias} dia(s)).`;
+  else if (e.dono_nome) msg += ` Vendedor: ${e.situacao === 'sua' ? 'você' : e.dono_nome}.`;
+  const fim = e.contrato_fim || (e.situacao === 'contrato' ? e.ate : null);
+  if (fim) msg += ` Contrato vigente até ${dataBR(fim)}.`;
+  return msg;
+}
+
+// Busca por nome parecido em toda a base de clientes da rádio (todas as carteiras)
+export async function buscarEmpresas(busca, documento) {
+  const { supabase } = await getSessao();
+  const { data, error } = await supabase.rpc('buscar_empresas', { p_busca: String(busca || ''), p_documento: documento || null });
+  if (!error) return data || [];
+  if (!semFuncao(error)) return [];
+  const { data: antigo } = await supabase.rpc('procurar_empresa', { p_busca: String(busca || '') });
+  return (antigo || []).map((x) => ({ ...x, expira_em: x.situacao === 'negociando' ? x.ate : null, contrato_fim: x.situacao === 'contrato' ? x.ate : null, parecido: 0.9 }));
+}
+
+// Início da visita: empresa + nome de quem atende o vendedor na empresa
 export async function iniciarVisita(_prev, fd) {
-  const { supabase, perfil } = await getSessao();
+  const { supabase } = await getSessao();
   let cliente_id = txt(fd, 'cliente_id');
+  const contato = txt(fd, 'contato_nome');
+  if (!txt(fd, 'novo_nome') && !cliente_id) return { erro: 'Escreva o nome da empresa.' };
+  if (!contato || contato.length < 2) return { erro: 'Escreva o nome da pessoa com quem você está falando na empresa.' };
+
   if (!cliente_id) {
-    const r = await criarClienteInterno(supabase, fd, 'novo_');
-    // empresa já cadastrada e livre (ou já sua): começa a visita com ela
-    if (r.erro && !r.existente) return r;
-    cliente_id = r.existente || r.id;
+    // confere nomes parecidos e CPF/CNPJ em toda a base antes de cadastrar
+    const parecidas = await buscarEmpresas(txt(fd, 'novo_nome'), txt(fd, 'novo_documento'));
+    const igual = parecidas.find((e) => e.mesmo_documento || Number(e.parecido) >= 1);
+    const forte = parecidas.find((e) => Number(e.parecido) >= 0.8);
+    const ocupada = (e) => e?.situacao === 'negociando' || e?.situacao === 'contrato';
+    if (igual) {
+      if (ocupada(igual)) return { erro: await avisoEmpresa(igual) };
+      cliente_id = igual.id; // já cadastrada e livre (ou sua): começa a visita com ela
+    } else if (forte && ocupada(forte)) {
+      return { erro: `${await avisoEmpresa(forte)} Se for a mesma empresa com outro nome, fale com o comercial.` };
+    } else if (parecidas.length && fd.get('confirmo_diferente') !== 'sim') {
+      return { erro: `Já existe empresa com nome parecido: ${parecidas.slice(0, 3).map((e) => e.nome).join(', ')}. Toque nela na lista se for a mesma, ou marque “É outra empresa”.` };
+    }
+    if (!cliente_id) {
+      fd.set('novo_contato_nome', contato);
+      const r = await criarClienteInterno(supabase, fd, 'novo_');
+      if (r.erro && !r.existente) return r;
+      cliente_id = r.existente || r.id;
+    }
   }
-  // o banco confere a exclusividade de 15 dias e passa a empresa livre para a carteira de quem visita
-  const { data: id, error } = await supabase.rpc('iniciar_visita', { p_cliente: cliente_id, p_obs: txt(fd, 'observacoes') || '' });
+
+  // o banco confere a exclusividade (um vendedor por empresa) e passa a empresa livre para quem visita
+  let { data: id, error } = await supabase.rpc('iniciar_visita_contato', {
+    p_cliente: cliente_id, p_contato: contato, p_cargo: txt(fd, 'contato_cargo') || '', p_obs: txt(fd, 'observacoes') || '',
+  });
+  if (error && semFuncao(error)) {
+    ({ data: id, error } = await supabase.rpc('iniciar_visita', { p_cliente: cliente_id, p_obs: [contato && `Contato: ${contato}`, txt(fd, 'observacoes')].filter(Boolean).join('\n') }));
+  }
   if (error) return { erro: traduzErro(error) };
   revalidatePath('/app', 'layout');
   redirect(`/app/visitas/${id}`);
+}
+
+// Programa/plano escolhido na visita: o próximo passo é enviar a proposta
+export async function escolherProgramaVisita(fd) {
+  const { supabase } = await getSessao();
+  const id = txt(fd, 'visita');
+  const programa_id = txt(fd, 'programa');
+  const { data: p } = await supabase.from('programas').select('id, radio_id').eq('id', programa_id).maybeSingle();
+  if (!p) redirect(`/app/visitas/${id}`);
+  const { error } = await supabase.from('visitas')
+    .update({ programa_id: p.id, plano_id: txt(fd, 'plano'), radio_id: p.radio_id, proposta_enviada_em: null, proposta_aprovada_em: null })
+    .eq('id', id);
+  if (error) redirect(`/app/visitas/${id}?erro=${encodeURIComponent(semColuna(error))}`);
+  revalidatePath(`/app/visitas/${id}`);
+  redirect(`/app/visitas/${id}/proposta`);
+}
+
+const semColuna = (error) => (/column|schema cache/i.test(error?.message || '')
+  ? 'Falta atualizar o banco de dados para o novo fluxo da visita. Avise o gestor.'
+  : traduzErro(error));
+
+// Proposta enviada pelo WhatsApp: guarda o telefone e muda a visita para "Proposta enviada"
+export async function marcarPropostaEnviada({ visita, telefone }) {
+  const { supabase } = await getSessao();
+  const { data: v } = await supabase.from('visitas').select('id, cliente_id, status, cliente:clientes(telefone)').eq('id', visita).maybeSingle();
+  if (!v) return { erro: 'Visita não encontrada.' };
+  const tel = String(telefone || '').trim() || null;
+  const { error } = await supabase.from('visitas')
+    .update({ proposta_enviada_em: new Date().toISOString(), contato_telefone: tel, status: v.status === 'em_andamento' ? 'proposta' : v.status })
+    .eq('id', visita);
+  if (error) return { erro: semColuna(error) };
+  if (tel && !v.cliente?.telefone) await supabase.from('clientes').update({ telefone: tel }).eq('id', v.cliente_id);
+  revalidatePath(`/app/visitas/${visita}`);
+  return { ok: true };
+}
+
+// Cliente aprovou a proposta: libera o cadastro completo e o contrato
+export async function aprovarProposta(fd) {
+  const { supabase } = await getSessao();
+  const id = txt(fd, 'id');
+  const { error } = await supabase.from('visitas').update({ proposta_aprovada_em: new Date().toISOString() }).eq('id', id);
+  if (error) redirect(`/app/visitas/${id}?erro=${encodeURIComponent(semColuna(error))}`);
+  revalidatePath(`/app/visitas/${id}`);
+  redirect(`/app/visitas/${id}/cadastro`);
+}
+
+const OBRIGATORIOS = [['razao_social', 'razão social'], ['documento', 'CNPJ ou CPF'], ['contato_nome', 'responsável'], ['telefone', 'telefone'], ['email', 'e-mail'], ['endereco', 'endereço'], ['cidade', 'cidade']];
+
+// Cadastro completo do cliente depois da aprovação; segue para o contrato
+export async function cadastroCompleto(_prev, fd) {
+  const faltam = OBRIGATORIOS.filter(([k]) => !txt(fd, k)).map(([, nome]) => nome);
+  if (faltam.length) return { erro: `Preencha: ${faltam.join(', ')}.` };
+  const r = await atualizarCliente(null, fd);
+  if (r?.erro) return r;
+  const q = new URLSearchParams({ cliente: txt(fd, 'id'), visita: txt(fd, 'visita') });
+  if (txt(fd, 'programa')) q.set('programa', txt(fd, 'programa'));
+  if (txt(fd, 'plano')) q.set('plano', txt(fd, 'plano'));
+  redirect(`/app/contratos/novo?${q}`);
 }
 
 // Renova o prazo de negociação (15 dias, depois mais 15 com aceite do comercial)
@@ -162,7 +271,8 @@ export async function criarContrato(_prev, fd) {
   const data_inicio = txt(fd, 'data_inicio');
   const meses = parseInt(fd.get('meses'), 10);
   const primeiro_vencimento = txt(fd, 'primeiro_vencimento');
-  const exclusivo = fd.get('exclusivo') !== 'nao';
+  // programa é sempre com exclusividade de segmento
+  const exclusivo = !!programa_id;
   const vendedor_id = isGestor && txt(fd, 'vendedor_id') ? txt(fd, 'vendedor_id') : perfil.id;
   let pedidos = [];
   try {
@@ -219,7 +329,7 @@ export async function criarContrato(_prev, fd) {
     partes.push(`Patrocínio do programa "${programa.nome}" (${desc}).`);
   }
   for (const i of itens) partes.push(`${i.quantidade} por mês: ${i.descricao}.`);
-  partes.push(exclusivo ? 'Com exclusividade: não haverá outro cliente do mesmo segmento neste programa no período.' : 'Sem exclusividade.');
+  if (exclusivo) partes.push('Com exclusividade: não haverá outro cliente do mesmo segmento neste programa no período.');
 
   const vendedor = vendedor_id === perfil.id
     ? perfil

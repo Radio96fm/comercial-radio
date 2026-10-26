@@ -19,7 +19,6 @@ export default async function Contratos() {
       <Topo titulo="Meus contratos" voltar="/app/ganhos" />
       <main className="conteudo">
         <Link href="/app/contratos/novo" className="btn grande verde" style={{ marginBottom: 14 }}>Novo contrato</Link>
-        <p className="muted" style={{ marginTop: -4 }}>Para montar um plano com inserções e testemunhais, entre na rádio e toque em <b>Montar plano personalizado</b>.</p>
         {!contratos?.length && <div className="vazio">Você ainda não tem contratos.</div>}
         <div className="lista">
           {(contratos || []).map((c) => (
