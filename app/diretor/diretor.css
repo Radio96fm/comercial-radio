@@ -353,3 +353,19 @@ body:has(.dir) { background: #f4f2ee; }
 .dir-pc-item small { font-size: .82rem; color: var(--muted); }
 .dir-pc-botao { cursor: pointer; }
 .dir-pc-botao svg { color: var(--muted); flex: none; }
+
+/* Nova proposta (simulação na demonstração do comercial) */
+.dir-proposta { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px 18px; margin: 0 0 16px; }
+.dir-proposta h2 { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; margin: 0 0 4px; }
+.dir-proposta-nota { color: var(--muted); font-size: .85rem; margin: 0 0 12px; }
+.dir-proposta-form { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.dir-proposta-form label { display: flex; flex-direction: column; gap: 6px; font-size: .85rem; color: var(--muted); }
+.dir-proposta-form input, .dir-proposta-form select, .dir-proposta-form textarea {
+  font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line-2); border-radius: 12px; padding: 10px 12px; min-height: 44px;
+}
+.dir-proposta-form .larga { grid-column: 1 / -1; }
+.dir-proposta-acoes { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; }
+.dir-proposta-acoes .btn { display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; width: auto; height: 44px; padding: 0 18px; margin: 0; cursor: pointer; }
+.dir-proposta-erro { color: var(--c-vermelho, #d33); margin: 10px 0 0; }
+.dir-proposta-arquivo { display: inline-block; margin-top: 12px; font-weight: 700; }
+@media (min-width: 900px) { .dir-proposta-form { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
