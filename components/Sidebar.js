@@ -105,8 +105,11 @@ export default function Sidebar({ master }) {
 }
 
 // Menu da demonstração sem login (/demo-gestao): o mesmo do diretor comercial,
-// sem Financeiro; só a Visão geral abre, o resto aparece como no sistema.
+// sem Financeiro. As telas que já têm demonstração abrem; o resto fica apagado.
+const NA_DEMO = ['/gestao', '/gestao/programas', '/gestao/propostas', '/gestao/precos'];
+
 export function SidebarDemo() {
+  const path = usePathname();
   return (
     <aside className="sidebar nao-imprimir">
       <div className="marca-gestao">
@@ -117,9 +120,15 @@ export function SidebarDemo() {
         <b>Gestão Comercial</b>
       </div>
       <nav className="nav-g">
-        {ITENS.filter((i) => i[4] !== 'm').map(([href, Ico, txt]) => (href === '/gestao'
-          ? <Link key={href} href="/demo-gestao" className="ativo"><Ico className="ico" />{txt}</Link>
-          : <span key={href} className="demo-off" title="Disponível no sistema com login"><Ico className="ico" />{txt}</span>))}
+        {ITENS.filter((i) => i[4] !== 'm').map(([href, Ico, txt, exato]) => {
+          if (!NA_DEMO.includes(href)) return <span key={href} className="demo-off" title="Disponível no sistema com login"><Ico className="ico" />{txt}</span>;
+          const destino = href.replace('/gestao', '/demo-gestao');
+          return (
+            <Link key={href} href={destino} className={(exato ? path === destino : path.startsWith(destino)) ? 'ativo' : ''}>
+              <Ico className="ico" />{txt}
+            </Link>
+          );
+        })}
       </nav>
     </aside>
   );
