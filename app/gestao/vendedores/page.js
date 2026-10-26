@@ -1,7 +1,7 @@
 import { requireMaster } from '@/lib/auth';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
-import { criarUsuario, atualizarUsuario, alternarAtivo, redefinirSenha, novoConvite } from '../actions';
+import { criarUsuario, criarAcessosTeste, atualizarUsuario, alternarAtivo, redefinirSenha, novoConvite } from '../actions';
 import { headers } from 'next/headers';
 import CopiarTexto from '@/components/CopiarTexto';
 
@@ -30,6 +30,14 @@ export default async function Usuarios() {
           <a className="btn whats" href={`https://wa.me/?text=${encodeURIComponent(`Olá! Este é o link para você criar seu acesso ao sistema comercial da Rádio 96 FM e Rádio do Agro: ${linkConvite}`)}`} target="_blank" rel="noopener noreferrer">Mandar no WhatsApp</a>
           <form action={novoConvite}><BotaoEnviar className="btn cinza" texto="Trocar link" enviando="..." confirmar="Gerar um link novo? O link antigo para de funcionar." /></form>
         </div>
+      </div>
+
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>Acessos de teste</h2>
+        <p className="muted">Cria um login para o Painel do Diretor, um para a Gestão Comercial e um para o Financeiro, cada um com senha temporária. Depois de testar, dá para desativar aqui embaixo.</p>
+        <FormAcao action={criarAcessosTeste}>
+          <BotaoEnviar className="btn" texto="Criar acessos de teste" enviando="Criando..." />
+        </FormAcao>
       </div>
 
       <details className="card" open={!usuarios || usuarios.length <= 1}>
