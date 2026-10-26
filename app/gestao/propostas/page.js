@@ -5,7 +5,7 @@ import EnviarPdf from './EnviarPdf';
 export const dynamic = 'force-dynamic';
 
 // PDFs das propostas comerciais que o vendedor envia pelo WhatsApp durante a visita.
-// Um por programa; o da rádio vale para o plano personalizado e para programa sem PDF.
+// Um por programa; o da rádio vale para programa que ainda não tem PDF próprio.
 export default async function Propostas() {
   const { supabase } = await requireGestor();
   const [{ data: radios, error }, { data: programas }] = await Promise.all([
@@ -53,7 +53,7 @@ export default async function Propostas() {
         <section key={r.id} style={{ marginBottom: 24 }}>
           <h2 style={{ color: r.cor }}>{r.nome}</h2>
           <div className="lista">
-            <Linha tipo="radio" x={r} titulo="Proposta geral da rádio" sub="Sem PDF. Vale para plano personalizado e para programa sem PDF próprio." />
+            <Linha tipo="radio" x={r} titulo="Proposta geral da rádio" sub="Sem PDF. Vale para programa que ainda não tem PDF próprio." />
             {(programas || []).filter((p) => p.radio_id === r.id).map((p) => (
               <Linha key={p.id} tipo="programa" x={p} titulo={p.nome} sub={r.proposta_pdf ? 'Sem PDF próprio: o vendedor envia a proposta geral da rádio' : 'Sem PDF ainda'} />
             ))}
