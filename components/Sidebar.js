@@ -103,3 +103,24 @@ export default function Sidebar({ master }) {
     </aside>
   );
 }
+
+// Menu da demonstração sem login (/demo-gestao): o mesmo do diretor comercial,
+// sem Financeiro; só a Visão geral abre, o resto aparece como no sistema.
+export function SidebarDemo() {
+  return (
+    <aside className="sidebar nao-imprimir">
+      <div className="marca-gestao">
+        <div className="emissoras-mini">
+          <img src="/logos/96fm.png" alt="96 FM" />
+          <img src="/logos/agro.png" alt="Rádio do Agro" />
+        </div>
+        <b>Gestão Comercial</b>
+      </div>
+      <nav className="nav-g">
+        {ITENS.filter((i) => i[4] !== 'm').map(([href, Ico, txt]) => (href === '/gestao'
+          ? <Link key={href} href="/demo-gestao" className="ativo"><Ico className="ico" />{txt}</Link>
+          : <span key={href} className="demo-off" title="Disponível no sistema com login"><Ico className="ico" />{txt}</span>))}
+      </nav>
+    </aside>
+  );
+}

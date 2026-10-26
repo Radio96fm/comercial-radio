@@ -723,6 +723,8 @@ details.acordeao .tabela-kit { background: transparent; border: 0; padding: 0; m
 .sidebar a.ativo { background: linear-gradient(90deg, color-mix(in srgb, var(--cor96) 22%, transparent), color-mix(in srgb, var(--cor96) 6%, transparent)); color: var(--text); }
 .sidebar a.ativo::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 4px; border-radius: 4px; background: var(--cor96); }
 .sidebar a.ativo .ico { color: var(--cor96); }
+.sidebar .demo-off { display: flex; align-items: center; gap: 12px; color: var(--muted); padding: 11px 12px; border-radius: 12px; font-weight: 600; font-size: .96rem; opacity: .55; cursor: default; white-space: nowrap; }
+.sidebar .demo-off .ico { width: 20px; height: 20px; }
 [data-theme="light"] .sidebar .logo-jc img { filter: brightness(0); opacity: .85; }
 
 .gestao-topo { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin: -10px 0 6px; }
