@@ -369,3 +369,7 @@ body:has(.dir) { background: #f4f2ee; }
 .dir-proposta-erro { color: var(--c-vermelho, #d33); margin: 10px 0 0; }
 .dir-proposta-arquivo { display: inline-block; margin-top: 12px; font-weight: 700; }
 @media (min-width: 900px) { .dir-proposta-form { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Itens do menu que só existem no sistema com login (aparecem apagados na demonstração) */
+.sidebar .dir-menu-off { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 12px; font-weight: 600; font-size: .96rem; color: var(--muted); opacity: .5; cursor: default; }
+.sidebar .dir-menu-off .ico { width: 20px; height: 20px; }

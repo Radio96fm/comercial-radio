@@ -252,14 +252,10 @@ function Menu({ demo, base }) {
       </div>
       <nav className="nav-g">
         <Link href={base} className="ativo"><Target className="ico" />Painel</Link>
-        {!demo && (
-          <>
-            <Link href="/gestao/negociacoes"><Handshake className="ico" />Negociações</Link>
-            <Link href="/gestao/programas"><Radio className="ico" />Programas</Link>
-            <Link href="/gestao/propostas"><FileUp className="ico" />Propostas em PDF</Link>
-            <Link href="/app"><Briefcase className="ico" />Vender</Link>
-          </>
-        )}
+        {[['/gestao/negociacoes', Handshake, 'Negociações'], ['/gestao/programas', Radio, 'Programas'], ['/gestao/propostas', FileUp, 'Propostas em PDF'], ['/app', Briefcase, 'Vender']].map(([href, Ico, txt]) => (demo
+          ? <span key={href} className="dir-menu-off" title="Disponível no sistema com login"><Ico className="ico" />{txt}</span>
+          : <Link key={href} href={href}><Ico className="ico" />{txt}</Link>
+        ))}
       </nav>
       {!demo && (
         <div className="rodape">
