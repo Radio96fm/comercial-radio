@@ -373,3 +373,13 @@ body:has(.dir) { background: #f4f2ee; }
 /* Itens do menu que só existem no sistema com login (aparecem apagados na demonstração) */
 .sidebar .dir-menu-off { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 12px; font-weight: 600; font-size: .96rem; color: var(--muted); opacity: .5; cursor: default; }
 .sidebar .dir-menu-off .ico { width: 20px; height: 20px; }
+
+/* Painel do comercial no computador: abas do menu lateral, em tela cheia */
+.sidebar .nav-g button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 12px; border: 0; border-radius: 12px; background: none; color: var(--muted); font: 600 .96rem var(--font); text-align: left; cursor: pointer; }
+.sidebar .nav-g button:hover { background: var(--card); color: var(--text); }
+.sidebar .nav-g button.ativo { background: var(--accent); color: var(--on-accent); }
+.sidebar .nav-g button .ico { width: 20px; height: 20px; flex: none; }
+.dir-pc-aba { display: block; }
+.dir-pc-aba > * + * { margin-top: 32px; }
+.dir-aba-titulo { display: flex; align-items: center; gap: 10px; font-size: 1.4rem; margin: 0 0 14px; }
+.dir-tabela-grande th, .dir-tabela-grande td { padding: 16px 18px; font-size: 1rem; }

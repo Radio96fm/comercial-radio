@@ -13,6 +13,7 @@ const dias = (n) => (n === 1 ? '1 dia' : `${n} dias`);
 export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
   const [aberto, setAberto] = useState(null);
   const fechar = useCallback(() => setAberto(null), []);
+  const [aba, setAba] = useState('visao');
   const { mes, vendas: vd, visitas: vs, funil: fu, negociacoes: ng, renovar: rn, assinatura: as, equipe: e, grade: g, prioridades, radio } = dados;
 
   const blocos = [
@@ -56,7 +57,7 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
   return (
     <>
       <div className="dir-app">
-        <Menu demo={demo} base={base} />
+        <Menu demo={demo} aba={aba} setAba={setAba} />
         <div className="dir-app-main">
         <header className="dir-topo">
           <div className="dir-logos">
@@ -90,8 +91,8 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
           </nav>
           {radio.atual && <p className="dir-radios-nota">Visitas e negociações não têm rádio cadastrada, então aparecem nas duas.</p>}
 
-          {demo && <PropostaForm dados={dados} />}
-          <Visao dados={dados} abrir={setAberto} />
+          <div className="dir-so-celular">{demo && <PropostaForm dados={dados} />}</div>
+          <PcAba aba={aba} dados={dados} demo={demo} abrir={setAberto} />
           {prioridades.length > 0 && (
             <section className="dir-foco dir-so-celular">
               <h2><Target size={18} />Pede sua atenção hoje</h2>
@@ -134,28 +135,6 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
             {blocos.map((b) => <Bloco key={b.id} b={b} abrir={setAberto} />)}
           </div>
   
-          <section className="dir-so-pc" aria-label="Equipe">
-            <h2><Users size={18} />Equipe em {mes.nome}</h2>
-            <table className="dir-tabela">
-              <thead>
-                <tr><th>Vendedor</th><th>Vendas</th><th>Visitas</th><th>Em negociação</th><th>Conversão 30d</th><th>Carteira</th><th>Última visita</th></tr>
-              </thead>
-              <tbody>
-                {e.lista.map((x) => (
-                  <tr key={x.id}>
-                    <td>{x.nome}</td>
-                    <td className="num">{x.vendasMes}</td>
-                    <td className="num">{x.visitasMes}</td>
-                    <td className="num">{x.negociando}</td>
-                    <td className="num">{x.conversao === null ? '—' : `${x.conversao}%`}</td>
-                    <td className="num">{x.carteira}</td>
-                    <td>{x.semVisitaDias === null ? 'Sem visita no mês' : x.semVisitaDias === 0 ? 'Hoje' : `Há ${dias(x.semVisitaDias)}`}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-
           <p className="dir-rodape">Toque em um quadro para ver os detalhes. Os números se atualizam sozinhos.</p>
         </main>
         </div>
@@ -163,6 +142,83 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
 
       <Folha aberto={aberto} fechar={fechar} demo={demo}><Detalhe id={aberto} dados={dados} /></Folha>
     </>
+  );
+}
+
+// Conteúdo do computador por aba. No celular, a mesma informação aparece nos blocos.
+function PcAba({ aba, dados, demo, abrir }) {
+  if (aba === 'visao') return <Visao dados={dados} abrir={abrir} />;
+  const { grade: g, equipe: e, negociacoes: ng, mes } = dados;
+  return (
+    <div className="dir-pc-visao dir-pc-aba">
+      {aba === 'propostas' && (demo
+        ? <PropostaForm dados={dados} />
+        : <Link href="/gestao/propostas" className="dir-btn-topo">Abrir propostas em PDF</Link>)}
+
+      {aba === 'equipe' && (
+        <>
+          <h2 className="dir-aba-titulo"><Users size={22} />Equipe em {mes.nome}</h2>
+          <table className="dir-tabela dir-tabela-grande">
+            <thead>
+              <tr><th>Vendedor</th><th>Vendas</th><th>Visitas</th><th>Em negociação</th><th>Conversão 30d</th><th>Carteira</th><th>Última visita</th></tr>
+            </thead>
+            <tbody>
+              {e.lista.map((x) => (
+                <tr key={x.id}>
+                  <td>{x.nome}</td>
+                  <td className="num">{x.vendasMes}</td>
+                  <td className="num">{x.visitasMes}</td>
+                  <td className="num">{x.negociando}</td>
+                  <td className="num">{x.conversao === null ? '—' : `${x.conversao}%`}</td>
+                  <td className="num">{x.carteira}</td>
+                  <td>{x.semVisitaDias === null ? 'Sem visita no mês' : x.semVisitaDias === 0 ? 'Hoje' : `Há ${dias(x.semVisitaDias)}`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+
+      {aba === 'programas' && g.radios.map((r) => (
+        <div key={r.id}>
+          <h2 className="dir-aba-titulo"><i className="dir-bolinha" style={{ background: r.cor }} />{r.nome}</h2>
+          <table className="dir-tabela dir-tabela-grande">
+            <thead><tr><th>Programa</th><th>Cotas</th><th>Vendidas</th><th>Livres</th><th>Situação</th></tr></thead>
+            <tbody>
+              {r.programas.map((p) => (
+                <tr key={p.nome}>
+                  <td>{p.nome}</td>
+                  <td className="num">{p.total}</td>
+                  <td className="num">{p.total - p.livres}</td>
+                  <td className="num">{p.livres}</td>
+                  <td><span className={`dir-tag ${p.livres > 0 ? (p.livres === 1 ? 'amarelo' : 'verde') : 'vermelho'}`}>{p.livres > 0 ? plural(p.livres, 'vaga', 'vagas') : 'Lotado'}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+
+      {aba === 'negociacoes' && (
+        <>
+          <h2 className="dir-aba-titulo"><Handshake size={22} />Negociações em aberto</h2>
+          <table className="dir-tabela dir-tabela-grande">
+            <thead><tr><th>Empresa</th><th>Vendedor</th><th>Etapa</th><th>Prazo de exclusividade</th></tr></thead>
+            <tbody>
+              {!ng.lista.length && <tr><td colSpan={4}>Nenhuma negociação aberta agora.</td></tr>}
+              {ng.lista.map((n) => (
+                <tr key={n.id}>
+                  <td>{n.cliente}</td>
+                  <td>{n.vendedor}</td>
+                  <td>{STATUS_VISITA[n.status]}</td>
+                  <td>{n.vencido ? 'Encerrado' : `${dias(n.restam)} · até ${n.ate}`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -240,7 +296,16 @@ function Visao({ dados, abrir }) {
 }
 
 // Menu lateral do computador (só o que é de comercial, sem financeiro nem R$)
-function Menu({ demo, base }) {
+const ABAS = [
+  ['visao', Target, 'Visão geral'],
+  ['propostas', FileUp, 'Propostas e PDF'],
+  ['equipe', Users, 'Equipe'],
+  ['programas', Radio, 'Programas e cotas'],
+  ['negociacoes', Handshake, 'Negociações'],
+];
+
+// Menu lateral do computador: cada item abre uma aba do painel. Só comercial, sem financeiro nem R$.
+function Menu({ demo, aba, setAba }) {
   return (
     <aside className="sidebar">
       <div className="marca-gestao">
@@ -251,11 +316,12 @@ function Menu({ demo, base }) {
         <b>Painel Comercial</b>
       </div>
       <nav className="nav-g">
-        <Link href={base} className="ativo"><Target className="ico" />Painel</Link>
-        {[['/gestao/negociacoes', Handshake, 'Negociações'], ['/gestao/programas', Radio, 'Programas'], ['/gestao/propostas', FileUp, 'Propostas em PDF'], ['/app', Briefcase, 'Vender']].map(([href, Ico, txt]) => (demo
-          ? <span key={href} className="dir-menu-off" title="Disponível no sistema com login"><Ico className="ico" />{txt}</span>
-          : <Link key={href} href={href}><Ico className="ico" />{txt}</Link>
+        {ABAS.map(([id, Ico, txt]) => (
+          <button key={id} type="button" className={aba === id ? 'ativo' : ''} onClick={() => setAba(id)}><Ico className="ico" />{txt}</button>
         ))}
+        {demo
+          ? <span className="dir-menu-off" title="Disponível no sistema com login"><Briefcase className="ico" />Vender</span>
+          : <Link href="/app"><Briefcase className="ico" />Vender</Link>}
       </nav>
       {!demo && (
         <div className="rodape">
