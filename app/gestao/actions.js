@@ -69,6 +69,26 @@ export async function criarUsuario(_prev, fd) {
   return { ok: `Usuário ${nome} criado. Passe para ele o e-mail e a senha para o primeiro acesso.` };
 }
 
+// Acessos temporários para testar cada painel (diretor, comercial e financeiro).
+// A senha é sorteada na hora e aparece só uma vez na tela.
+const ACESSOS_TESTE = [
+  ['Diretor (teste)', 'teste.diretor@radio96fm.com', 'gestor', 'Painel do Diretor'],
+  ['Gustavo (teste)', 'teste.comercial@radio96fm.com', 'comercial', 'Gestão Comercial'],
+  ['Financeiro (teste)', 'teste.financeiro@radio96fm.com', 'financeiro', 'Financeiro'],
+];
+
+export async function criarAcessosTeste() {
+  await requireMaster();
+  const linhas = [];
+  for (const [nome, email, papel, painel] of ACESSOS_TESTE) {
+    const senha = `Teste-${Math.random().toString(36).slice(2, 8)}${Math.floor(Math.random() * 90 + 10)}`;
+    const { error } = await adminCriarUsuario({ email, password: senha, email_confirm: true, user_metadata: { nome }, app_metadata: { papel } });
+    linhas.push(error ? `${painel}: ${email} (${erroAmigavel(error)})` : `${painel}: ${email} · senha ${senha}`);
+  }
+  revalidatePath('/gestao/vendedores');
+  return { ok: `Acessos de teste (anote, a senha aparece só agora):\n${linhas.join('\n')}` };
+}
+
 export async function atualizarUsuario(_prev, fd) {
   const { supabase, perfil } = await requireMaster();
   const id = txt(fd, 'id');

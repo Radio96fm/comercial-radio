@@ -12,6 +12,13 @@ const nextConfig = {
       '/app/contratos/[id]': ['./public/logos/**', './node_modules/pdfkit/js/**'],
     },
   },
+  // o diretor comercial usa o sistema de verdade: os links antigos de demonstração levam ao login
+  async redirects() {
+    return [
+      { source: '/demo-comercial', destination: '/login', permanent: false },
+      { source: '/demo-gestao/:resto*', destination: '/login', permanent: false },
+    ];
+  },
   async headers() {
     return [
       {
