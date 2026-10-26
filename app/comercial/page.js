@@ -1,6 +1,7 @@
 import { requireGestor } from '@/lib/auth';
 import { hojeISO, somarDias, somarMeses } from '@/lib/format';
 import { montarComercial } from '@/lib/comercial';
+import TelaCerta from '@/components/TelaCerta';
 import Painel from './Painel';
 
 export const dynamic = 'force-dynamic';
@@ -41,5 +42,5 @@ export default async function PainelComercial({ searchParams }) {
   const dados = montarComercial({ hoje, radios, contratos, novos, vendedores, visitas, liberadas, programas, radioId });
   const dataLonga = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (l) => l.toUpperCase());
 
-  return <Painel dados={dados} ola={`${saudacao()}, ${perfil.nome.split(' ')[0]}!`} dataLonga={dataLonga} base="/comercial" />;
+  return <><TelaCerta pc="/gestao" /><Painel dados={dados} ola={`${saudacao()}, ${perfil.nome.split(' ')[0]}!`} dataLonga={dataLonga} base="/comercial" /></>;
 }

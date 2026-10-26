@@ -1,6 +1,7 @@
 import { hojeISO } from '@/lib/format';
 import { montarComercial } from '@/lib/comercial';
 import { dadosDemoComercial } from '@/lib/demoComercial';
+import TelaCerta from '@/components/TelaCerta';
 import Painel from '../comercial/Painel';
 
 export const metadata = {
@@ -18,5 +19,5 @@ export default function Page({ searchParams }) {
   const hoje = hojeISO();
   const dados = montarComercial({ ...dadosDemoComercial(hoje), radioId: searchParams?.radio || null });
   const dataLonga = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (l) => l.toUpperCase());
-  return <Painel dados={dados} ola={`${saudacao()}, Gustavo!`} dataLonga={dataLonga} base="/demo-comercial" demo />;
+  return <><TelaCerta pc="/demo-gestao" /><Painel dados={dados} ola={`${saudacao()}, Gustavo!`} dataLonga={dataLonga} base="/demo-comercial" demo /></>;
 }
