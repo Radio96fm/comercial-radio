@@ -34,7 +34,6 @@ export default async function CadastroVisita({ params }) {
           <input type="hidden" name="visita" value={v.id} />
           <input type="hidden" name="programa" value={v.programa_id || ''} />
           <input type="hidden" name="plano" value={v.plano_id || ''} />
-          <input type="hidden" name="radio" value={v.radio_id || ''} />
           <CamposCliente segmentos={segmentos || []} valores={valores} completo />
           <BotaoEnviar className="btn grande verde" texto="Salvar e seguir para o contrato" enviando="Salvando..." />
         </FormAcao>

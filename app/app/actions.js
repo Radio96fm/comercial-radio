@@ -228,7 +228,7 @@ export async function cadastroCompleto(_prev, fd) {
   const q = new URLSearchParams({ cliente: txt(fd, 'id'), visita: txt(fd, 'visita') });
   if (txt(fd, 'programa')) q.set('programa', txt(fd, 'programa'));
   if (txt(fd, 'plano')) q.set('plano', txt(fd, 'plano'));
-  redirect(txt(fd, 'programa') ? `/app/contratos/novo?${q}` : `/app/radio/${txt(fd, 'radio')}/montar?${q}`);
+  redirect(`/app/contratos/novo?${q}`);
 }
 
 // Renova o prazo de negociação (15 dias, depois mais 15 com aceite do comercial)
