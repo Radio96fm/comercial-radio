@@ -5,6 +5,7 @@ import {
   Rocket, Handshake, Hourglass, UserX, CalendarClock, FileSignature, Filter, Car, Radio, Trophy, ChevronRight, LayoutDashboard, LogOut, TrendingUp, TrendingDown, Target, Medal, Briefcase, Users, FileUp,
 } from 'lucide-react';
 import { data, STATUS_VISITA } from '@/lib/format';
+import PropostaForm from './Proposta';
 import { plural, primeiro, BotaoTemaPainel, Folha, Bloco, Titulo, Numeros, Linha, VerTudo } from '../diretor/Pecas';
 
 const dias = (n) => (n === 1 ? '1 dia' : `${n} dias`);
@@ -89,6 +90,7 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
           </nav>
           {radio.atual && <p className="dir-radios-nota">Visitas e negociações não têm rádio cadastrada, então aparecem nas duas.</p>}
 
+          {demo && <PropostaForm dados={dados} />}
           <Visao dados={dados} abrir={setAberto} />
           {prioridades.length > 0 && (
             <section className="dir-foco dir-so-celular">
