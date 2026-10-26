@@ -8,7 +8,7 @@ import { salvarPropostaPdf, removerPropostaPdf } from '../actions';
 const LIMITE_MB = 25;
 
 // Botão para colocar ou trocar o PDF de uma proposta (programa ou rádio)
-export default function EnviarPdf({ tipo, id, tem }) {
+export default function EnviarPdf({ tipo, id, tem, demo = false }) {
   const router = useRouter();
   const input = useRef(null);
   const [estado, setEstado] = useState('');
@@ -19,6 +19,7 @@ export default function EnviarPdf({ tipo, id, tem }) {
     if (!arq) return;
     if (arq.type !== 'application/pdf' && !/\.pdf$/i.test(arq.name)) { setEstado('Escolha um arquivo PDF.'); return; }
     if (arq.size > LIMITE_MB * 1024 * 1024) { setEstado(`PDF muito grande (máximo ${LIMITE_MB} MB).`); return; }
+    if (demo) { setEstado(`${arq.name} escolhido. Na demonstração o arquivo não é enviado.`); return; }
     setEstado('Enviando...');
     const caminho = `${tipo}/${id}/${Date.now()}.pdf`;
     const { error } = await createClient().storage.from('propostas').upload(caminho, arq, { contentType: 'application/pdf' });
@@ -31,6 +32,7 @@ export default function EnviarPdf({ tipo, id, tem }) {
 
   async function remover() {
     if (!confirm('Tirar este PDF? Os vendedores deixam de enviá-lo.')) return;
+    if (demo) { setEstado('Na demonstração nada é apagado.'); return; }
     setEstado('Removendo...');
     const r = await removerPropostaPdf({ tipo, id });
     setEstado(r?.erro || '');

@@ -5,9 +5,11 @@ import { data, dataHora, tempoDesde, horario, statusPrograma, somarDias } from '
 
 const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
-// Na demonstração os atalhos não levam a telas que pedem login.
+// Na demonstração os atalhos só levam às telas que também têm demonstração.
 function L({ demo, href, ...resto }) {
-  return demo ? <div {...resto} /> : <Link href={href} {...resto} />;
+  if (!demo) return <Link href={href} {...resto} />;
+  if (href.startsWith('/gestao/programas')) return <Link href={href.replace('/gestao', '/demo-gestao')} {...resto} />;
+  return <div {...resto} />;
 }
 
 // Visão geral da Gestão Comercial. Recebe as linhas já buscadas (do banco ou
