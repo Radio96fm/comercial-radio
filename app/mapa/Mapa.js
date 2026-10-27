@@ -2,12 +2,14 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { MODELO, TIPOS, atualizarModelo, mapaInicial } from '@/lib/mapaInicial';
-import TelaPrevia, { TELAS, telaDe } from './Telas';
+import TelaPrevia, { TELAS, telaDe, proporcao } from './Telas';
 
 // Mapa do fluxo do negócio: caixas e setas que qualquer pessoa com o link edita,
 // sem login. Fica numa linha da tabela mapa_fluxo, lida e gravada só pelas
 // funções mapa_ler e mapa_salvar (supabase/migracao-mapa.sql).
-const LARG = 270;
+const LARG = 300;
+const GAPX = 150;
+const GAPY = 50;
 const novoId = (p) => `${p}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const FALTA_SQL = 'Falta ativar o mapa no banco (supabase/migracao-mapa.sql)';
 const semFuncao = (error) => error && (error.code === 'PGRST202' || /mapa_(ler|salvar)/.test(error.message || ''));
@@ -40,11 +42,11 @@ function caminho(p, q, dir) {
 // Caixas que aparecem: começa pelo Início (e caixas soltas) e segue as setas.
 // Seta com "botao" só passa quando aquele botão da tela foi tocado. Caixas de
 // gestão, travas e mudanças sem seta chegando aparecem junto com a caixa a que apontam.
-function visiveis(m, abertos, tudo) {
+function visiveis(m, abertos, tudo, forcados) {
   if (tudo) return new Set(m.nos.map((n) => n.id));
   const chega = new Set(m.ligacoes.map((l) => l.para));
   const sai = new Set(m.ligacoes.map((l) => l.de));
-  const v = new Set(m.nos.filter((n) => n.tipo === 'inicio' || (!chega.has(n.id) && !sai.has(n.id))).map((n) => n.id));
+  const v = new Set(m.nos.filter((n) => n.tipo === 'inicio' || forcados.has(n.id) || (!chega.has(n.id) && !sai.has(n.id))).map((n) => n.id));
   for (let mudou = true; mudou;) {
     mudou = false;
     m.ligacoes.forEach((l) => {
@@ -55,6 +57,42 @@ function visiveis(m, abertos, tudo) {
     });
   }
   return v;
+}
+
+// Posição das caixas: árvore da esquerda para a direita a partir do Início,
+// cada caminho aberto empurra os de baixo. Caixa arrastada à mão fica onde foi solta.
+function arrumar(m, vis, abertos, tudo, altura) {
+  const porId = Object.fromEntries(m.nos.map((n) => [n.id, n]));
+  const passa = (l) => tudo || !l.botao || abertos.has(`${l.de}:${l.botao}`);
+  const chega = new Set(m.ligacoes.map((l) => l.para));
+  const filhos = {};
+  const visto = new Set();
+  const raizes = m.nos.filter((n) => vis.has(n.id) && n.tipo === 'inicio').map((n) => n.id);
+  const fila = [...raizes];
+  raizes.forEach((id) => visto.add(id));
+  const pendurar = (pai, id) => { visto.add(id); (filhos[pai] = filhos[pai] || []).push(id); fila.push(id); };
+  while (fila.length) {
+    const id = fila.shift();
+    m.ligacoes.forEach((l) => { if (l.de === id && vis.has(l.para) && !visto.has(l.para) && passa(l)) pendurar(id, l.para); });
+    m.ligacoes.forEach((l) => { if (l.para === id && vis.has(l.de) && !visto.has(l.de) && !chega.has(l.de)) pendurar(id, l.de); });
+  }
+  const pos = {};
+  const por = (id, d, y) => {
+    pos[id] = { x: d * (LARG + GAPX), y };
+    let cy = y;
+    (filhos[id] || []).forEach((f) => { cy = por(f, d + 1, cy) + GAPY; });
+    return Math.max(y + altura(porId[id]), cy - GAPY);
+  };
+  let y0 = 0;
+  raizes.forEach((id) => { y0 = por(id, 0, y0) + GAPY * 3; });
+  // caixas soltas (criadas à mão ou que ficaram de mapas antigos): coluna à esquerda
+  let ys = 0;
+  m.nos.forEach((n) => {
+    if (!vis.has(n.id)) return;
+    if (n.fixo) pos[n.id] = { x: n.x, y: n.y };
+    else if (!pos[n.id]) { pos[n.id] = { x: -(LARG + GAPX), y: ys }; ys += altura(n) + GAPY; }
+  });
+  return pos;
 }
 
 const quando = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -73,6 +111,9 @@ export default function Mapa({ codigo }) {
   const [telas, setTelas] = useState(true);
   const [abertos, setAbertos] = useState(() => new Set()); // "caixa:botão" tocados nas telas
   const [tudo, setTudo] = useState(false);
+  const [forcados, setForcados] = useState(() => new Set()); // telas abertas pelo Voltar/menu
+  const [foco, setFoco] = useState(null);
+  const posRef = useRef({});
   const [autor, setAutor] = useState('');
   useEffect(() => { try { setAutor(localStorage.getItem('mapaAutor') || ''); } catch { /* sem armazenamento */ } }, []);
   const mudarAutor = (v) => { setAutor(v); try { localStorage.setItem('mapaAutor', v); } catch { /* sem armazenamento */ } };
@@ -85,24 +126,38 @@ export default function Mapa({ codigo }) {
   const mapaRef = useRef(null);
   mapaRef.current = mapa;
 
-  const vis = mapa ? visiveis(mapa, abertos, tudo) : new Set();
+  const vis = mapa ? visiveis(mapa, abertos, tudo, forcados) : new Set();
+  const altura = (n) => alturas[n.id] || (proporcao(n.tela) ? (LARG - 28) * proporcao(n.tela) + 90 : 130);
+  const pos = mapa ? arrumar(mapa, vis, abertos, tudo, altura) : {};
+  posRef.current = pos;
 
-  // toque num botão da miniatura: abre (ou fecha) a seta e leva a vista até a próxima tela
+  // leva a vista até a caixa que acabou de abrir
+  useEffect(() => {
+    if (!foco) return;
+    const p = posRef.current[foco];
+    const r = area.current?.getBoundingClientRect();
+    setFoco(null);
+    if (!p || !r) return;
+    setVista((v) => {
+      const sx = p.x * v.k + v.x;
+      const sy = p.y * v.k + v.y;
+      const dentro = sx >= 0 && sx + LARG * v.k <= r.width && sy >= 0 && sy + 120 * v.k <= r.height;
+      if (dentro) return v;
+      return { ...v, x: v.x + (r.width / 2 - (sx + (LARG * v.k) / 2)), y: v.y + (r.height * 0.15 - sy) };
+    });
+  }, [foco]);
+
+  // toque num botão da tela: abre (ou fecha) a seta e leva a vista até a próxima tela
   function ir(no, k) {
     const chave = `${no.id}:${k}`;
     const abrir = !abertos.has(chave);
     setAbertos((a) => { const b = new Set(a); if (abrir) b.add(chave); else b.delete(chave); return b; });
-    if (!abrir) return;
     const l = mapa.ligacoes.find((x) => x.de === no.id && x.botao === k);
-    const alvo = l && mapa.nos.find((n) => n.id === l.para);
-    const r = area.current?.getBoundingClientRect();
-    if (!alvo || !r) return;
-    const sx = alvo.x * vista.k + vista.x;
-    const sy = alvo.y * vista.k + vista.y;
-    const fora = sx < 0 || sx + LARG * vista.k > r.width || sy < 0 || sy + 200 * vista.k > r.height;
-    if (fora) {
-      setVista((v) => ({ ...v, x: v.x + (r.width / 2 - (sx + (LARG * v.k) / 2)), y: v.y + (r.height * 0.3 - sy) }));
-    }
+    if (abrir && l) setFoco(l.para);
+  }
+  function pular(id) {
+    if (!vis.has(id)) setForcados((f) => new Set(f).add(id));
+    setFoco(id);
   }
 
   // ---------- carregar
@@ -198,7 +253,8 @@ export default function Mapa({ codigo }) {
       return;
     }
     const p = ponto(e);
-    arrasto.current = { tipo: 'no', id: n.id, dx: p.x - n.x, dy: p.y - n.y, sx: e.clientX, sy: e.clientY, moveu: false };
+    const q = pos[n.id] || n;
+    arrasto.current = { tipo: 'no', id: n.id, dx: p.x - q.x, dy: p.y - q.y, sx: e.clientX, sy: e.clientY, moveu: false };
     area.current.setPointerCapture(e.pointerId);
   }
   function move(e) {
@@ -209,7 +265,7 @@ export default function Mapa({ codigo }) {
     if (a.tipo === 'tela') setVista((v) => ({ ...v, x: a.vx + e.clientX - a.sx, y: a.vy + e.clientY - a.sy }));
     else {
       const p = ponto(e);
-      mudar((m) => ({ ...m, nos: m.nos.map((n) => (n.id === a.id ? { ...n, x: Math.round(p.x - a.dx), y: Math.round(p.y - a.dy) } : n)) }));
+      mudar((m) => ({ ...m, nos: m.nos.map((n) => (n.id === a.id ? { ...n, fixo: true, x: Math.round(p.x - a.dx), y: Math.round(p.y - a.dy) } : n)) }));
     }
   }
   function up() {
@@ -241,7 +297,7 @@ export default function Mapa({ codigo }) {
     return { k, x: r.width / 2 - ((r.width / 2 - v.x) / v.k) * k, y: r.height / 2 - ((r.height / 2 - v.y) / v.k) * k };
   });
   const ajustar = () => {
-    const nos = mapa?.nos.filter((n) => vis.has(n.id)) || [];
+    const nos = Object.values(pos);
     if (!nos.length) return;
     const r = area.current.getBoundingClientRect();
     const xs = nos.map((n) => n.x);
@@ -261,15 +317,14 @@ export default function Mapa({ codigo }) {
   function novaCaixa(tipo) {
     const id = novoId('n');
     const c = centro();
-    mudar((m) => ({ ...m, nos: [...m.nos, { id, tipo, x: c.x, y: c.y, titulo: tipo === 'mudanca' ? 'Mudança' : 'Novo passo', texto: '' }] }));
+    mudar((m) => ({ ...m, nos: [...m.nos, { id, tipo, fixo: true, x: c.x, y: c.y, titulo: tipo === 'mudanca' ? 'Mudança' : 'Novo passo', texto: '' }] }));
     setSel({ tipo: 'no', id });
   }
   function proximo(n) {
     const id = novoId('n');
-    const h = alturas[n.id] || 120;
     mudar((m) => ({
       ...m,
-      nos: [...m.nos, { id, tipo: 'passo', x: n.x, y: n.y + h + 70, titulo: 'Novo passo', texto: '' }],
+      nos: [...m.nos, { id, tipo: 'passo', x: 0, y: 0, titulo: 'Novo passo', texto: '' }],
       ligacoes: [...m.ligacoes, { id: novoId('l'), de: n.id, para: id, rotulo: '' }],
     }));
     setSel({ tipo: 'no', id });
@@ -321,8 +376,8 @@ export default function Mapa({ codigo }) {
   const ligVis = mapa.ligacoes.filter((l) => vis.has(l.de) && vis.has(l.para) && (tudo || !l.botao || abertos.has(`${l.de}:${l.botao}`)));
   const botoesDe = (id) => new Set(mapa.ligacoes.filter((l) => l.de === id && l.botao).map((l) => l.botao));
   const abertosDe = (id) => new Set([...abertos].filter((c) => c.startsWith(`${id}:`)).map((c) => c.slice(id.length + 1)));
-  const largura = Math.max(...mapa.nos.map((n) => n.x)) + LARG + 400;
-  const altura = Math.max(...mapa.nos.map((n) => n.y)) + 1200;
+  const largura = Math.max(0, ...Object.values(pos).map((p) => p.x)) + LARG + 400;
+  const alturaSvg = Math.max(0, ...Object.values(pos).map((p) => p.y)) + 3000;
 
   return (
     <div className="mapa">
@@ -333,7 +388,7 @@ export default function Mapa({ codigo }) {
         </div>
         <div className="mapa-acoes">
           <button type="button" className={tudo ? 'ativo' : ''} onClick={() => setTudo((v) => !v)}>{tudo ? 'Mostrar passo a passo' : 'Abrir tudo'}</button>
-          {!tudo && abertos.size > 0 && <button type="button" onClick={() => setAbertos(new Set())}>Fechar tudo</button>}
+          {!tudo && (abertos.size > 0 || forcados.size > 0) && <button type="button" onClick={() => { setAbertos(new Set()); setForcados(new Set()); }}>Fechar tudo</button>}
           <button type="button" onClick={() => novaCaixa('passo')}>+ Caixa</button>
           <button type="button" onClick={() => novaCaixa('mudanca')}>+ Mudança</button>
           <button type="button" className={telas ? 'ativo' : ''} onClick={() => setTelas((v) => !v)}>{telas ? 'Esconder telas' : 'Mostrar telas'}</button>
@@ -355,7 +410,7 @@ export default function Mapa({ codigo }) {
       <div className="mapa-corpo">
         <div ref={area} className={`mapa-area ${ligando ? 'ligando' : ''}`} onPointerDown={downFundo} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
           <div className="mapa-plano" style={{ transform: `translate(${vista.x}px, ${vista.y}px) scale(${vista.k})` }}>
-            <svg className="mapa-setas" width={largura} height={altura}>
+            <svg className="mapa-setas" width={largura} height={alturaSvg}>
               <defs>
                 <marker id="ponta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
                   <path d="M0,0 L10,5 L0,10 z" className="ponta" />
@@ -365,8 +420,8 @@ export default function Mapa({ codigo }) {
                 </marker>
               </defs>
               {ligVis.map((l) => {
-                const a = porId[l.de];
-                const b = porId[l.para];
+                const a = pos[l.de] && { ...porId[l.de], ...pos[l.de] };
+                const b = pos[l.para] && { ...porId[l.para], ...pos[l.para] };
                 if (!a || !b) return null;
                 const [p, q, dir] = ancoras(a, b, alturas[a.id] || 100, alturas[b.id] || 100);
                 const d = caminho(p, q, dir);
@@ -386,7 +441,7 @@ export default function Mapa({ codigo }) {
                 key={n.id}
                 ref={(el) => { refs.current[n.id] = el; }}
                 className={`no t-${n.tipo} ${sel?.tipo === 'no' && sel.id === n.id ? 'sel' : ''}`}
-                style={{ left: n.x, top: n.y, width: LARG }}
+                style={{ left: pos[n.id]?.x ?? 0, top: pos[n.id]?.y ?? 0, width: LARG }}
                 onPointerDown={(e) => downNo(e, n)}
               >
                 <div className="no-tipo">{TIPOS[n.tipo] || n.tipo}{qtdComent(n.id) > 0 && <span className="no-coment">{qtdComent(n.id)} comentário{qtdComent(n.id) > 1 ? 's' : ''}</span>}</div>
@@ -395,7 +450,7 @@ export default function Mapa({ codigo }) {
                   <div key={c.id} className="no-nota"><b>{c.autor}:</b> {c.texto}</div>
                 ))}
                 {n.texto && <p>{n.texto}</p>}
-                {telas && telaDe(n) && <TelaPrevia tela={telaDe(n)} tem={tudo ? null : botoesDe(n.id)} abertos={abertosDe(n.id)} ir={(k) => ir(n, k)} />}
+                {telas && telaDe(n) && <TelaPrevia tela={telaDe(n)} tem={tudo ? null : botoesDe(n.id)} abertos={abertosDe(n.id)} ir={(k) => ir(n, k)} pular={tudo ? null : pular} />}
               </div>
             ))}
           </div>

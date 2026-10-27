@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
-import { MarcarCondicoesVistas, assinatura } from '@/components/AvisoCondicoes';
+import { MarcarCondicoesVistas } from '@/components/AvisoCondicoes';
+import { assinatura } from '@/lib/condicoes';
 import { buscarCondicoesAtivas, PERIODOS, nomePeriodo, valorNoPeriodo, temPrecoPorPeriodo } from '@/lib/periodo';
 import { moeda } from '@/lib/format';
 import { Sparkles } from 'lucide-react';

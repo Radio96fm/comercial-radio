@@ -82,80 +82,23 @@
 .mapa-acoes button.ativo { border-color: var(--cor96); }
 
 /* miniatura do celular com a tela do app do vendedor (sempre no visual escuro do app) */
-.tl-cel { margin: 10px auto 2px; width: 232px; border-radius: 26px; padding: 7px; background: #2a2a2a; box-shadow: inset 0 0 0 1px #3a3a3a; }
-.tl-tela { height: 420px; overflow: hidden; border-radius: 20px; background: #0a0a0a; color: #f5f5f5; padding: 12px 10px; display: flex; flex-direction: column; gap: 6px; font-size: 9.5px; line-height: 1.25; position: relative; text-align: left; }
-.tl-tela b { font-family: inherit; font-size: inherit; display: inline; }
-.tl-tela small { color: #a3a3a3; font-size: 8px; display: block; }
-.tl-topo { display: flex; gap: 6px; align-items: center; font-weight: 700; font-size: 11px; padding-bottom: 4px; }
-.tl-topo span { color: #a3a3a3; font-size: 14px; }
-.tl-h { font-size: 14px !important; font-weight: 800; }
-.tl-ola { display: flex; gap: 7px; align-items: center; margin-bottom: 2px; }
-.tl-ola i { width: 22px; height: 22px; border-radius: 50%; background: #f2f0eb; color: #0a0a0a; display: grid; place-items: center; font-style: normal; font-weight: 800; }
-.tl-ola b { font-size: 12px; display: block; }
-.tl-radio { border-radius: 12px; padding: 12px 10px; color: #fff; }
-.tl-radio b { font-size: 13px !important; font-weight: 800; display: block; }
-.tl-radio small { color: rgba(255, 255, 255, .8); }
-.tl-radio.peq { padding: 7px 10px; }
-.tl-radio.peq b { font-size: 11px !important; }
-.c96 { background: linear-gradient(135deg, #ec7020, #b8480c); }
-.cagro { background: linear-gradient(135deg, #00b13e, #00318b); }
-.tl-bt { border-radius: 11px; padding: 8px; text-align: center; font-weight: 700; font-size: 9.5px; background: #1d1d1d; border: 1px solid #333; }
-.tl-bt.claro { background: #f2f0eb; color: #0a0a0a; border-color: #f2f0eb; font-size: 11px; padding: 10px; }
-.tl-bt.verde { background: #16a34a; border-color: #16a34a; color: #fff; }
-.tl-bt.whats { background: #25d366; border-color: #25d366; color: #052e12; }
-.tl-bt.cinza { background: #262626; color: #d4d4d4; }
-.tl-bt.c96, .tl-bt.cagro { color: #fff; border: 0; }
-.tl-sec { font-weight: 800; font-size: 10.5px; margin-top: 4px; }
-.tl-item { display: flex; justify-content: space-between; align-items: center; gap: 4px; background: #151515; border-radius: 9px; padding: 6px 8px; }
-.tl-badge { font-size: 8px; font-weight: 700; border-radius: 99px; padding: 2px 6px; align-self: flex-start; }
-.tl-badge.v { background: rgba(74, 222, 128, .15); color: #4ade80; }
-.tl-badge.a { background: rgba(251, 191, 36, .15); color: #fbbf24; }
-.tl-campo small { margin-bottom: 2px; color: #d4d4d4; font-weight: 700; }
-.tl-campo div { background: #151515; border: 1px solid #2a2a2a; border-radius: 8px; padding: 6px 7px; color: #8a8a8a; }
-.tl-lado { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-.tl-nav { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; justify-content: space-around; background: #151515; border-radius: 12px; padding: 4px; }
-.tl-nav > div { padding: 4px 5px; border-radius: 8px; color: #8a8a8a; font-weight: 700; font-size: 8.5px; }
-.tl-nav > div.on { color: #f5f5f5; background: #262626; }
-.tl-prazo { background: #151515; border-radius: 9px; padding: 7px 8px; display: flex; flex-direction: column; gap: 5px; }
-.tl-prazo i { height: 5px; background: #2a2a2a; border-radius: 3px; overflow: hidden; display: block; }
-.tl-prazo i span { display: block; height: 100%; background: #4ade80; }
-.tl-faixa { border-radius: 12px; padding: 14px 10px; }
-.tl-faixa b { font-size: 15px !important; font-weight: 800; color: #fff; }
-.tl-prog { display: flex; justify-content: space-between; align-items: center; background: #151515; border-left: 3px solid var(--c); border-radius: 8px; padding: 6px 8px; }
-.tl-prog span { color: #a3a3a3; font-size: 8px; text-align: right; }
-.tl-prog span b { display: block; color: #4ade80; font-size: 12px !important; }
-.tl-cotas { display: flex; gap: 3px; }
-.tl-cotas i { flex: 1; height: 8px; border-radius: 3px; background: #2a2a2a; }
-.tl-cotas i.on { background: #ec7020; }
-.tl-cond { background: rgba(251, 191, 36, .15); color: #fbbf24; border-radius: 8px; padding: 6px 8px; font-weight: 700; }
-.tl-plano { background: #151515; border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 5px; }
-.tl-periodos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-.tl-periodos span { background: #1d1d1d; border-radius: 6px; padding: 4px; text-align: center; color: #a3a3a3; font-size: 8px; }
-.tl-periodos b { display: block !important; color: #f5f5f5; font-size: 10px !important; }
-.tl-pdf { display: flex; justify-content: space-between; align-items: center; background: #151515; border-radius: 9px; padding: 8px; }
-.tl-pdf span { background: #262626; border-radius: 6px; padding: 2px 6px; }
-.tl-resumo { background: #151515; border-radius: 10px; padding: 9px; display: flex; flex-direction: column; gap: 3px; }
-.tl-resumo b { font-size: 11px !important; }
-.tl-ok { background: rgba(74, 222, 128, .13); color: #4ade80; border-radius: 8px; padding: 7px 8px; font-weight: 700; }
-.tl-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-.tl-seg span { background: #151515; border: 1px solid #2a2a2a; border-radius: 8px; padding: 6px; text-align: center; font-weight: 800; font-size: 12px; }
-.tl-seg span.on { background: #f2f0eb; color: #0a0a0a; }
-.tl-total { display: flex; justify-content: space-between; align-items: center; background: #151515; border-radius: 9px; padding: 8px; }
-.tl-total b { font-size: 13px !important; font-weight: 800; }
-
-/* botões tocáveis das miniaturas: abrem o próximo caminho */
-.tl-hot { cursor: pointer; outline: 2px solid #38bdf8; outline-offset: 1px; animation: tl-pulso 1.6s ease-in-out infinite; }
-.tl-hot:hover { outline-color: #7dd3fc; }
-.tl-hot.aberto { outline: 2px solid #facc15; animation: none; }
-@keyframes tl-pulso { 50% { outline-color: rgba(56, 189, 248, .25); } }
+/* foto da tela real do app, com os botões tocáveis por cima */
+.tl-foto { position: relative; margin: 10px 0 2px; border-radius: 18px; overflow: hidden; border: 1px solid #333; background: #0a0a0a; }
+.tl-foto img { display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.tl-hot { position: absolute; padding: 0; margin: 0; background: rgba(56, 189, 248, .10); border: 2px solid #38bdf8; border-radius: 10px; cursor: pointer; animation: tl-pulso 1.6s ease-in-out infinite; }
+.tl-hot:hover { background: rgba(56, 189, 248, .25); }
+.tl-hot.aberto { border-color: #facc15; background: rgba(250, 204, 21, .14); animation: none; }
+.tl-hot.pula { border: 1px dashed rgba(255, 255, 255, .35); background: transparent; animation: none; }
+.tl-hot.pula:hover { border-color: #fff; background: rgba(255, 255, 255, .08); }
+@keyframes tl-pulso { 50% { border-color: rgba(56, 189, 248, .3); } }
 @media (prefers-reduced-motion: reduce) { .tl-hot { animation: none; } }
-.tl-av { width: 22px; height: 22px; border-radius: 50%; background: #f2f0eb; color: #0a0a0a; display: grid; place-items: center; font-weight: 800; }
-.tl-mais { text-align: center; color: #a3a3a3; font-weight: 700; padding: 5px; border-radius: 8px; }
-.tl-bolha { background: #1d1d1d; border-radius: 10px; padding: 7px 8px; max-width: 85%; }
-.tl-bolha.eu { align-self: flex-end; background: #f2f0eb; color: #0a0a0a; }
-.tl-qtd { font-weight: 800; color: #a3a3a3; }
-.tl-faixa small { color: rgba(255, 255, 255, .8); }
-.no-texto { margin: 6px 0 0; font-size: 12px; color: var(--muted, #737373); white-space: pre-line; line-height: 1.35; }
-.mapa-legenda { display: flex; gap: 10px; align-items: center; font-size: 12px; }
-.mapa-legenda i { display: inline-block; width: 14px; height: 10px; border-radius: 3px; outline: 2px solid #38bdf8; margin-right: 4px; vertical-align: middle; }
-.mapa-legenda i.am { outline-color: #facc15; }
+.t-acao { border-style: dotted; }
+
+/* celular: barra de cima numa faixa só, rolando de lado */
+@media (max-width: 700px) {
+  .mapa-topo { padding: 8px 10px; gap: 6px; }
+  .mapa-titulo b { font-size: 1rem; }
+  .mapa-acoes { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 2px; }
+  .mapa-acoes button { font-size: .8rem; padding: 6px 10px; white-space: nowrap; flex: none; }
+  .mapa-dica { display: none; }
+}
