@@ -1,21 +1,20 @@
 'use client';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { TIPOS, mapaInicial } from '@/lib/mapaInicial';
 
-// Mapa do fluxo do negócio: caixas e setas que todo mundo do comercial edita.
-// Fica guardado como um arquivo JSON no armazenamento do Supabase (pasta mapa/
-// do bucket privado "assistente", que só gestor e comercial leem e gravam).
-const BUCKET = 'assistente';
-const ARQUIVO = 'mapa/fluxo.json';
+// Mapa do fluxo do negócio: caixas e setas que qualquer pessoa com o link edita,
+// sem login. Fica numa linha da tabela mapa_fluxo, lida e gravada só pelas
+// funções mapa_ler e mapa_salvar (supabase/migracao-mapa.sql).
 const LARG = 270;
 const novoId = (p) => `${p}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+const FALTA_SQL = 'Falta ativar o mapa no banco (supabase/migracao-mapa.sql)';
+const semFuncao = (error) => error && (error.code === 'PGRST202' || /mapa_(ler|salvar)/.test(error.message || ''));
 
-async function baixar() {
-  const { data, error } = await createClient().storage.from(BUCKET).download(ARQUIVO);
-  if (error || !data) return null;
-  return JSON.parse(await data.text());
+async function ler(codigo) {
+  const { data, error } = await createClient().rpc('mapa_ler', { p_id: codigo });
+  if (error) throw error;
+  return data || null;
 }
 
 // pontos de saída e chegada da seta conforme a posição das duas caixas
@@ -39,7 +38,7 @@ function caminho(p, q, dir) {
 
 const quando = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
-export default function Mapa({ autor }) {
+export default function Mapa({ codigo }) {
   const [mapa, setMapa] = useState(null);
   const [base, setBase] = useState(null); // versão que foi carregada (para não sobrescrever a de outra pessoa)
   const [status, setStatus] = useState('Carregando...');
@@ -50,6 +49,9 @@ export default function Mapa({ autor }) {
   const [vista, setVista] = useState({ x: 40, y: 20, k: 0.8 });
   const [alturas, setAlturas] = useState({});
   const [comentario, setComentario] = useState('');
+  const [autor, setAutor] = useState('');
+  useEffect(() => { try { setAutor(localStorage.getItem('mapaAutor') || ''); } catch { /* sem armazenamento */ } }, []);
+  const mudarAutor = (v) => { setAutor(v); try { localStorage.setItem('mapaAutor', v); } catch { /* sem armazenamento */ } };
   const refs = useRef({});
   const area = useRef(null);
   const arrasto = useRef(null);
@@ -62,14 +64,16 @@ export default function Mapa({ autor }) {
   // ---------- carregar
   const carregar = useCallback(async () => {
     setStatus('Carregando...');
-    const salvo = await baixar().catch(() => null);
+    let salvo = null;
+    let erro = null;
+    try { salvo = await ler(codigo); } catch (e) { erro = e; }
     const m = salvo || mapaInicial();
     setMapa(m);
     setBase(m.versao);
     setConflito(false);
     sujo.current = false;
-    setStatus(salvo ? 'Salvo' : 'Mapa inicial (ainda não salvo)');
-  }, []);
+    setStatus(semFuncao(erro) ? FALTA_SQL : erro ? 'Não consegui abrir o mapa salvo' : salvo ? 'Salvo' : 'Mapa inicial (ainda não salvo)');
+  }, [codigo]);
   useEffect(() => { carregar(); }, [carregar]);
 
   // ---------- salvar (espera 1,5 s depois da última mudança)
@@ -79,16 +83,11 @@ export default function Mapa({ autor }) {
     const contagem = edicoes.current;
     setStatus('Salvando...');
     try {
-      const atual = await baixar().catch(() => null);
-      if (atual && atual.versao !== base) {
-        setConflito(true);
-        setStatus('Outra pessoa salvou');
-        return;
-      }
       const versao = novoId('v');
       const dados = { ...mapaRef.current, versao };
-      const { error } = await createClient().storage.from(BUCKET).upload(ARQUIVO, new Blob([JSON.stringify(dados)], { type: 'application/json' }), { upsert: true, cacheControl: '0', contentType: 'application/json' });
-      if (error) { setStatus('Não salvou. Tente de novo.'); return; }
+      const { data: r, error } = await createClient().rpc('mapa_salvar', { p_id: codigo, p_dados: dados, p_base: base });
+      if (error) { setStatus(semFuncao(error) ? FALTA_SQL : 'Não salvou. Tente de novo.'); return; }
+      if (r === 'conflito') { setConflito(true); setStatus('Outra pessoa salvou'); return; }
       setBase(versao);
       // se alguém mexeu durante o envio, o próximo ciclo salva de novo
       if (edicoes.current === contagem) { sujo.current = false; setStatus('Salvo'); }
@@ -98,7 +97,7 @@ export default function Mapa({ autor }) {
     } finally {
       salvando.current = false;
     }
-  }, [base, conflito]);
+  }, [base, conflito, codigo]);
 
   useEffect(() => {
     if (!sujo.current) return undefined;
@@ -239,7 +238,7 @@ export default function Mapa({ autor }) {
   function comentar(noId) {
     const texto = comentario.trim();
     if (!texto) return;
-    mudar((m) => ({ ...m, comentarios: [...m.comentarios, { id: novoId('c'), no: noId, autor, texto, em: new Date().toISOString() }] }));
+    mudar((m) => ({ ...m, comentarios: [...m.comentarios, { id: novoId('c'), no: noId, autor: autor.trim() || 'Sem nome', texto, em: new Date().toISOString() }] }));
     setComentario('');
   }
   const apagarComentario = (id) => mudar((m) => ({ ...m, comentarios: m.comentarios.filter((c) => c.id !== id) }));
@@ -279,7 +278,6 @@ export default function Mapa({ autor }) {
           <button type="button" onClick={() => zoom(1.15)} aria-label="Aumentar">+</button>
           <button type="button" onClick={ajustar}>Centralizar</button>
           <button type="button" onClick={copiarTexto}>Copiar texto do mapa</button>
-          <Link href="/gestao">Sair do mapa</Link>
         </div>
       </header>
 
@@ -364,6 +362,8 @@ export default function Mapa({ autor }) {
                     <p>{c.texto}</p>
                   </div>
                 ))}
+                <label htmlFor="m-autor">Seu nome</label>
+                <input id="m-autor" value={autor} placeholder="Para saberem quem comentou" onChange={(e) => mudarAutor(e.target.value)} />
                 <label htmlFor="m-coment" className="sr">Novo comentário</label>
                 <textarea id="m-coment" rows={3} placeholder="Escreva o que precisa mudar nesta regra..." value={comentario} onChange={(e) => setComentario(e.target.value)} />
                 <button type="button" className="principal" onClick={() => comentar(noSel.id)} disabled={!comentario.trim()}>Comentar</button>
