@@ -2,10 +2,10 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { assinatura } from '@/lib/condicoes';
 import { Sparkles, ChevronRight } from 'lucide-react';
 
 const CHAVE = 'condicoes-vistas';
-export const assinatura = (lista) => lista.map((c) => c.id).sort().join(',');
 
 function juntar(nomes) {
   return nomes.length > 1 ? `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}` : nomes[0];
