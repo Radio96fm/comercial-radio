@@ -194,7 +194,7 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
         <div><div className="muted">Total ({meses}x)</div><b className="grande">{moeda(total * Number(meses))}</b></div>
       </div>
 
-      <BotaoEnviar className="btn grande verde" texto="Criar contrato e gerar PDF" enviando="Criando contrato..." disabled={!!conflito || vazio} />
+      <BotaoEnviar className="btn grande verde" texto="Gerar contrato" enviando="Gerando contrato..." disabled={!!conflito || vazio} />
       <p className="muted" style={{ marginTop: 10 }}>O contrato fica como “Aguardando assinatura” até o cliente assinar.</p>
     </form>
   );

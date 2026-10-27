@@ -113,6 +113,8 @@ export default function Mapa({ codigo }) {
   const [tudo, setTudo] = useState(false);
   const [forcados, setForcados] = useState(() => new Set()); // telas abertas pelo Voltar/menu
   const [foco, setFoco] = useState(null);
+  const [cheia, setCheia] = useState(false);
+  const historico = useRef([]); // ordem em que os caminhos foram abertos, para "Voltar um passo"
   const posRef = useRef({});
   const [autor, setAutor] = useState('');
   useEffect(() => { try { setAutor(localStorage.getItem('mapaAutor') || ''); } catch { /* sem armazenamento */ } }, []);
@@ -152,9 +154,42 @@ export default function Mapa({ codigo }) {
     const chave = `${no.id}:${k}`;
     const abrir = !abertos.has(chave);
     setAbertos((a) => { const b = new Set(a); if (abrir) b.add(chave); else b.delete(chave); return b; });
+    historico.current = historico.current.filter((c) => c !== chave);
+    if (abrir) historico.current.push(chave);
     const l = mapa.ligacoes.find((x) => x.de === no.id && x.botao === k);
     if (abrir && l) setFoco(l.para);
   }
+  // fecha a tela (e o que veio depois dela), voltando para a tela de onde ela saiu
+  function fecharTela(id) {
+    const chaves = mapa.ligacoes.filter((l) => l.para === id && l.botao).map((l) => `${l.de}:${l.botao}`);
+    setAbertos((a) => { const b = new Set(a); chaves.forEach((c) => b.delete(c)); return b; });
+    setForcados((f) => { const g = new Set(f); g.delete(id); return g; });
+    historico.current = historico.current.filter((c) => !chaves.includes(c));
+    const origem = chaves.find((c) => abertos.has(c));
+    if (origem) setFoco(origem.split(':')[0]);
+  }
+  function voltarPasso() {
+    const h = historico.current.filter((c) => abertos.has(c));
+    const ultima = h.pop();
+    historico.current = h;
+    if (!ultima) return;
+    setAbertos((a) => { const b = new Set(a); b.delete(ultima); return b; });
+    setFoco(ultima.split(':')[0]);
+  }
+  const fechavel = (n) => !tudo && n.tipo !== 'inicio' && (forcados.has(n.id) || mapa.ligacoes.some((l) => l.para === n.id && l.botao && abertos.has(`${l.de}:${l.botao}`)));
+  async function telaCheia() {
+    const ligar = !cheia;
+    setCheia(ligar);
+    try {
+      if (ligar && !document.fullscreenElement) await document.documentElement.requestFullscreen?.();
+      if (!ligar && document.fullscreenElement) await document.exitFullscreen?.();
+    } catch { /* o iPhone não deixa: fica só sem a barra de cima */ }
+  }
+  useEffect(() => {
+    const fn = () => { if (!document.fullscreenElement) setCheia(false); };
+    document.addEventListener('fullscreenchange', fn);
+    return () => document.removeEventListener('fullscreenchange', fn);
+  }, []);
   function pular(id) {
     if (!vis.has(id)) setForcados((f) => new Set(f).add(id));
     setFoco(id);
@@ -166,6 +201,13 @@ export default function Mapa({ codigo }) {
     let salvo = null;
     let erro = null;
     try { salvo = await ler(codigo); } catch (e) { erro = e; }
+    // sem o banco ativado, vale a cópia guardada neste aparelho
+    if (!salvo) {
+      try {
+        const local = JSON.parse(localStorage.getItem(`mapaLocal:${codigo}`) || 'null');
+        if (local?.modelo === MODELO) salvo = local;
+      } catch { /* sem armazenamento */ }
+    }
     const antigo = salvo && (salvo.modelo || 1) < MODELO;
     const m = antigo ? atualizarModelo(salvo) : salvo || mapaInicial();
     setMapa(m);
@@ -209,6 +251,7 @@ export default function Mapa({ codigo }) {
 
   useEffect(() => {
     if (!sujo.current) return undefined;
+    try { localStorage.setItem(`mapaLocal:${codigo}`, JSON.stringify(mapa)); } catch { /* sem armazenamento */ }
     const t = setTimeout(salvar, 1500);
     return () => clearTimeout(t);
   }, [mapa, salvar]);
@@ -352,18 +395,56 @@ export default function Mapa({ codigo }) {
   }
   const apagarComentario = (id) => mudar((m) => ({ ...m, comentarios: m.comentarios.filter((c) => c.id !== id) }));
 
-  // texto do mapa inteiro para colar na conversa com o Claude
-  async function copiarTexto() {
+  // mapa inteiro em texto, com as mudanças em relação ao app de hoje no começo,
+  // para mandar ao Claude (copiando ou baixando o arquivo)
+  function textoMapa() {
     const m = mapaRef.current;
-    const nome = Object.fromEntries(m.nos.map((n) => [n.id, n.titulo]));
-    const linhas = [...m.nos].sort((a, b) => a.y - b.y || a.x - b.x).map((n) => {
-      const saidas = m.ligacoes.filter((l) => l.de === n.id).map((l) => `${l.rotulo ? `(${l.rotulo}) ` : ''}${nome[l.para]}`);
-      const coms = m.comentarios.filter((c) => c.no === n.id).map((c) => `  Comentário de ${c.autor}: ${c.texto}`);
-      return [`[${TIPOS[n.tipo] || n.tipo}] ${n.titulo}`, n.texto && `  ${n.texto.replace(/\n/g, '\n  ')}`, saidas.length && `  Segue para: ${saidas.join('; ')}`, ...coms].filter(Boolean).join('\n');
+    const ini = mapaInicial();
+    const orig = Object.fromEntries(ini.nos.map((n) => [n.id, n]));
+    const nome = Object.fromEntries([...ini.nos, ...m.nos].map((n) => [n.id, n.titulo]));
+    const chaveLig = (l) => `${l.de}>${l.para}`;
+    const ligOrig = new Set(ini.ligacoes.map(chaveLig));
+    const ligAgora = new Set(m.ligacoes.map(chaveLig));
+    const saidas = (id) => m.ligacoes.filter((l) => l.de === id).map((l) => `${l.rotulo ? `(${l.rotulo}) ` : ''}${nome[l.para]}`);
+    const entradas = (id) => m.ligacoes.filter((l) => l.para === id).map((l) => `${nome[l.de]}${l.rotulo ? ` (${l.rotulo})` : ''}`);
+    const coms = (id) => m.comentarios.filter((c) => c.no === id).map((c) => `  Comentário de ${c.autor}: ${c.texto}`);
+    const recuo = (t) => `  ${t.replace(/\n/g, '\n  ')}`;
+    const mud = [];
+    m.nos.forEach((n) => {
+      const o = orig[n.id];
+      if (!o) {
+        mud.push([`NOVA CAIXA [${TIPOS[n.tipo] || n.tipo}] ${n.titulo}`, n.texto && recuo(n.texto),
+          entradas(n.id).length && `  Vem de: ${entradas(n.id).join('; ')}`, saidas(n.id).length && `  Segue para: ${saidas(n.id).join('; ')}`, ...coms(n.id)].filter(Boolean).join('\n'));
+        return;
+      }
+      const linhas = [];
+      if (o.titulo !== n.titulo) linhas.push(`  Título: "${o.titulo}" virou "${n.titulo}"`);
+      if (o.texto !== n.texto) linhas.push(`  Texto antes: ${o.texto || '(vazio)'}\n  Texto agora: ${n.texto || '(vazio)'}`);
+      if (o.tipo !== n.tipo) linhas.push(`  Tipo: ${TIPOS[o.tipo]} virou ${TIPOS[n.tipo]}`);
+      linhas.push(...coms(n.id));
+      if (linhas.length) mud.push([`NA CAIXA "${o.titulo}"${n.tela ? ' (tela do app)' : ''}`, ...linhas].join('\n'));
     });
-    const texto = `MAPA DO FLUXO\n\n${linhas.join('\n\n')}`;
-    try { await navigator.clipboard.writeText(texto); setStatus('Texto copiado: cole na conversa'); }
-    catch { setStatus('Não consegui copiar'); }
+    ini.nos.filter((n) => !m.nos.some((x) => x.id === n.id)).forEach((n) => mud.push(`CAIXA APAGADA: ${n.titulo}`));
+    m.ligacoes.filter((l) => !ligOrig.has(chaveLig(l))).forEach((l) => mud.push(`NOVA SETA: ${nome[l.de]} → ${nome[l.para]}${l.rotulo ? ` (${l.rotulo})` : ''}`));
+    ini.ligacoes.filter((l) => !ligAgora.has(chaveLig(l))).forEach((l) => mud.push(`SETA APAGADA: ${nome[l.de]} → ${nome[l.para]}`));
+    const completo = m.nos.map((n) => [`[${TIPOS[n.tipo] || n.tipo}] ${n.titulo}`, n.texto && recuo(n.texto),
+      saidas(n.id).length && `  Segue para: ${saidas(n.id).join('; ')}`].filter(Boolean).join('\n'));
+    return `MAPA DO FLUXO: app do vendedor (${new Date().toLocaleString('pt-BR')})\n\n`
+      + `== MUDANÇAS PEDIDAS (${mud.length}) ==\nTudo que não aparece aqui continua como está no app.\n\n${mud.join('\n\n') || 'Nenhuma mudança.'}\n\n`
+      + `== MAPA COMPLETO ==\n\n${completo.join('\n\n')}\n`;
+  }
+  async function copiarTexto() {
+    try { await navigator.clipboard.writeText(textoMapa()); setStatus('Copiado: cole na conversa'); }
+    catch { setStatus('Não consegui copiar. Use Baixar arquivo.'); }
+  }
+  function baixarArquivo() {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([textoMapa()], { type: 'text/plain;charset=utf-8' }));
+    a.download = `mapa-do-fluxo-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
   if (!mapa) return <div ref={area} className="mapa-carregando">Carregando o mapa...</div>;
@@ -380,7 +461,7 @@ export default function Mapa({ codigo }) {
   const alturaSvg = Math.max(0, ...Object.values(pos).map((p) => p.y)) + 3000;
 
   return (
-    <div className="mapa">
+    <div className={`mapa ${cheia ? 'cheia' : ''}`}>
       <header className="mapa-topo">
         <div className="mapa-titulo">
           <b>Mapa do fluxo</b>
@@ -388,6 +469,7 @@ export default function Mapa({ codigo }) {
         </div>
         <div className="mapa-acoes">
           <button type="button" className={tudo ? 'ativo' : ''} onClick={() => setTudo((v) => !v)}>{tudo ? 'Mostrar passo a passo' : 'Abrir tudo'}</button>
+          {!tudo && abertos.size > 0 && <button type="button" onClick={voltarPasso}>Voltar um passo</button>}
           {!tudo && (abertos.size > 0 || forcados.size > 0) && <button type="button" onClick={() => { setAbertos(new Set()); setForcados(new Set()); }}>Fechar tudo</button>}
           <button type="button" onClick={() => novaCaixa('passo')}>+ Caixa</button>
           <button type="button" onClick={() => novaCaixa('mudanca')}>+ Mudança</button>
@@ -395,7 +477,9 @@ export default function Mapa({ codigo }) {
           <button type="button" onClick={() => zoom(0.85)} aria-label="Diminuir">−</button>
           <button type="button" onClick={() => zoom(1.15)} aria-label="Aumentar">+</button>
           <button type="button" onClick={ajustar}>Centralizar</button>
-          <button type="button" onClick={copiarTexto}>Copiar texto do mapa</button>
+          <button type="button" onClick={copiarTexto}>Copiar mapa</button>
+          <button type="button" onClick={baixarArquivo}>Baixar arquivo</button>
+          <button type="button" onClick={telaCheia}>Tela cheia</button>
         </div>
       </header>
 
@@ -444,7 +528,10 @@ export default function Mapa({ codigo }) {
                 style={{ left: pos[n.id]?.x ?? 0, top: pos[n.id]?.y ?? 0, width: LARG }}
                 onPointerDown={(e) => downNo(e, n)}
               >
-                <div className="no-tipo">{TIPOS[n.tipo] || n.tipo}{qtdComent(n.id) > 0 && <span className="no-coment">{qtdComent(n.id)} comentário{qtdComent(n.id) > 1 ? 's' : ''}</span>}</div>
+                <div className="no-tipo">
+                  <span>{TIPOS[n.tipo] || n.tipo}{qtdComent(n.id) > 0 && <span className="no-coment"> · {qtdComent(n.id)} comentário{qtdComent(n.id) > 1 ? 's' : ''}</span>}</span>
+                  {fechavel(n) && <button type="button" className="no-fechar" title="Fechar esta tela" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); fecharTela(n.id); }}>Fechar ×</button>}
+                </div>
                 <b>{n.titulo}</b>
                 {mapa.comentarios.filter((c) => c.no === n.id).slice(-2).map((c) => (
                   <div key={c.id} className="no-nota"><b>{c.autor}:</b> {c.texto}</div>
@@ -454,7 +541,13 @@ export default function Mapa({ codigo }) {
               </div>
             ))}
           </div>
-          <div className="mapa-dica">Toque nos botões com contorno azul dentro das telas para abrir o próximo caminho (amarelo = aberto). Arraste o fundo para andar. Toque numa caixa para editar ou comentar.</div>
+          {cheia && (
+            <div className="mapa-flutuante">
+              {!tudo && abertos.size > 0 && <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={voltarPasso}>Voltar um passo</button>}
+              <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={telaCheia}>Sair da tela cheia</button>
+            </div>
+          )}
+          <div className="mapa-dica">Toque nos botões das telas para abrir o próximo caminho. Arraste o fundo para andar. Toque numa caixa para editar ou comentar.</div>
         </div>
 
         {(noSel || ligSel) && (
