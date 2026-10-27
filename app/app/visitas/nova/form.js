@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { Building2, UserRound } from 'lucide-react';
 import { iniciarVisita, buscarEmpresas } from '../../actions';
@@ -54,12 +54,31 @@ export default function FormNovaVisita({ clientes, segmentos, clienteInicial }) 
     return () => clearTimeout(t);
   }, [nome]);
 
+  // rascunho no aparelho: o que já foi escrito volta se o vendedor sair e entrar de novo
+  const formRef = useRef(null);
+  const RASCUNHO = ['contato_nome', 'contato_cargo', 'contato_telefone', 'observacoes'];
+  useEffect(() => {
+    try {
+      const r = JSON.parse(localStorage.getItem('rascunho:nova-visita') || 'null');
+      if (!r) return;
+      if (r.nome && !inicial) setNome(r.nome);
+      RASCUNHO.forEach((k) => { const el = formRef.current?.elements[k]; if (el && r[k]) el.value = r[k]; });
+    } catch { /* sem armazenamento */ }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const guardar = () => {
+    try {
+      const f = formRef.current;
+      localStorage.setItem('rascunho:nova-visita', JSON.stringify({ nome, ...Object.fromEntries(RASCUNHO.map((k) => [k, f?.elements[k]?.value || ''])) }));
+    } catch { /* sem armazenamento */ }
+  };
+  useEffect(guardar, [nome]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const bloqueioForte = parecidas.find((c) => ocupada(c) && Number(c.parecido) >= 0.8);
   const precisaConfirmar = !selecionado && parecidas.length > 0 && !bloqueioForte;
   const podeIniciar = selecionado ? !ocupada(selecionado) : nome.trim().length >= 2 && !bloqueioForte && (!precisaConfirmar || diferente);
 
   return (
-    <form action={acao}>
+    <form ref={formRef} action={acao} onInput={guardar}>
       {estado?.erro && <div className="alerta erro">{estado.erro}</div>}
 
       <h2 className="passo"><Building2 className="ico" /> Empresa</h2>
@@ -143,6 +162,12 @@ export default function FormNovaVisita({ clientes, segmentos, clienteInicial }) 
           <label htmlFor="contato_cargo">Cargo</label>
           <input id="contato_cargo" name="contato_cargo" placeholder="Ex.: diretor de marketing" autoComplete="off" />
         </div>
+      </div>
+
+      <div className="campo">
+        <label htmlFor="contato_telefone">Telefone / WhatsApp do contato *</label>
+        <input id="contato_telefone" name="contato_telefone" type="tel" inputMode="tel" required minLength={10} placeholder="(00) 00000-0000" autoComplete="off" />
+        <div className="ajuda aviso-privado">🔒 Só você e o comercial veem este número. Os outros vendedores não têm acesso ao telefone dos seus contatos.</div>
       </div>
 
       <div className="campo">

@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { Check, UserPlus } from 'lucide-react';
 import { criarContrato } from '../../actions';
@@ -34,6 +34,23 @@ export default function FormContrato({ clientes, programas, planos, precos, radi
   const [vencimento, setVencimento] = useState(() => { const d = somarMeses(hoje, 1); return `${d.slice(0, 8)}10`; });
   const [vendedorId, setVendedorId] = useState(meuId);
   const [obsManual, setObsManual] = useState(null);
+
+  // rascunho no aparelho: saiu do app no meio do contrato, volta com o que já tinha escolhido
+  const chave = `contrato:${inicial.visita || inicial.cliente || 'novo'}`;
+  useEffect(() => {
+    try {
+      const r = JSON.parse(localStorage.getItem(chave) || 'null');
+      if (!r) return;
+      if (r.inicio) setInicio(r.inicio);
+      if (r.meses) setMeses(r.meses);
+      if (r.vencimento) setVencimento(r.vencimento);
+      if (r.obsManual != null) setObsManual(r.obsManual);
+      if (r.planoId && planosDe(programaId).some((x) => x.id === r.planoId)) setPlanoId(r.planoId);
+    } catch { /* sem armazenamento */ }
+  }, [chave]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    try { localStorage.setItem(chave, JSON.stringify({ inicio, meses, vencimento, obsManual, planoId })); } catch { /* sem armazenamento */ }
+  }, [chave, inicio, meses, vencimento, obsManual, planoId]);
 
   const radio = radios.find((r) => r.id === radioId);
   const prog = programas.find((p) => p.id === programaId);

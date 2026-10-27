@@ -10,7 +10,7 @@ import { plural, primeiro, BotaoTemaPainel, Folha, Bloco, Titulo, Numeros, Linha
 
 const dias = (n) => (n === 1 ? '1 dia' : `${n} dias`);
 
-export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
+export default function Painel({ dados, ola, dataLonga, base, demo = false, avisos = null }) {
   const [aberto, setAberto] = useState(null);
   const fechar = useCallback(() => setAberto(null), []);
   const [aba, setAba] = useState('visao');
@@ -91,6 +91,7 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false }) {
           </nav>
           {radio.atual && <p className="dir-radios-nota">Visitas e negociações não têm rádio cadastrada, então aparecem nas duas.</p>}
 
+          {avisos}
           <div className="dir-so-celular">{demo && <PropostaForm dados={dados} />}</div>
           <PcAba aba={aba} dados={dados} demo={demo} abrir={setAberto} />
           {prioridades.length > 0 && (

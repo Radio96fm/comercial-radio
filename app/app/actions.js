@@ -138,6 +138,8 @@ export async function iniciarVisita(_prev, fd) {
   const contato = txt(fd, 'contato_nome');
   if (!txt(fd, 'novo_nome') && !cliente_id) return { erro: 'Escreva o nome da empresa.' };
   if (!contato || contato.length < 2) return { erro: 'Escreva o nome da pessoa com quem você está falando na empresa.' };
+  const telefone = txt(fd, 'contato_telefone');
+  if ((telefone || '').replace(/\D/g, '').length < 10) return { erro: 'Escreva o telefone do contato com DDD.' };
 
   if (!cliente_id) {
     // confere nomes parecidos e CPF/CNPJ em toda a base antes de cadastrar
@@ -169,6 +171,8 @@ export async function iniciarVisita(_prev, fd) {
     ({ data: id, error } = await supabase.rpc('iniciar_visita', { p_cliente: cliente_id, p_obs: [contato && `Contato: ${contato}`, txt(fd, 'observacoes')].filter(Boolean).join('\n') }));
   }
   if (error) return { erro: traduzErro(error) };
+  // o telefone fica só na visita: os outros vendedores não veem
+  await supabase.from('visitas').update({ contato_telefone: telefone }).eq('id', id);
   revalidatePath('/app', 'layout');
   redirect(`/app/visitas/${id}`);
 }
@@ -202,7 +206,6 @@ export async function marcarPropostaEnviada({ visita, telefone }) {
     .update({ proposta_enviada_em: new Date().toISOString(), contato_telefone: tel, status: v.status === 'em_andamento' ? 'proposta' : v.status })
     .eq('id', visita);
   if (error) return { erro: semColuna(error) };
-  if (tel && !v.cliente?.telefone) await supabase.from('clientes').update({ telefone: tel }).eq('id', v.cliente_id);
   revalidatePath(`/app/visitas/${visita}`);
   return { ok: true };
 }
@@ -215,6 +218,30 @@ export async function aprovarProposta(fd) {
   if (error) redirect(`/app/visitas/${id}?erro=${encodeURIComponent(semColuna(error))}`);
   revalidatePath(`/app/visitas/${id}`);
   redirect(`/app/visitas/${id}/cadastro`);
+}
+
+// Um bloco do cadastro completo: salva só os campos daquele bloco
+const CAMPOS_CLIENTE = ['nome', 'razao_social', 'documento', 'inscricao_estadual', 'contato_nome', 'telefone', 'fax', 'email', 'endereco', 'bairro', 'cep', 'cidade', 'observacoes', 'segmento_id'];
+export async function salvarBlocoCliente(fd) {
+  const { supabase } = await getSessao();
+  const id = txt(fd, 'id');
+  const campos = {};
+  for (const k of (txt(fd, '_campos') || '').split(',').filter((c) => CAMPOS_CLIENTE.includes(c))) campos[k] = txt(fd, k);
+  if ('nome' in campos && !campos.nome) return { erro: 'Escreva o nome da empresa.' };
+  if ('segmento_id' in campos) {
+    if (!campos.segmento_id) return { erro: 'Escolha o segmento.' };
+    if (campos.segmento_id === OUTRO) {
+      if (!txt(fd, 'segmento_novo')) return { erro: 'Escreva qual é o segmento do cliente.' };
+      const { data: seg, error: e } = await supabase.rpc('segmento_garantir', { p_nome: txt(fd, 'segmento_novo') });
+      if (e) return { erro: traduzErro(e) };
+      campos.segmento_id = seg;
+    }
+  }
+  const { data, error } = await supabase.from('clientes').update(campos).eq('id', id).select('id');
+  if (error) return { erro: traduzErro(error) };
+  if (!data?.length) return { erro: 'Somente o vendedor responsável ou o gestor pode alterar este cliente.' };
+  revalidatePath(`/app/clientes/${id}`);
+  return { ok: true, segmento_id: campos.segmento_id };
 }
 
 const OBRIGATORIOS = [['razao_social', 'razão social'], ['documento', 'CNPJ ou CPF'], ['contato_nome', 'responsável'], ['telefone', 'telefone'], ['email', 'e-mail'], ['endereco', 'endereço'], ['cidade', 'cidade']];

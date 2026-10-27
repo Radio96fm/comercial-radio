@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
 import FormAcao from '@/components/FormAcao';
+import LimparRascunho from '@/components/LimparRascunho';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import { ArrowUpRight, Check, FileText, Send } from 'lucide-react';
 import { mudarStatusVisita, salvarObsVisita, pedirProrrogacao, aprovarProposta } from '../../actions';
@@ -50,6 +51,7 @@ export default async function VisitaPage({ params, searchParams }) {
   return (
     <>
       <Topo titulo={v.cliente.nome} voltar="/app/visitas" />
+      {Date.now() - new Date(v.iniciada_em).getTime() < 5 * 60000 && <LimparRascunho chave="rascunho:nova-visita" />}
       <main className="conteudo">
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
@@ -75,19 +77,17 @@ export default async function VisitaPage({ params, searchParams }) {
               )}
             </div>
           )}
-          {aberta && !liberada && prazo.vencido && podeEditar && euNegocio && v.prazo_extra_dias < PRAZO_MAXIMO_DIAS - PRAZO_DIAS && (
+          {aberta && !liberada && prazo.vencido && podeEditar && euNegocio && !pedidoPendente && v.prazo_extra_dias < PRAZO_MAXIMO_DIAS - PRAZO_DIAS && (
             <FormAcao action={pedirProrrogacao} className="renovar-prazo">
               <input type="hidden" name="id" value={v.id} />
-              <b>{v.prazo_extra_dias === 0 ? 'Precisa de mais tempo?' : 'Último pedido de mais 15 dias'}</b>
-              <span className="muted">{v.prazo_extra_dias === 0
-                ? 'Você pode renovar por mais 15 dias. Explique o motivo.'
-                : 'Este pedido vai para o comercial. Os 15 dias extras valem se ele aceitar. O prazo máximo é de 45 dias.'}</span>
-              <div className="campo"><textarea name="motivo" required minLength={5} placeholder="Motivo da renovação" /></div>
-              <BotaoEnviar className="btn sec" texto={v.prazo_extra_dias === 0 ? 'Renovar por 15 dias' : 'Pedir ao comercial'} enviando="..." />
+              <b>{v.prazo_extra_dias === 0 ? 'Precisa de mais tempo?' : 'Precisa de mais tempo de novo?'}</b>
+              <span className="muted">Peça mais 15 dias e explique o motivo. O pedido vai para o comercial analisar, e os dias extras valem quando ele aceitar. O prazo máximo é de 45 dias.</span>
+              <div className="campo"><textarea name="motivo" required minLength={5} placeholder="Motivo do pedido" /></div>
+              <BotaoEnviar className="btn grande verde" texto="Solicitar mais tempo" enviando="Enviando..." />
             </FormAcao>
           )}
           {aberta && !liberada && prazo.vencido && euNegocio && pedidoPendente && (
-            <div className="prazo-visita alerta-p"><b>Aguardando o comercial</b><span>O pedido de mais 15 dias foi enviado. Você continua sem exclusividade até a resposta.</span></div>
+            <div className="prazo-visita alerta-p"><b>Pedido enviado ao comercial</b><span>Você pediu mais 15 dias. Enquanto o comercial não responde, a empresa fica sem exclusividade.</span></div>
           )}
           {liberada && aberta && <div className="prazo-visita fim"><b>Exclusividade liberada pelo gestor</b><span>Outros vendedores já podem visitar esta empresa.</span></div>}
           {contato && <div style={{ marginTop: 6 }}>Contato: <b>{contato}</b>{v.contato_cargo ? ` · ${v.contato_cargo}` : ''}</div>}
@@ -130,7 +130,10 @@ export default async function VisitaPage({ params, searchParams }) {
                   <input type="hidden" name="id" value={v.id} />
                   <BotaoEnviar className="btn grande verde" texto="Cliente aprovou: fazer cadastro completo" enviando="..." />
                 </form>
-                <Link href={`/app/visitas/${v.id}/proposta`} className="btn sec" style={{ marginTop: 10, width: '100%' }}>Reenviar proposta</Link>
+                <a className="btn whats" style={{ marginTop: 10, width: '100%' }} target="_blank" rel="noopener noreferrer"
+                  href={linkWhatsApp(telefone, `Olá${contato ? `, ${contato.split(' ')[0]}` : ''}! Para eu fazer o contrato, pode me enviar o cartão CNPJ da empresa, por favor?`)}>
+                  Pedir cartão CNPJ pelo WhatsApp
+                </a>
               </>
             )}
             {etapa === 4 && (

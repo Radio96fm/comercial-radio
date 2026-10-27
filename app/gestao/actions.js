@@ -408,6 +408,7 @@ export async function decidirProrrogacao(fd) {
   const { error } = await supabase.rpc('decidir_prorrogacao', { p_id: fd.get('id'), p_aceitar: fd.get('aceitar') === 'sim' });
   if (error) throw new Error(error.message);
   revalidatePath('/gestao/negociacoes');
+  revalidatePath('/comercial');
   revalidatePath(`/gestao/visitas/${fd.get('visita_id')}`);
 }
 
