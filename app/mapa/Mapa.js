@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { TIPOS, mapaInicial } from '@/lib/mapaInicial';
+import { MODELO, TIPOS, atualizarModelo, mapaInicial } from '@/lib/mapaInicial';
 import TelaPrevia, { TELAS, telaDe } from './Telas';
 
 // Mapa do fluxo do negócio: caixas e setas que qualquer pessoa com o link edita,
@@ -37,6 +37,26 @@ function caminho(p, q, dir) {
   return `M${p.x},${p.y} C${p.x + m},${p.y} ${q.x - m},${q.y} ${q.x},${q.y}`;
 }
 
+// Caixas que aparecem: começa pelo Início (e caixas soltas) e segue as setas.
+// Seta com "botao" só passa quando aquele botão da tela foi tocado. Caixas de
+// gestão, travas e mudanças sem seta chegando aparecem junto com a caixa a que apontam.
+function visiveis(m, abertos, tudo) {
+  if (tudo) return new Set(m.nos.map((n) => n.id));
+  const chega = new Set(m.ligacoes.map((l) => l.para));
+  const sai = new Set(m.ligacoes.map((l) => l.de));
+  const v = new Set(m.nos.filter((n) => n.tipo === 'inicio' || (!chega.has(n.id) && !sai.has(n.id))).map((n) => n.id));
+  for (let mudou = true; mudou;) {
+    mudou = false;
+    m.ligacoes.forEach((l) => {
+      const passa = v.has(l.de) && (!l.botao || abertos.has(`${l.de}:${l.botao}`));
+      const lado = !chega.has(l.de) && v.has(l.para) && !m.nos.some((n) => n.id === l.de && n.tipo === 'inicio');
+      if (passa && !v.has(l.para)) { v.add(l.para); mudou = true; }
+      if (lado && !v.has(l.de)) { v.add(l.de); mudou = true; }
+    });
+  }
+  return v;
+}
+
 const quando = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 export default function Mapa({ codigo }) {
@@ -51,6 +71,8 @@ export default function Mapa({ codigo }) {
   const [alturas, setAlturas] = useState({});
   const [comentario, setComentario] = useState('');
   const [telas, setTelas] = useState(true);
+  const [abertos, setAbertos] = useState(() => new Set()); // "caixa:botão" tocados nas telas
+  const [tudo, setTudo] = useState(false);
   const [autor, setAutor] = useState('');
   useEffect(() => { try { setAutor(localStorage.getItem('mapaAutor') || ''); } catch { /* sem armazenamento */ } }, []);
   const mudarAutor = (v) => { setAutor(v); try { localStorage.setItem('mapaAutor', v); } catch { /* sem armazenamento */ } };
@@ -63,18 +85,47 @@ export default function Mapa({ codigo }) {
   const mapaRef = useRef(null);
   mapaRef.current = mapa;
 
+  const vis = mapa ? visiveis(mapa, abertos, tudo) : new Set();
+
+  // toque num botão da miniatura: abre (ou fecha) a seta e leva a vista até a próxima tela
+  function ir(no, k) {
+    const chave = `${no.id}:${k}`;
+    const abrir = !abertos.has(chave);
+    setAbertos((a) => { const b = new Set(a); if (abrir) b.add(chave); else b.delete(chave); return b; });
+    if (!abrir) return;
+    const l = mapa.ligacoes.find((x) => x.de === no.id && x.botao === k);
+    const alvo = l && mapa.nos.find((n) => n.id === l.para);
+    const r = area.current?.getBoundingClientRect();
+    if (!alvo || !r) return;
+    const sx = alvo.x * vista.k + vista.x;
+    const sy = alvo.y * vista.k + vista.y;
+    const fora = sx < 0 || sx + LARG * vista.k > r.width || sy < 0 || sy + 200 * vista.k > r.height;
+    if (fora) {
+      setVista((v) => ({ ...v, x: v.x + (r.width / 2 - (sx + (LARG * v.k) / 2)), y: v.y + (r.height * 0.3 - sy) }));
+    }
+  }
+
   // ---------- carregar
   const carregar = useCallback(async () => {
     setStatus('Carregando...');
     let salvo = null;
     let erro = null;
     try { salvo = await ler(codigo); } catch (e) { erro = e; }
-    const m = salvo || mapaInicial();
+    const antigo = salvo && (salvo.modelo || 1) < MODELO;
+    const m = antigo ? atualizarModelo(salvo) : salvo || mapaInicial();
     setMapa(m);
     setBase(m.versao);
     setConflito(false);
-    sujo.current = false;
-    setStatus(semFuncao(erro) ? FALTA_SQL : erro ? 'Não consegui abrir o mapa salvo' : salvo ? 'Salvo' : 'Mapa inicial (ainda não salvo)');
+    sujo.current = antigo;
+    if (antigo) edicoes.current += 1;
+    setStatus(semFuncao(erro) ? FALTA_SQL : erro ? 'Não consegui abrir o mapa salvo' : antigo ? 'Mapa atualizado com o app completo' : salvo ? 'Salvo' : 'Mapa inicial (ainda não salvo)');
+    // começa mostrando o Início no alto, no meio da tela
+    const ini = m.nos.find((n) => n.tipo === 'inicio');
+    const r = area.current?.getBoundingClientRect();
+    if (ini && r) {
+      const k = r.width < 700 ? 0.6 : 0.8;
+      setVista({ k, x: r.width / 2 - (ini.x + LARG / 2) * k, y: 20 - ini.y * k });
+    }
   }, [codigo]);
   useEffect(() => { carregar(); }, [carregar]);
 
@@ -190,10 +241,11 @@ export default function Mapa({ codigo }) {
     return { k, x: r.width / 2 - ((r.width / 2 - v.x) / v.k) * k, y: r.height / 2 - ((r.height / 2 - v.y) / v.k) * k };
   });
   const ajustar = () => {
-    if (!mapa?.nos.length) return;
+    const nos = mapa?.nos.filter((n) => vis.has(n.id)) || [];
+    if (!nos.length) return;
     const r = area.current.getBoundingClientRect();
-    const xs = mapa.nos.map((n) => n.x);
-    const ys = mapa.nos.map((n) => n.y);
+    const xs = nos.map((n) => n.x);
+    const ys = nos.map((n) => n.y);
     const x0 = Math.min(...xs) - 30;
     const x1 = Math.max(...xs) + LARG + 30;
     const y0 = Math.min(...ys) - 30;
@@ -259,12 +311,18 @@ export default function Mapa({ codigo }) {
     catch { setStatus('Não consegui copiar'); }
   }
 
-  if (!mapa) return <div className="mapa-carregando">Carregando o mapa...</div>;
+  if (!mapa) return <div ref={area} className="mapa-carregando">Carregando o mapa...</div>;
 
   const porId = Object.fromEntries(mapa.nos.map((n) => [n.id, n]));
   const noSel = sel?.tipo === 'no' ? porId[sel.id] : null;
   const ligSel = sel?.tipo === 'lig' ? mapa.ligacoes.find((l) => l.id === sel.id) : null;
   const qtdComent = (id) => mapa.comentarios.filter((c) => c.no === id).length;
+  const nosVis = mapa.nos.filter((n) => vis.has(n.id));
+  const ligVis = mapa.ligacoes.filter((l) => vis.has(l.de) && vis.has(l.para) && (tudo || !l.botao || abertos.has(`${l.de}:${l.botao}`)));
+  const botoesDe = (id) => new Set(mapa.ligacoes.filter((l) => l.de === id && l.botao).map((l) => l.botao));
+  const abertosDe = (id) => new Set([...abertos].filter((c) => c.startsWith(`${id}:`)).map((c) => c.slice(id.length + 1)));
+  const largura = Math.max(...mapa.nos.map((n) => n.x)) + LARG + 400;
+  const altura = Math.max(...mapa.nos.map((n) => n.y)) + 1200;
 
   return (
     <div className="mapa">
@@ -274,6 +332,8 @@ export default function Mapa({ codigo }) {
           <span className={`mapa-status ${status === 'Salvo' ? 'ok' : ''}`}>{status}</span>
         </div>
         <div className="mapa-acoes">
+          <button type="button" className={tudo ? 'ativo' : ''} onClick={() => setTudo((v) => !v)}>{tudo ? 'Mostrar passo a passo' : 'Abrir tudo'}</button>
+          {!tudo && abertos.size > 0 && <button type="button" onClick={() => setAbertos(new Set())}>Fechar tudo</button>}
           <button type="button" onClick={() => novaCaixa('passo')}>+ Caixa</button>
           <button type="button" onClick={() => novaCaixa('mudanca')}>+ Mudança</button>
           <button type="button" className={telas ? 'ativo' : ''} onClick={() => setTelas((v) => !v)}>{telas ? 'Esconder telas' : 'Mostrar telas'}</button>
@@ -295,7 +355,7 @@ export default function Mapa({ codigo }) {
       <div className="mapa-corpo">
         <div ref={area} className={`mapa-area ${ligando ? 'ligando' : ''}`} onPointerDown={downFundo} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
           <div className="mapa-plano" style={{ transform: `translate(${vista.x}px, ${vista.y}px) scale(${vista.k})` }}>
-            <svg className="mapa-setas" width="6000" height="6000">
+            <svg className="mapa-setas" width={largura} height={altura}>
               <defs>
                 <marker id="ponta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
                   <path d="M0,0 L10,5 L0,10 z" className="ponta" />
@@ -304,7 +364,7 @@ export default function Mapa({ codigo }) {
                   <path d="M0,0 L10,5 L0,10 z" className="ponta-sel" />
                 </marker>
               </defs>
-              {mapa.ligacoes.map((l) => {
+              {ligVis.map((l) => {
                 const a = porId[l.de];
                 const b = porId[l.para];
                 if (!a || !b) return null;
@@ -321,7 +381,7 @@ export default function Mapa({ codigo }) {
                 );
               })}
             </svg>
-            {mapa.nos.map((n) => (
+            {nosVis.map((n) => (
               <div
                 key={n.id}
                 ref={(el) => { refs.current[n.id] = el; }}
@@ -334,11 +394,12 @@ export default function Mapa({ codigo }) {
                 {mapa.comentarios.filter((c) => c.no === n.id).slice(-2).map((c) => (
                   <div key={c.id} className="no-nota"><b>{c.autor}:</b> {c.texto}</div>
                 ))}
-                {telas && telaDe(n) ? <TelaPrevia tela={telaDe(n)} /> : n.texto && <p>{n.texto}</p>}
+                {n.texto && <p>{n.texto}</p>}
+                {telas && telaDe(n) && <TelaPrevia tela={telaDe(n)} tem={tudo ? null : botoesDe(n.id)} abertos={abertosDe(n.id)} ir={(k) => ir(n, k)} />}
               </div>
             ))}
           </div>
-          <div className="mapa-dica">Arraste o fundo para andar, a roda do mouse aproxima. Toque numa caixa ou seta para editar.</div>
+          <div className="mapa-dica">Toque nos botões com contorno azul dentro das telas para abrir o próximo caminho (amarelo = aberto). Arraste o fundo para andar. Toque numa caixa para editar ou comentar.</div>
         </div>
 
         {(noSel || ligSel) && (
