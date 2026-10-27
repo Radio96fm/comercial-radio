@@ -1378,3 +1378,21 @@ a.b-hero { color: var(--on-destaque, #fff); }
 /* campos lado a lado não passam da largura da tela (data no celular empurrava a página) */
 .grid2 > * { min-width: 0; }
 input[type="date"] { min-width: 0; max-width: 100%; }
+.pedidos-prazo h2 { font-size: 1rem; margin: 0 0 4px; }
+.pedidos-prazo.dir-foco h2 { font-size: .82rem; }
+.pedidos-prazo .renovar-prazo .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.pedidos-prazo .renovar-prazo form { flex: 1; }
+.pedidos-prazo .renovar-prazo .btn { width: 100%; }
+.bloco-cad { background: var(--card); border: 1px solid var(--line, rgba(255,255,255,.1)); border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden; }
+.bloco-cad.feito { border-color: rgba(34, 197, 94, .45); }
+.bloco-cab { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.bloco-num { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .9rem; background: rgba(148, 163, 184, .2); }
+.bloco-cad.feito .bloco-num { background: #22c55e; color: #052e14; }
+.bloco-cad.aberto .bloco-num { background: var(--azul, #3b82f6); color: #fff; }
+.bloco-tit { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bloco-tit small { color: var(--muted); font-size: .84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bloco-ico { flex: none; opacity: .6; }
+.bloco-cad.aberto .bloco-ico { transform: rotate(180deg); }
+.bloco-corpo { padding: 0 14px 14px; }
+details.recolhido summary { cursor: pointer; font-weight: 700; padding: 2px 0; }
+details.recolhido[open] summary { margin-bottom: 10px; }

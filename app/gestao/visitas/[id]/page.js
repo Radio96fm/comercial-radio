@@ -41,7 +41,7 @@ export default async function VisitaGestor({ params }) {
           <div className="renovar-prazo">
             <b>Pedido de mais 15 dias</b>
             <span className="muted">Motivo do vendedor: {pedido.motivo}</span>
-            <span>Aceitar leva o prazo a {PRAZO_DIAS + PRAZO_MAXIMO_EXTRA} dias no total.</span>
+            <span>Aceitar leva o prazo a {Math.min(total + 15, PRAZO_DIAS + PRAZO_MAXIMO_EXTRA)} dias no total.</span>
             <div className="acoes">
               <form action={decidirProrrogacao}>
                 <input type="hidden" name="id" value={pedido.id} />

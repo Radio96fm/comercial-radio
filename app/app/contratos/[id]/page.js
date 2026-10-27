@@ -2,11 +2,8 @@ import { notFound } from 'next/navigation';
 import { getSessao } from '@/lib/auth';
 import Topo from '@/components/Topo';
 import BotaoEnviar from '@/components/BotaoEnviar';
-import AbrirPdf from '@/components/AbrirPdf';
-import { FileDown, PenTool, CheckCircle2, Clock3 } from 'lucide-react';
-import DocumentoContrato from '@/components/DocumentoContrato';
+import { FileDown, FileText, Mail, PenTool, CheckCircle2, Clock3 } from 'lucide-react';
 import CopiarTexto from '@/components/CopiarTexto';
-import { mensagemContrato } from '@/lib/mensagemContrato';
 import { mudarStatusContrato, enviarParaAssinatura, reenviarEmailAssinatura } from '../../actions';
 import { configAutentique, situacaoDocumento, marcarAssinado } from '@/lib/autentique';
 import { SELECT_CONTRATO } from '@/lib/pdfGerar';
@@ -40,8 +37,10 @@ export default async function ContratoPage({ params, searchParams }) {
 
   const dono = c.vendedor_id === perfil.id;
   const podeMudar = isGestor || (dono && c.status === 'pendente');
-  const msgWhats = mensagemContrato(c, { parcelas: parcelas || [] });
-  const msgAssinar = c.assinatura_link ? mensagemContrato(c, { parcelas: parcelas || [], link: c.assinatura_link }) : null;
+  const nome = (c.cliente?.contato_nome || '').trim().split(' ')[0];
+  const msgAssinar = c.assinatura_link
+    ? `Olá${nome ? `, ${nome}` : ''}! Encaminhei${c.cliente?.email ? ` para o seu e-mail (${c.cliente.email})` : ''} o link para a assinatura do contrato da ${c.radio?.nome || 'rádio'}. Caso não tenha recebido, ou para facilitar, estou enviando por aqui também:\n\n${c.assinatura_link}\n\nA assinatura é digital, leva menos de um minuto. Qualquer dúvida, estou à disposição!`
+    : null;
 
   const Status = ({ status, texto, classe, confirmar }) => (
     <form action={mudarStatusContrato}>
@@ -56,13 +55,12 @@ export default async function ContratoPage({ params, searchParams }) {
       <Topo titulo={`Contrato nº ${c.numero}`} voltar="/app/contratos" />
       <main className="conteudo">
         {searchParams?.novo && (
-          <div className="alerta ok nao-imprimir">Contrato criado! O PDF já está sendo baixado. Se não abrir, toque em “Baixar contrato em PDF”.</div>
+          <div className="alerta ok nao-imprimir">Contrato gerado! Confira o contrato pronto e depois envie para o cliente assinar.</div>
         )}
-        {searchParams?.novo && <AbrirPdf href={`/app/contratos/${c.id}/pdf?baixar=1`} />}
         {searchParams?.erro && <div className="alerta erro nao-imprimir">{searchParams.erro}</div>}
         {searchParams?.enviado && (
           <div className="alerta ok nao-imprimir">
-            Enviado para assinatura! {c.cliente?.email ? `O cliente recebe por e-mail (${c.cliente.email}).` : ''} Mande também o link pelo WhatsApp no botão abaixo.
+            Enviado para assinatura! {c.cliente?.email ? `O cliente recebe por e-mail (${c.cliente.email}).` : ''} Mande também pelo WhatsApp no botão abaixo.
           </div>
         )}
 
@@ -78,24 +76,13 @@ export default async function ContratoPage({ params, searchParams }) {
             <div><div className="muted">Período</div><b>{data(c.data_inicio)} a {data(c.data_fim)}</b></div>
             <div><div className="muted">Valor</div><b>{moeda(c.valor_mensal)} × {c.meses}</b></div>
           </div>
-          <p style={{ marginTop: 10 }}>Vendedor: <b>{dono ? 'você' : c.vendedor?.nome}</b></p>
+          {c.descricao_produto && <p className="muted" style={{ margin: '10px 0 0', whiteSpace: 'pre-line' }}>{c.descricao_produto}</p>}
         </div>
 
-        {c.descricao_produto && (
-          <div className="card nao-imprimir">
-            <h2 style={{ marginTop: 0 }}>O que foi contratado</h2>
-            <div style={{ whiteSpace: 'pre-line' }}>{c.descricao_produto}</div>
-            {!!itens?.length && (
-              <table className="itens-contrato" style={{ width: '100%', marginTop: 10 }}>
-                <tbody>
-                  {itens.map((i) => (
-                    <tr key={i.id}><td>{i.quantidade}× {i.descricao}</td><td className="num">{moeda(i.subtotal)}/mês</td></tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        )}
+        <div className="acoes nao-imprimir" style={{ marginBottom: 14 }}>
+          <a className="btn grande sec" href={`/app/contratos/${c.id}/pdf`} target="_blank" rel="noopener noreferrer"><FileText className="ico" /> Ver contrato pronto</a>
+          <a className="btn cinza" href={`/app/contratos/${c.id}/pdf?baixar=1`}><FileDown className="ico" /> Baixar PDF</a>
+        </div>
 
         {/* ------- assinatura digital ------- */}
         <div className={`assinatura-card nao-imprimir ${c.assinado_em || c.status === 'ativo' ? 'ok' : ''}`}>
@@ -124,42 +111,35 @@ export default async function ContratoPage({ params, searchParams }) {
               )}
               {assinatura?.recusado && <div className="alerta erro" style={{ margin: '10px 0 0' }}>O cliente recusou a assinatura. Fale com ele e, se precisar, cancele e crie um novo contrato.</div>}
               {c.assinatura_link && (
-                <div className="acoes" style={{ marginTop: 12 }}>
-                  <a className="btn whats" href={linkWhatsApp(c.cliente?.telefone, msgAssinar)} target="_blank" rel="noopener noreferrer">Mandar no WhatsApp</a>
-                  <CopiarTexto texto={msgAssinar} rotulo="Copiar mensagem com link" />
-                  <CopiarTexto texto={c.assinatura_link} rotulo="Copiar só o link" className="btn cinza" />
-                </div>
+                <>
+                  <a className="btn grande whats" style={{ marginTop: 12 }} href={linkWhatsApp(c.cliente?.telefone, msgAssinar)} target="_blank" rel="noopener noreferrer">Enviar pelo WhatsApp</a>
+                  <div className="acoes" style={{ marginTop: 8 }}>
+                    <CopiarTexto texto={c.assinatura_link} rotulo="Copiar só o link" className="btn cinza peq" />
+                  </div>
+                </>
               )}
               {c.cliente?.email && !assinatura?.emailDoDono && (
                 <form action={reenviarEmailAssinatura} style={{ marginTop: 8 }}>
                   <input type="hidden" name="id" value={c.id} />
-                  <BotaoEnviar className="btn cinza peq" texto="Reenviar e-mail" enviando="Reenviando..." />
+                  <BotaoEnviar className="btn cinza peq" texto={`Reenviar e-mail para ${c.cliente.email}`} enviando="Reenviando..." />
                 </form>
               )}
               <p className="muted" style={{ margin: '10px 0 0', fontSize: '.88rem' }}>Quando o cliente assinar, o contrato fica ativo sozinho.</p>
             </>
           ) : c.status === 'pendente' && (dono || isGestor) ? (
             <>
-              <div className="topo-a"><PenTool className="ico" /><div><b>Assinatura digital</b><small>{c.cliente?.email ? `Vai por e-mail para ${c.cliente.email} e você recebe um link para mandar no WhatsApp.` : 'Você recebe um link para mandar ao cliente no WhatsApp.'}</small></div></div>
+              <div className="topo-a"><PenTool className="ico" /><div><b>Enviar para o cliente assinar</b><small>{c.cliente?.email ? `O link de assinatura vai para o e-mail cadastrado: ${c.cliente.email}. Depois você manda também pelo WhatsApp.` : 'O cliente não tem e-mail cadastrado. Você recebe o link para mandar pelo WhatsApp.'}</small></div></div>
               <form action={enviarParaAssinatura} style={{ marginTop: 12 }}>
                 <input type="hidden" name="id" value={c.id} />
-                <BotaoEnviar className="btn grande verde" texto="Enviar para o cliente assinar" enviando="Enviando para a Autentique..." />
+                <BotaoEnviar className="btn grande verde" texto={c.cliente?.email ? 'Enviar por e-mail' : 'Gerar link de assinatura'} enviando="Enviando..." />
               </form>
+              <p className="muted" style={{ margin: '8px 0 0', fontSize: '.86rem' }}>Depois de enviar, aparece aqui o botão para mandar pelo WhatsApp.</p>
             </>
           ) : null}
         </div>
 
-        <a className="btn grande nao-imprimir" href={`/app/contratos/${c.id}/pdf?baixar=1`} style={{ marginBottom: 10 }}>
-          <FileDown className="ico" strokeWidth={2.4} /> Baixar contrato em PDF
-        </a>
-        <div className="acoes nao-imprimir" style={{ marginBottom: 14 }}>
-          <a className="btn sec" href={`/app/contratos/${c.id}/pdf`} target="_blank" rel="noopener noreferrer">Ver PDF</a>
-          {!msgAssinar && <a className="btn whats" href={linkWhatsApp(c.cliente?.telefone, msgWhats)} target="_blank" rel="noopener noreferrer">Resumo no WhatsApp</a>}
-        </div>
-
         {podeMudar && (
           <div className="acoes nao-imprimir" style={{ marginBottom: 14 }}>
-            {c.status === 'pendente' && <Status status="ativo" texto="Assinou no papel (ativar)" classe="sec" />}
             {(c.status === 'pendente' || (isGestor && c.status === 'ativo')) && (
               <Status status="cancelado" texto="Cancelar contrato" classe="cinza" confirmar="Cancelar este contrato? A vaga será liberada." />
             )}
@@ -168,7 +148,8 @@ export default async function ContratoPage({ params, searchParams }) {
           </div>
         )}
 
-        <div className="secao-titulo nao-imprimir"><h2>Parcelas / boletos</h2></div>
+        <details className="card nao-imprimir recolhido">
+          <summary>Parcelas ({(parcelas || []).length})</summary>
         <div className="tabela nao-imprimir">
           <table>
             <thead><tr><th>#</th><th>Vencimento</th><th>Valor</th><th>Situação</th></tr></thead>
@@ -186,12 +167,7 @@ export default async function ContratoPage({ params, searchParams }) {
             </tbody>
           </table>
         </div>
-        <div className="alerta info nao-imprimir">
-          Emissão automática de boletos: será ativada quando a integração com o banco for configurada. Por enquanto, o financeiro emite a partir desta lista.
-        </div>
-
-        <div className="secao-titulo nao-imprimir"><h2>Contrato</h2><span className="muted">Prévia</span></div>
-        <DocumentoContrato c={c} itens={itens || []} parcelas={parcelas || []} />
+        </details>
       </main>
     </>
   );
