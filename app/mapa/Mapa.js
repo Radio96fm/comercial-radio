@@ -244,6 +244,20 @@ export default function Mapa({ autor }) {
   }
   const apagarComentario = (id) => mudar((m) => ({ ...m, comentarios: m.comentarios.filter((c) => c.id !== id) }));
 
+  // texto do mapa inteiro para colar na conversa com o Claude
+  async function copiarTexto() {
+    const m = mapaRef.current;
+    const nome = Object.fromEntries(m.nos.map((n) => [n.id, n.titulo]));
+    const linhas = [...m.nos].sort((a, b) => a.y - b.y || a.x - b.x).map((n) => {
+      const saidas = m.ligacoes.filter((l) => l.de === n.id).map((l) => `${l.rotulo ? `(${l.rotulo}) ` : ''}${nome[l.para]}`);
+      const coms = m.comentarios.filter((c) => c.no === n.id).map((c) => `  Comentário de ${c.autor}: ${c.texto}`);
+      return [`[${TIPOS[n.tipo] || n.tipo}] ${n.titulo}`, n.texto && `  ${n.texto.replace(/\n/g, '\n  ')}`, saidas.length && `  Segue para: ${saidas.join('; ')}`, ...coms].filter(Boolean).join('\n');
+    });
+    const texto = `MAPA DO FLUXO\n\n${linhas.join('\n\n')}`;
+    try { await navigator.clipboard.writeText(texto); setStatus('Texto copiado: cole na conversa'); }
+    catch { setStatus('Não consegui copiar'); }
+  }
+
   if (!mapa) return <div className="mapa-carregando">Carregando o mapa...</div>;
 
   const porId = Object.fromEntries(mapa.nos.map((n) => [n.id, n]));
@@ -264,6 +278,7 @@ export default function Mapa({ autor }) {
           <button type="button" onClick={() => zoom(0.85)} aria-label="Diminuir">−</button>
           <button type="button" onClick={() => zoom(1.15)} aria-label="Aumentar">+</button>
           <button type="button" onClick={ajustar}>Centralizar</button>
+          <button type="button" onClick={copiarTexto}>Copiar texto do mapa</button>
           <Link href="/gestao">Sair do mapa</Link>
         </div>
       </header>
