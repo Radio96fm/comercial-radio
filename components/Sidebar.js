@@ -93,7 +93,7 @@ export default function Sidebar({ master }) {
       <div className="rodape">
         <div className="sep" />
         {master && <Link href="/diretor"><Crown className="ico" />Painel do Diretor</Link>}
-        <Link href="/mapa"><Workflow className="ico" />Mapa do fluxo</Link>
+        <Link href="/fluxo"><Workflow className="ico" />Mapa do fluxo</Link>
         <Link href="/comercial"><Target className="ico" />Painel Comercial</Link>
         <Link href="/app"><Smartphone className="ico" />Abrir app do vendedor</Link>
         <form action="/sair" method="post">
