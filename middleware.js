@@ -34,7 +34,7 @@ export async function middleware(request) {
   if (!user && !publica) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    url.search = '';
+    url.search = path === '/mapa' ? '?ir=/mapa' : '';
     return NextResponse.redirect(url);
   }
   return response;

@@ -1,0 +1,78 @@
+/* Mapa do fluxo: tela cheia, área de desenho à esquerda e painel de edição à direita */
+.mapa { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
+.mapa-carregando { padding: 40px; color: var(--muted); }
+.mapa-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--card); }
+.mapa-titulo { display: flex; align-items: baseline; gap: 12px; }
+.mapa-titulo b { font-family: var(--font-display); font-size: 1.2rem; }
+.mapa-status { font-size: .82rem; color: var(--amarelo); }
+.mapa-status.ok { color: var(--verde); }
+.mapa-acoes { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.mapa-acoes button, .mapa-acoes a, .mapa-aviso button, .mapa-botoes button, .mapa-apagar button, .mapa-painel .principal {
+  font: inherit; font-size: .88rem; font-weight: 600; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--line-2);
+  background: var(--card-2); color: var(--text); cursor: pointer; text-decoration: none;
+}
+.mapa-acoes button:hover, .mapa-botoes button:hover { border-color: var(--muted); }
+.mapa-aviso { padding: 10px 16px; background: var(--amarelo-bg); color: var(--text); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: .92rem; }
+.mapa-aviso.azul { background: var(--azul-bg); }
+
+.mapa-corpo { flex: 1; display: flex; min-height: 0; }
+.mapa-area { flex: 1; position: relative; overflow: hidden; touch-action: none; cursor: grab; user-select: none;
+  background-image: radial-gradient(var(--line-2) 1px, transparent 1px); background-size: 24px 24px; }
+.mapa-area:active { cursor: grabbing; }
+.mapa-area.ligando .no { cursor: crosshair; }
+.mapa-plano { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.mapa-setas { position: absolute; left: 0; top: 0; overflow: visible; }
+.mapa-setas .seta { fill: none; stroke: var(--muted); stroke-width: 2; }
+.mapa-setas .seta.tracejada { stroke-dasharray: 6 5; }
+.mapa-setas .seta.sel { stroke: var(--cor96); stroke-width: 3; }
+.mapa-setas .seta-toque { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: pointer; }
+.mapa-setas .ponta { fill: var(--muted); }
+.mapa-setas .ponta-sel { fill: var(--cor96); }
+.mapa-setas .seta-rotulo { fill: var(--text); font-size: 13px; font-weight: 700; paint-order: stroke; stroke: var(--bg); stroke-width: 4px; }
+.mapa-dica { position: absolute; left: 12px; bottom: 10px; font-size: .78rem; color: var(--muted); background: var(--card); padding: 4px 10px; border-radius: 8px; pointer-events: none; }
+
+.no { position: absolute; box-sizing: border-box; background: var(--card); border: 2px solid var(--line-2); border-radius: 14px; padding: 10px 12px; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, .18); }
+.no b { display: block; font-family: var(--font-display); font-size: 1.02rem; line-height: 1.2; }
+.no p { margin: 6px 0 0; font-size: .82rem; line-height: 1.4; color: var(--muted); white-space: pre-wrap; }
+.no-tipo { display: flex; justify-content: space-between; gap: 6px; font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.no-coment { color: var(--cor96); text-transform: none; letter-spacing: 0; }
+.no.sel { outline: 3px solid var(--cor96); outline-offset: 2px; }
+.no.t-inicio { background: var(--text); border-color: var(--text); }
+.no.t-inicio b, .no.t-inicio p, .no.t-inicio .no-tipo { color: var(--bg); }
+.no.t-decisao { border-style: dashed; border-color: var(--link); border-radius: 26px; }
+.no.t-trava { border-color: var(--vermelho); background: var(--vermelho-bg); }
+.no.t-trava .no-tipo { color: var(--vermelho); }
+.no.t-gestao { border-color: var(--amarelo); background: var(--amarelo-bg); }
+.no.t-gestao .no-tipo { color: var(--amarelo); }
+.no.t-financeiro { border-color: #a78bfa; }
+.no.t-financeiro .no-tipo { color: #a78bfa; }
+.no.t-mudanca { border-color: var(--cor96); background: color-mix(in srgb, var(--cor96) 14%, var(--card)); transform: rotate(-1deg); }
+.no.t-mudanca .no-tipo { color: var(--cor96); }
+.no.t-fim { border-color: var(--verde); background: var(--verde-bg); border-radius: 26px; }
+.no.t-fim .no-tipo { color: var(--verde); }
+
+.mapa-painel { width: 340px; flex: none; overflow-y: auto; border-left: 1px solid var(--line); background: var(--card); padding: 16px; position: relative; display: flex; flex-direction: column; gap: 6px; }
+.mapa-painel label { font-size: .8rem; font-weight: 700; color: var(--muted); margin-top: 6px; }
+.mapa-painel input, .mapa-painel select, .mapa-painel textarea { font: inherit; font-size: .92rem; width: 100%; box-sizing: border-box; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--bg); color: var(--text); }
+.mapa-painel textarea { resize: vertical; line-height: 1.4; }
+.mapa-painel h3 { font-family: var(--font-display); font-size: 1rem; margin: 16px 0 2px; }
+.mapa-painel .fechar { position: absolute; right: 10px; top: 8px; border: 0; background: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; }
+.mapa-painel .principal { background: var(--accent); color: var(--on-accent); border-color: var(--accent); margin-top: 6px; }
+.mapa-painel .principal:disabled { opacity: .4; cursor: default; }
+.mapa-painel .muted { color: var(--muted); font-size: .88rem; margin: 0; }
+.mapa-painel .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.mapa-botoes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.coment { background: var(--bg); border-radius: 10px; padding: 8px 10px; }
+.coment-topo { display: flex; gap: 8px; align-items: baseline; font-size: .8rem; }
+.coment-topo span { color: var(--muted); flex: 1; }
+.coment-topo button { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
+.coment p { margin: 4px 0 0; font-size: .9rem; white-space: pre-wrap; }
+.mapa-apagar { display: flex; gap: 6px; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--line); }
+.mapa-apagar .perigo { background: var(--vermelho); color: #fff; border-color: var(--vermelho); }
+.mapa-apagar .perigo-leve { color: var(--vermelho); }
+
+@media (max-width: 760px) {
+  .mapa-corpo { flex-direction: column; }
+  .mapa-painel { width: auto; max-height: 52vh; border-left: 0; border-top: 1px solid var(--line); }
+  .mapa-dica { display: none; }
+}
