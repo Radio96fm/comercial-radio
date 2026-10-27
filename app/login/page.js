@@ -25,7 +25,9 @@ function LoginForm() {
       return;
     }
     // dentro da moldura de celular (/celular) abre a versão daquela apresentação
-    let destino = '/';
+    // volta para a tela que pediu o login (ex.: /mapa), só caminhos deste site
+    const ir = params.get('ir') || '';
+    let destino = /^\/[a-z]/.test(ir) ? ir : '/';
     if (window.self !== window.top) {
       let topo = '';
       try { topo = window.top.location.pathname; } catch {}
