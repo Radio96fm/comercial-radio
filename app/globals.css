@@ -1374,3 +1374,7 @@ a.b-hero { color: var(--on-destaque, #fff); }
 .pdf-linha { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line); margin: 12px 0; }
 .pdf-linha .t { flex: 1; min-width: 0; }
 .pdf-linha small { display: block; color: var(--muted); }
+
+/* campos lado a lado não passam da largura da tela (data no celular empurrava a página) */
+.grid2 > * { min-width: 0; }
+input[type="date"] { min-width: 0; max-width: 100%; }

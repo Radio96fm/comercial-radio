@@ -85,13 +85,9 @@
 /* foto da tela real do app, com os botões tocáveis por cima */
 .tl-foto { position: relative; margin: 10px 0 2px; border-radius: 18px; overflow: hidden; border: 1px solid #333; background: #0a0a0a; }
 .tl-foto img { display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-drag: none; pointer-events: none; }
-.tl-hot { position: absolute; padding: 0; margin: 0; background: rgba(56, 189, 248, .10); border: 2px solid #38bdf8; border-radius: 10px; cursor: pointer; animation: tl-pulso 1.6s ease-in-out infinite; }
-.tl-hot:hover { background: rgba(56, 189, 248, .25); }
-.tl-hot.aberto { border-color: #facc15; background: rgba(250, 204, 21, .14); animation: none; }
-.tl-hot.pula { border: 1px dashed rgba(255, 255, 255, .35); background: transparent; animation: none; }
-.tl-hot.pula:hover { border-color: #fff; background: rgba(255, 255, 255, .08); }
-@keyframes tl-pulso { 50% { border-color: rgba(56, 189, 248, .3); } }
-@media (prefers-reduced-motion: reduce) { .tl-hot { animation: none; } }
+/* botões tocáveis invisíveis: só a foto da tela aparece */
+.tl-hot { position: absolute; padding: 0; margin: 0; background: transparent; border: 0; border-radius: 10px; cursor: pointer; }
+.tl-hot:focus-visible { outline: 2px solid var(--text); }
 .t-acao { border-style: dotted; }
 
 /* celular: barra de cima numa faixa só, rolando de lado */
@@ -102,3 +98,8 @@
   .mapa-acoes button { font-size: .8rem; padding: 6px 10px; white-space: nowrap; flex: none; }
   .mapa-dica { display: none; }
 }
+
+.no-tipo .no-fechar { font: inherit; font-size: .72rem; font-weight: 700; letter-spacing: 0; text-transform: none; border: 1px solid var(--line-2); background: var(--card-2); color: var(--text); border-radius: 8px; padding: 2px 8px; cursor: pointer; }
+.mapa.cheia .mapa-topo { display: none; }
+.mapa-flutuante { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; z-index: 5; }
+.mapa-flutuante button { font: inherit; font-size: .82rem; font-weight: 600; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--card-2); color: var(--text); cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
