@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { TIPOS, mapaInicial } from '@/lib/mapaInicial';
+import TelaPrevia, { TELAS, telaDe } from './Telas';
 
 // Mapa do fluxo do negócio: caixas e setas que qualquer pessoa com o link edita,
 // sem login. Fica numa linha da tabela mapa_fluxo, lida e gravada só pelas
@@ -49,6 +50,7 @@ export default function Mapa({ codigo }) {
   const [vista, setVista] = useState({ x: 40, y: 20, k: 0.8 });
   const [alturas, setAlturas] = useState({});
   const [comentario, setComentario] = useState('');
+  const [telas, setTelas] = useState(true);
   const [autor, setAutor] = useState('');
   useEffect(() => { try { setAutor(localStorage.getItem('mapaAutor') || ''); } catch { /* sem armazenamento */ } }, []);
   const mudarAutor = (v) => { setAutor(v); try { localStorage.setItem('mapaAutor', v); } catch { /* sem armazenamento */ } };
@@ -274,6 +276,7 @@ export default function Mapa({ codigo }) {
         <div className="mapa-acoes">
           <button type="button" onClick={() => novaCaixa('passo')}>+ Caixa</button>
           <button type="button" onClick={() => novaCaixa('mudanca')}>+ Mudança</button>
+          <button type="button" className={telas ? 'ativo' : ''} onClick={() => setTelas((v) => !v)}>{telas ? 'Esconder telas' : 'Mostrar telas'}</button>
           <button type="button" onClick={() => zoom(0.85)} aria-label="Diminuir">−</button>
           <button type="button" onClick={() => zoom(1.15)} aria-label="Aumentar">+</button>
           <button type="button" onClick={ajustar}>Centralizar</button>
@@ -328,7 +331,10 @@ export default function Mapa({ codigo }) {
               >
                 <div className="no-tipo">{TIPOS[n.tipo] || n.tipo}{qtdComent(n.id) > 0 && <span className="no-coment">{qtdComent(n.id)} comentário{qtdComent(n.id) > 1 ? 's' : ''}</span>}</div>
                 <b>{n.titulo}</b>
-                {n.texto && <p>{n.texto}</p>}
+                {mapa.comentarios.filter((c) => c.no === n.id).slice(-2).map((c) => (
+                  <div key={c.id} className="no-nota"><b>{c.autor}:</b> {c.texto}</div>
+                ))}
+                {telas && telaDe(n) ? <TelaPrevia tela={telaDe(n)} /> : n.texto && <p>{n.texto}</p>}
               </div>
             ))}
           </div>
@@ -343,6 +349,11 @@ export default function Mapa({ codigo }) {
                 <label htmlFor="m-tipo">Tipo</label>
                 <select id="m-tipo" value={noSel.tipo} onChange={(e) => editarNo(noSel.id, { tipo: e.target.value })}>
                   {Object.entries(TIPOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+                <label htmlFor="m-tela">Tela do app nesta caixa</label>
+                <select id="m-tela" value={telaDe(noSel)} onChange={(e) => editarNo(noSel.id, { tela: e.target.value })}>
+                  <option value="">Nenhuma (mostrar o texto)</option>
+                  {Object.entries(TELAS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
                 <label htmlFor="m-titulo">Título</label>
                 <input id="m-titulo" value={noSel.titulo} onChange={(e) => editarNo(noSel.id, { titulo: e.target.value })} />
