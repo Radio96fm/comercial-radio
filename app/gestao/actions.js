@@ -345,7 +345,7 @@ export async function excluirPreco(fd) {
 
 // ------------------------------------------------------------------ assinatura digital
 export async function salvarAutentique(_prev, fd) {
-  const { supabase } = await requireGestor();
+  const { supabase } = await requireDev();
   const token = txt(fd, 'token');
   const webhook = txt(fd, 'webhook');
   if (!token && !webhook) return { erro: 'Cole a chave da API da Autentique.' };
@@ -355,12 +355,12 @@ export async function salvarAutentique(_prev, fd) {
   }
   const { error } = await supabase.rpc('salvar_autentique', { p_token: token, p_webhook: webhook });
   if (error) return { erro: erroAmigavel(error) };
-  revalidatePath('/gestao/modelos');
+  revalidatePath('/dev/integracoes');
   return { ok: conta ? `Conectado à conta ${conta.name || conta.email}. Os vendedores já podem enviar contratos para assinar.` : 'Segredo do aviso automático salvo.' };
 }
 
 export async function salvarIA(_prev, fd) {
-  const { supabase } = await requireMaster();
+  const { supabase } = await requireDev();
   const provedor = txt(fd, 'provedor');
   const token = txt(fd, 'token');
   if (!PROVEDORES[provedor]) return { erro: 'Escolha a IA.' };
@@ -383,6 +383,7 @@ export async function salvarIA(_prev, fd) {
   }
   const { error } = await supabase.rpc('salvar_ia', { p_provedor: provedor, p_modelo: modelo, p_token: token || '' });
   if (error) return { erro: erroAmigavel(error) };
+  revalidatePath('/dev/integracoes');
   revalidatePath('/dev/assistente');
   return { ok: `Assistente ligado com ${PROVEDORES[provedor].nome}${modelo ? ` (${modelo})` : ''}. Os vendedores já podem criar testemunhais.${aviso}` };
 }

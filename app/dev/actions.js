@@ -64,3 +64,21 @@ export async function salvarFuncoes(_prev, fd) {
   revalidatePath('/dev/acessos');
   return { ok: bloqueadas.length ? `Salvo. ${bloqueadas.length} função(ões) desligada(s).` : 'Salvo. Tudo liberado.' };
 }
+
+// ElevenLabs: testa a chave na hora de salvar
+export async function salvarElevenLabs(_prev, fd) {
+  const { supabase } = await requireDev();
+  const token = txt(fd, 'token');
+  const voz = txt(fd, 'voz') || '';
+  let conta = '';
+  if (token) {
+    const r = await fetch('https://api.elevenlabs.io/v1/user/subscription', { headers: { 'xi-api-key': token }, cache: 'no-store' }).catch(() => null);
+    if (!r?.ok) return { erro: `A ElevenLabs não aceitou esta chave${r ? ` (${r.status})` : ''}.` };
+    const j = await r.json().catch(() => ({}));
+    if (j.tier) conta = ` Plano ${j.tier}, ${Number(j.character_count || 0).toLocaleString('pt-BR')} de ${Number(j.character_limit || 0).toLocaleString('pt-BR')} caracteres usados no mês.`;
+  }
+  const { error } = await supabase.rpc('salvar_elevenlabs', { p_token: token || '', p_voz: voz });
+  if (error) return { erro: error.message };
+  revalidatePath('/dev/integracoes');
+  return { ok: `ElevenLabs salva.${conta}` };
+}
