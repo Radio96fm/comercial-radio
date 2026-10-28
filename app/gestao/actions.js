@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { requireGestor, requireMaster, requireDev } from '@/lib/auth';
-import { adminCriarUsuario, adminAtualizarUsuario } from '@/lib/supabase/admin';
+import { adminCriarUsuario, adminAtualizarUsuario, adminExcluirUsuario } from '@/lib/supabase/admin';
 import { parseValor } from '@/lib/format';
 import { testarChave } from '@/lib/autentique';
 import { escolherModelo, gerar, PROVEDORES } from '@/lib/ia';
@@ -120,6 +120,23 @@ export async function alternarAtivo(fd) {
   await adminAtualizarUsuario(id, { ban_duration: ativar ? 'none' : '876000h' });
   revalidatePath('/dev/acessos');
   revalidatePath('/dev/vendedores');
+}
+
+// Apaga o login de vez. Só para quem não tem contrato nem visita (esses ficam desativados).
+export async function excluirUsuario(_prev, fd) {
+  const { supabase, perfil } = await requireDev();
+  const id = txt(fd, 'id');
+  if (!id || id === perfil.id) return { erro: 'Você não pode excluir o seu próprio acesso.' };
+  const [{ count: contratos }, { count: visitas }] = await Promise.all([
+    supabase.from('contratos').select('id', { count: 'exact', head: true }).eq('vendedor_id', id),
+    supabase.from('visitas').select('id', { count: 'exact', head: true }).eq('vendedor_id', id),
+  ]);
+  if (contratos || visitas) return { erro: 'Este acesso tem contratos ou visitas. Desative em vez de excluir.' };
+  const { error } = await adminExcluirUsuario(id);
+  if (error) return { erro: erroAmigavel(error) };
+  revalidatePath('/dev/acessos');
+  revalidatePath('/dev');
+  return { ok: 'Acesso excluído.' };
 }
 
 export async function redefinirSenha(_prev, fd) {

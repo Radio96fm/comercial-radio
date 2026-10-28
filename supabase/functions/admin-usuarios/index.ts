@@ -1,4 +1,4 @@
-// Operações de administração de logins (criar usuário, trocar papel, senha, bloqueio).
+// Operações de administração de logins (criar usuário, trocar papel, senha, bloqueio, excluir).
 // Roda dentro do Supabase, onde a chave mestra já existe; o site só chama esta
 // função com um segredo compartilhado (ADMIN_PROXY_SECRET). O banco guarda só o
 // SHA-256 desse segredo (privado.config, lido por public.admin_proxy_hash()).
@@ -45,6 +45,11 @@ Deno.serve(async (req) => {
 
   if (op === 'atualizar' && id) {
     const { error } = await admin.auth.admin.updateUserById(id, dados);
+    return json(error ? { error: error.message } : { ok: true });
+  }
+
+  if (op === 'excluir' && id) {
+    const { error } = await admin.auth.admin.deleteUser(id);
     return json(error ? { error: error.message } : { ok: true });
   }
 
