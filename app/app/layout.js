@@ -10,7 +10,7 @@ import { PRAZO_DIAS, prazoVisita } from '@/lib/prazo';
 export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({ children }) {
-  const { supabase, perfil } = await getSessao();
+  const { supabase, perfil, isDev } = await getSessao();
   if (perfil.papel === 'financeiro') redirect('/financeiro');
   const [{ data: condicoes }, { data: abertas }] = await Promise.all([
     buscarCondicoesAtivas(supabase),
@@ -24,7 +24,7 @@ export default async function AppLayout({ children }) {
       <AvisoPrazo itens={vencendo} />
       <AvisoCondicoes condicoes={condicoes || []} />
       {children}
-      <BottomNav />
+      <BottomNav bloqueadas={isDev ? [] : perfil.funcoes_bloqueadas || []} />
       <AoVivo />
     </div>
   );

@@ -12,6 +12,11 @@ export default function FormCadastro({ codigo }) {
       {estado?.erro && <div className="alerta erro">{estado.erro}</div>}
       <input type="hidden" name="codigo" value={codigo} />
       <div className="campo"><label>Seu nome completo</label><input name="nome" required autoComplete="name" /></div>
+      <div className="campo">
+        <label>CPF ou CNPJ</label>
+        <input name="documento" inputMode="numeric" required autoComplete="off" />
+        <div className="ajuda">O mesmo que você usa nas notas para a rádio. Assim seus contratos já aparecem.</div>
+      </div>
       <div className="campo"><label>Seu e-mail</label><input name="email" type="email" inputMode="email" required autoComplete="username" /></div>
       <div className="campo"><label>Seu WhatsApp</label><input name="telefone" type="tel" inputMode="tel" autoComplete="tel" /></div>
       <div className="campo">

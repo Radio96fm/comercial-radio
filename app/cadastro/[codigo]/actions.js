@@ -9,9 +9,13 @@ export async function cadastrarVendedor(_prev, fd) {
   const nome = String(fd.get('nome') || '').trim();
   const email = String(fd.get('email') || '').trim().toLowerCase();
   const telefone = String(fd.get('telefone') || '').trim();
+  const documento = String(fd.get('documento') || '').trim();
+  const digitos = documento.replace(/\D/g, '');
   const senha = String(fd.get('senha') || '');
   const senha2 = String(fd.get('senha2') || '');
   if (!nome || !email) return { erro: 'Preencha seu nome e e-mail.' };
+  if (nome.split(/\s+/).length < 2) return { erro: 'Coloque o nome completo.' };
+  if (digitos.length !== 11 && digitos.length !== 14) return { erro: 'Confira o CPF (11 números) ou CNPJ (14 números).' };
   if (!/^\S+@\S+\.\S+$/.test(email)) return { erro: 'Confira o e-mail.' };
   if (senha.length < 8) return { erro: 'A senha precisa ter pelo menos 8 caracteres.' };
   if (senha !== senha2) return { erro: 'As duas senhas não são iguais.' };
@@ -32,5 +36,7 @@ export async function cadastrarVendedor(_prev, fd) {
     return { erro: `Não foi possível criar o acesso: ${error.message}` };
   }
   await supabase.auth.signInWithPassword({ email, password: senha });
-  redirect('/app/perfil?bemvindo=1');
+  // CPF/CNPJ igual ao de um vendedor/agência dos contratos: os contratos passam para este acesso
+  const { data: vinculados } = await supabase.rpc('concluir_cadastro', { p_documento: documento });
+  redirect(`/app/perfil?bemvindo=1${vinculados ? `&contratos=${vinculados}` : ''}`);
 }

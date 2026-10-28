@@ -1396,3 +1396,10 @@ input[type="date"] { min-width: 0; max-width: 100%; }
 .bloco-corpo { padding: 0 14px 14px; }
 details.recolhido summary { cursor: pointer; font-weight: 700; padding: 2px 0; }
 details.recolhido[open] summary { margin-bottom: 10px; }
+
+/* Painel do desenvolvedor: funções liberadas por acesso */
+.funcoes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.funcoes-grid fieldset { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; margin: 0; }
+.funcoes-grid legend { font-weight: 600; padding: 0 6px; }
+.funcoes-grid label { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-weight: 400; }
+.agora-lista { display: flex; flex-wrap: wrap; gap: 8px; }

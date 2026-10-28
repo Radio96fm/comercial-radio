@@ -4,7 +4,14 @@ import { NextResponse } from 'next/server';
 const PUBLICAS = ['/login', '/celular', '/demo-diretor', '/demo-comercial', '/demo-gestao', '/fluxo', '/mapa', '/diretor.webmanifest', '/comercial.webmanifest', '/primeiro-acesso', '/cadastro', '/api/autentique'];
 
 export async function middleware(request) {
-  let response = NextResponse.next({ request });
+  const path = request.nextUrl.pathname;
+  // as telas sabem qual endereço foi aberto (funções desligadas por acesso, ver lib/auth.js)
+  const comCaminho = () => {
+    const h = new Headers(request.headers);
+    h.set('x-caminho', path);
+    return NextResponse.next({ request: { headers: h } });
+  };
+  let response = comCaminho();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -16,7 +23,7 @@ export async function middleware(request) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = comCaminho();
           cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         },
       },
@@ -28,7 +35,6 @@ export async function middleware(request) {
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user;
 
-  const path = request.nextUrl.pathname;
   const publica = PUBLICAS.some((p) => path.startsWith(p));
 
   if (!user && !publica) {

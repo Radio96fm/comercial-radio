@@ -1,6 +1,7 @@
 import '@fontsource-variable/inter';
 import '@fontsource-variable/space-grotesk';
 import './globals.css';
+import RegistrarAcesso from '@/components/RegistrarAcesso';
 
 export const metadata = {
   title: 'Comercial · 96 FM & Rádio do Agro',
@@ -28,7 +29,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>{children}<RegistrarAcesso /></body>
     </html>
   );
 }

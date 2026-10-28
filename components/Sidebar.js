@@ -1,8 +1,9 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { bloqueado } from '@/lib/funcoes';
 import {
-  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, UserCog, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, Timer, BadgePercent, Send, Building2, TrendingUp, Crown, Target, FileUp, Workflow,
+  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, Timer, BadgePercent, Send, Building2, TrendingUp, Crown, Target, FileUp, Workflow, Code2, KeyRound, Handshake, Activity,
 } from 'lucide-react';
 
 // m = só para o gestor master
@@ -14,9 +15,7 @@ const ITENS = [
   ['/gestao/contratos', FileText, 'Contratos'],
   ['/gestao/clientes', Users, 'Clientes'],
   ['/gestao/negociacoes', Timer, 'Negociações'],
-  ['/gestao/vendedores', UserCog, 'Usuários', false, 'm'],
   ['/gestao/modelos', FileSignature, 'Modelo de contrato'],
-  ['/gestao/assistente', Sparkles, 'Treinar assistente', false, 'm'],
   ['/gestao/cadastros', Tags, 'Rádios e segmentos'],
   ['/gestao/atividades', History, 'Histórico'],
 ];
@@ -62,8 +61,9 @@ export function SidebarFinanceiro() {
   );
 }
 
-export default function Sidebar({ master }) {
+export default function Sidebar({ master, dev, bloqueadas = [] }) {
   const path = usePathname();
+  const livre = (href) => !bloqueado(href, bloqueadas);
   return (
     <aside className="sidebar nao-imprimir">
       <div className="marca-gestao">
@@ -74,12 +74,12 @@ export default function Sidebar({ master }) {
         <b>Gestão Comercial</b>
       </div>
       <nav className="nav-g">
-        {ITENS.filter((i) => master || i[4] !== 'm').map(([href, Ico, txt, exato]) => (
+        {ITENS.filter((i) => (master || i[4] !== 'm') && livre(i[0])).map(([href, Ico, txt, exato]) => (
           <Link key={href} href={href} className={(exato ? path === href : path.startsWith(href)) ? 'ativo' : ''}>
             <Ico className="ico" />{txt}
           </Link>
         ))}
-        {master && (
+        {master && livre('/gestao/financeiro') && (
           <>
             <span className="nav-grupo">Financeiro</span>
             {FINANCEIRO.map(([href, Ico, txt, exato]) => (
@@ -92,9 +92,10 @@ export default function Sidebar({ master }) {
       </nav>
       <div className="rodape">
         <div className="sep" />
-        {master && <Link href="/diretor"><Crown className="ico" />Painel do Diretor</Link>}
+        {dev && <Link href="/dev"><Code2 className="ico" />Painel do desenvolvedor</Link>}
+        {master && livre('/diretor') && <Link href="/diretor"><Crown className="ico" />Painel do Diretor</Link>}
         <Link href="/fluxo"><Workflow className="ico" />Mapa do fluxo</Link>
-        <Link href="/comercial"><Target className="ico" />Painel Comercial</Link>
+        {livre('/comercial') && <Link href="/comercial"><Target className="ico" />Painel Comercial</Link>}
         <Link href="/app"><Smartphone className="ico" />Abrir app do vendedor</Link>
         <form action="/sair" method="post">
           <button className="btn peq cinza" style={{ margin: '10px 0 0', width: '100%' }}><LogOut className="ico" />Sair</button>
@@ -130,6 +131,40 @@ export function SidebarDemo() {
           );
         })}
       </nav>
+    </aside>
+  );
+}
+
+// Menu do Painel do Desenvolvedor (/dev): acessos e configurações do sistema
+const DEV = [
+  ['/dev', LayoutDashboard, 'Visão geral', true],
+  ['/dev/movimento', Activity, 'Movimento'],
+  ['/dev/vendedores', Handshake, 'Vendedores e agências'],
+  ['/dev/acessos', KeyRound, 'Acessos'],
+  ['/dev/assistente', Sparkles, 'Treinar assistente'],
+];
+
+export function SidebarDev() {
+  const path = usePathname();
+  return (
+    <aside className="sidebar nao-imprimir">
+      <div className="marca-gestao">
+        <div className="emissoras-mini">
+          <img src="/logos/96fm.png" alt="96 FM" />
+          <img src="/logos/agro.png" alt="Rádio do Agro" />
+        </div>
+        <b>Desenvolvedor</b>
+      </div>
+      <nav className="nav-g">{DEV.map(link(path))}</nav>
+      <div className="rodape">
+        <div className="sep" />
+        <Link href="/gestao"><LayoutDashboard className="ico" />Gestão Comercial</Link>
+        <Link href="/diretor"><Crown className="ico" />Painel do Diretor</Link>
+        <Link href="/app"><Smartphone className="ico" />Abrir app do vendedor</Link>
+        <form action="/sair" method="post">
+          <button className="btn peq cinza" style={{ margin: '10px 0 0', width: '100%' }}><LogOut className="ico" />Sair</button>
+        </form>
+      </div>
     </aside>
   );
 }

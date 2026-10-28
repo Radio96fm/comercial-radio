@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { bloqueado } from '@/lib/funcoes';
 import { Home, Car, Users, Wallet } from 'lucide-react';
 
 const ITENS = [
@@ -10,11 +11,11 @@ const ITENS = [
   { href: '/app/ganhos', Ico: Wallet, txt: 'Ganhos', destaque: true },
 ];
 
-export default function BottomNav() {
+export default function BottomNav({ bloqueadas = [] }) {
   const path = usePathname();
   return (
     <nav className="bottomnav nao-imprimir">
-      {ITENS.map(({ href, Ico, txt, exato, destaque }) => {
+      {ITENS.filter((i) => !bloqueado(i.href, bloqueadas)).map(({ href, Ico, txt, exato, destaque }) => {
         const ativo = exato ? path === href || path.startsWith('/app/radio') || path.startsWith('/app/programa') : path.startsWith(href) || (destaque && path.startsWith('/app/contratos'));
         return (
           <Link key={href} href={href} className={`${ativo ? 'ativo' : ''} ${destaque ? 'destaque' : ''}`}>
