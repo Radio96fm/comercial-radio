@@ -3,8 +3,9 @@
 --  Deixa o banco pronto para cadastrar os contratos reais.
 --
 --  APAGA: clientes, contratos (com itens e parcelas), visitas, propostas
---  enviadas, prorrogações, testemunhais, histórico, comissões, todos os
---  vendedores e os acessos de teste (teste.*@radio96fm.com).
+--  enviadas, prorrogações, testemunhais, histórico, comissões, os
+--  vendedores fictícios (*.demo@exemplo.com.br) e os acessos de teste
+--  (teste.*@radio96fm.com). Vendedor com e-mail real fica, sem dados.
 --
 --  MANTÉM: rádios, programas, planos, tabela de preços, condições
 --  especiais, segmentos, modelo de contrato, PDFs de proposta dos
@@ -45,11 +46,11 @@ begin
     end if;
   end loop;
 
-  -- 3) Apaga os vendedores e os acessos de teste (o perfil sai junto com o login)
+  -- 3) Apaga os vendedores fictícios e os acessos de teste (o perfil sai junto com o login)
   delete from auth.users u
    using public.profiles p
    where p.id = u.id
-     and (p.papel::text = 'vendedor' or p.email ilike 'teste.%@radio96fm.com');
+     and (p.email ilike '%.demo@exemplo.com.br' or p.email ilike 'teste.%@radio96fm.com');
 
   -- 4) Numeração dos contratos volta para o 1
   if to_regclass('public.contratos_numero_seq') is not null then
