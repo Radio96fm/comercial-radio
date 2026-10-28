@@ -200,7 +200,6 @@ function Detalhe({ id, dados }) {
         {vend.map((x) => (
           <Linha key={x.id} titulo={x.nome} sub={x.ativos ? `${real(x.mensal)} por mês` : 'Sem contrato ativo'} valor={x.ativos} valorSub={x.ativos === 1 ? 'contrato' : 'contratos'} tom={x.ativos ? 'azul' : 'cinza'} />
         ))}
-        <VerTudo href="/gestao/vendedores">Ver usuários</VerTudo>
       </>
     );
   }

@@ -1,6 +1,6 @@
 'use server';
 import { revalidatePath } from 'next/cache';
-import { requireGestor, requireMaster } from '@/lib/auth';
+import { requireGestor, requireMaster, requireDev } from '@/lib/auth';
 import { adminCriarUsuario, adminAtualizarUsuario } from '@/lib/supabase/admin';
 import { parseValor } from '@/lib/format';
 import { testarChave } from '@/lib/autentique';
@@ -48,7 +48,7 @@ export async function salvarPrograma(_prev, fd) {
 
 // ------------------------------------------------------------------ usuários
 export async function criarUsuario(_prev, fd) {
-  await requireMaster();
+  await requireDev();
   const nome = txt(fd, 'nome');
   const email = (txt(fd, 'email') || '').toLowerCase();
   const senha = String(fd.get('senha') || '');
@@ -65,7 +65,8 @@ export async function criarUsuario(_prev, fd) {
     app_metadata: { papel },
   });
   if (error) return { erro: erroAmigavel(error) };
-  revalidatePath('/gestao/vendedores');
+  revalidatePath('/dev/acessos');
+  revalidatePath('/dev/vendedores');
   return { ok: `Usuário ${nome} criado. Passe para ele o e-mail e a senha para o primeiro acesso.` };
 }
 
@@ -78,19 +79,20 @@ const ACESSOS_TESTE = [
 ];
 
 export async function criarAcessosTeste() {
-  await requireMaster();
+  await requireDev();
   const linhas = [];
   for (const [nome, email, papel, painel] of ACESSOS_TESTE) {
     const senha = `Teste-${Math.random().toString(36).slice(2, 8)}${Math.floor(Math.random() * 90 + 10)}`;
     const { error } = await adminCriarUsuario({ email, password: senha, email_confirm: true, user_metadata: { nome }, app_metadata: { papel } });
     linhas.push(error ? `${painel}: ${email} (${erroAmigavel(error)})` : `${painel}: ${email} · senha ${senha}`);
   }
-  revalidatePath('/gestao/vendedores');
+  revalidatePath('/dev/acessos');
+  revalidatePath('/dev/vendedores');
   return { ok: `Acessos de teste (anote, a senha aparece só agora):\n${linhas.join('\n')}` };
 }
 
 export async function atualizarUsuario(_prev, fd) {
-  const { supabase, perfil } = await requireMaster();
+  const { supabase, perfil } = await requireDev();
   const id = txt(fd, 'id');
   const papel = ['gestor', 'comercial', 'financeiro'].includes(txt(fd, 'papel')) ? txt(fd, 'papel') : 'vendedor';
   if (id === perfil.id && papel !== 'gestor') return { erro: 'Você não pode tirar o seu próprio acesso de gestor master.' };
@@ -103,23 +105,25 @@ export async function atualizarUsuario(_prev, fd) {
     .eq('id', id);
   if (error) return { erro: erroAmigavel(error) };
   await adminAtualizarUsuario(id, { app_metadata: { papel } });
-  revalidatePath('/gestao/vendedores');
+  revalidatePath('/dev/acessos');
+  revalidatePath('/dev/vendedores');
   return { ok: 'Usuário atualizado.' };
 }
 
 export async function alternarAtivo(fd) {
-  const { supabase, perfil } = await requireMaster();
+  const { supabase, perfil } = await requireDev();
   const id = txt(fd, 'id');
   const ativar = fd.get('ativar') === '1';
   if (id === perfil.id) return;
   await supabase.from('profiles').update({ ativo: ativar }).eq('id', id);
   // bloqueia/desbloqueia o login no Supabase Auth
   await adminAtualizarUsuario(id, { ban_duration: ativar ? 'none' : '876000h' });
-  revalidatePath('/gestao/vendedores');
+  revalidatePath('/dev/acessos');
+  revalidatePath('/dev/vendedores');
 }
 
 export async function redefinirSenha(_prev, fd) {
-  await requireMaster();
+  await requireDev();
   const id = txt(fd, 'id');
   const senha = String(fd.get('senha') || '');
   if (senha.length < 8) return { erro: 'A nova senha precisa ter pelo menos 8 caracteres.' };
@@ -379,20 +383,20 @@ export async function salvarIA(_prev, fd) {
   }
   const { error } = await supabase.rpc('salvar_ia', { p_provedor: provedor, p_modelo: modelo, p_token: token || '' });
   if (error) return { erro: erroAmigavel(error) };
-  revalidatePath('/gestao/assistente');
+  revalidatePath('/dev/assistente');
   return { ok: `Assistente ligado com ${PROVEDORES[provedor].nome}${modelo ? ` (${modelo})` : ''}. Os vendedores já podem criar testemunhais.${aviso}` };
 }
 
 export async function alternarMaterial(fd) {
   const { supabase } = await requireMaster();
   await supabase.from('assistente_materiais').update({ ativo: fd.get('ativo') === '1' }).eq('id', fd.get('id'));
-  revalidatePath('/gestao/assistente');
+  revalidatePath('/dev/assistente');
 }
 
 export async function excluirMaterial(fd) {
   const { supabase } = await requireMaster();
   await supabase.from('assistente_materiais').delete().eq('id', fd.get('id'));
-  revalidatePath('/gestao/assistente');
+  revalidatePath('/dev/assistente');
 }
 
 // libera a exclusividade de 15 dias de uma visita (a empresa fica livre para outros vendedores)
@@ -414,9 +418,10 @@ export async function decidirProrrogacao(fd) {
 
 // link único de cadastro dos vendedores (gerar um novo invalida o anterior)
 export async function novoConvite() {
-  const { supabase } = await requireMaster();
+  const { supabase } = await requireDev();
   await supabase.rpc('convite_vendedor', { p_novo: true });
-  revalidatePath('/gestao/vendedores');
+  revalidatePath('/dev/acessos');
+  revalidatePath('/dev/vendedores');
 }
 
 // ------------------------------------------------------------------ propostas em PDF

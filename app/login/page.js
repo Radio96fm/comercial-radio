@@ -24,6 +24,8 @@ function LoginForm() {
       setErro('E-mail ou senha incorretos.');
       return;
     }
+    // aparece no Painel do Desenvolvedor (quem entrou e quando)
+    await supabase.rpc('registrar_acesso', { p_evento: 'login', p_caminho: 'login' }).then(() => {}, () => {});
     // dentro da moldura de celular (/celular) abre a versão daquela apresentação
     // volta para a tela que pediu o login (ex.: /mapa), só caminhos deste site
     const ir = params.get('ir') || '';

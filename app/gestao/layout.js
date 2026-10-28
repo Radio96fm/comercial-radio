@@ -6,10 +6,10 @@ import BotaoTema from '@/components/BotaoTema';
 export const dynamic = 'force-dynamic';
 
 export default async function GestaoLayout({ children }) {
-  const { isMaster } = await requireGestor();
+  const { isMaster, isDev, perfil } = await requireGestor();
   return (
     <div className="gestao">
-      <Sidebar master={isMaster} />
+      <Sidebar master={isMaster} dev={isDev} bloqueadas={isDev ? [] : perfil.funcoes_bloqueadas || []} />
       <main className="gestao-main">
         <div className="gestao-topo">
           <span className="ao-vivo" title="A tela se atualiza sozinha quando um vendedor faz algo (visita, cliente, contrato)">Atualiza sozinho</span>
