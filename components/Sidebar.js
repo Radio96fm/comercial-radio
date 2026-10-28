@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { bloqueado } from '@/lib/funcoes';
 import {
-  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, Timer, BadgePercent, Send, Building2, TrendingUp, Crown, Target, FileUp, Workflow, Code2, KeyRound, Handshake, Activity, Plug, AppWindow,
+  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, Timer, BadgePercent, Send, Building2, TrendingUp, Crown, Target, FileUp, Workflow, Code2, KeyRound, Handshake, Activity, Plug, AppWindow, Columns3,
 } from 'lucide-react';
 
 // m = só para o gestor master
@@ -139,6 +139,7 @@ export function SidebarDemo() {
 const DEV = [
   ['/dev', LayoutDashboard, 'Visão geral', true],
   ['/dev/movimento', Activity, 'Movimento'],
+  ['/dev/contratos', Columns3, 'Contratos por vendedor'],
   ['/dev/vendedores', Handshake, 'Vendedores e agências'],
   ['/dev/acessos', KeyRound, 'Acessos'],
   ['/dev/integracoes', Plug, 'Integrações'],
