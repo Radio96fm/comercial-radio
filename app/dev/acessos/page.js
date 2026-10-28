@@ -2,7 +2,7 @@ import { requireDev } from '@/lib/auth';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import Link from 'next/link';
-import { criarUsuario, criarAcessosTeste, atualizarUsuario, alternarAtivo, redefinirSenha } from '@/app/gestao/actions';
+import { criarUsuario, criarAcessosTeste, atualizarUsuario, alternarAtivo, redefinirSenha, excluirUsuario } from '@/app/gestao/actions';
 import { salvarFuncoes } from '../actions';
 import { FUNCOES } from '@/lib/funcoes';
 import { dataHora } from '@/lib/format';
@@ -97,6 +97,12 @@ export default async function Acessos() {
                       confirmar={u.ativo ? `Desativar o acesso de ${u.nome}? Ele não conseguirá mais entrar.` : undefined}
                     />
                   </form>
+                )}
+                {u.id !== perfil.id && (
+                  <FormAcao action={excluirUsuario} style={{ marginTop: 10 }}>
+                    <input type="hidden" name="id" value={u.id} />
+                    <BotaoEnviar className="btn peq vermelho" texto="Excluir acesso" confirmar={`Excluir de vez o acesso de ${u.nome}? Não dá para desfazer.`} />
+                  </FormAcao>
                 )}
               </div>
             </div>
