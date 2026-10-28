@@ -1,7 +1,8 @@
 import { requireDev } from '@/lib/auth';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
-import { salvarIA, alternarMaterial, excluirMaterial } from '@/app/gestao/actions';
+import Link from 'next/link';
+import { alternarMaterial, excluirMaterial } from '@/app/gestao/actions';
 import { PROVEDORES } from '@/lib/ia';
 import { TIPOS_MATERIAL } from '@/lib/assistente';
 import { data } from '@/lib/format';
@@ -29,34 +30,9 @@ export default async function Assistente() {
         Tudo o que você cadastrar aqui é usado em todos os testemunhais.
       </p>
 
-      <div className="card">
-        <div className="cabecalho" style={{ marginBottom: 6 }}>
-          <h2 style={{ margin: 0 }}>Inteligência artificial</h2>
-          <span className={`badge ${atual ? 'b-verde' : 'b-amarelo'}`}>{atual ? `Ligada: ${PROVEDORES[atual].nome}` : 'Desligada'}</span>
-        </div>
-        <FormAcao action={salvarIA} limparAoSalvar>
-          <div className="form-grid">
-            <div className="campo"><label>Qual IA usar</label>
-              <select name="provedor" defaultValue={atual || 'gemini'}>
-                {Object.entries(PROVEDORES).map(([k, p]) => (
-                  <option key={k} value={k}>{p.nome}{k === 'gemini' ? ' · tem faixa gratuita' : ''}{chaves.includes(k) ? ' · chave salva' : ''}</option>
-                ))}
-              </select>
-            </div>
-            <div className="campo"><label>Chave da API <small>(para trocar de IA com chave já salva, deixe em branco)</small></label>
-              <input name="token" type="password" autoComplete="off" placeholder="Cole aqui a chave" />
-            </div>
-          </div>
-          <BotaoEnviar className="btn" texto="Salvar e testar" enviando="Testando..." />
-        </FormAcao>
-        <details style={{ marginTop: 12 }}>
-          <summary className="muted">Onde pego a chave?</summary>
-          <ul className="muted" style={{ marginTop: 8 }}>
-            {Object.entries(PROVEDORES).map(([k, p]) => (
-              <li key={k}><b>{p.nome}:</b> <a href={p.chave} target="_blank" rel="noopener noreferrer">{p.chave.replace('https://', '')}</a></li>
-            ))}
-          </ul>
-        </details>
+      <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <span>IA do assistente: <span className={`badge ${atual ? 'b-verde' : 'b-amarelo'}`}>{atual ? `Ligada: ${PROVEDORES[atual].nome}` : 'Desligada'}</span></span>
+        <Link className="btn peq sec" href="/dev/integracoes">Trocar IA ou chave</Link>
       </div>
 
       <NovoMaterial ligado={!!atual} />
