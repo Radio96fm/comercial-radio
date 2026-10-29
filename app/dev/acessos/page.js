@@ -58,7 +58,7 @@ export default async function Acessos() {
         {(usuarios || []).map((u) => (
           <details key={u.id} className="card" style={{ marginBottom: 0, opacity: u.ativo ? 1 : 0.6 }}>
             <summary>
-              {u.nome} {u.id === perfil.id && '(você)'} — <span className={`badge ${u.papel === 'gestor' ? 'b-azul' : u.papel === 'vendedor' ? 'b-cinza' : 'b-amarelo'}`}>{{ gestor: 'gestor master', comercial: 'gestor comercial', financeiro: 'financeiro', vendedor: 'vendedor' }[u.papel] || u.papel}</span>{' '}
+              {u.nome} {u.id === perfil.id && '(você)'}{u.provisorio && <span className="badge b-amarelo" title="Criado na importação dos contratos. Quando a pessoa se cadastrar pelo link com o CPF dela, os contratos passam para o login novo.">sem login ainda</span>} — <span className={`badge ${u.papel === 'gestor' ? 'b-azul' : u.papel === 'vendedor' ? 'b-cinza' : 'b-amarelo'}`}>{{ gestor: 'gestor master', comercial: 'gestor comercial', financeiro: 'financeiro', vendedor: 'vendedor' }[u.papel] || u.papel}</span>{' '}
               {!u.ativo && <span className="badge b-vermelho">desativado</span>}{' '}
               <small>{u.email} · {qtd[u.id] || 0} contratos vigentes · {u.ultimo_acesso ? `último acesso ${dataHora(u.ultimo_acesso)}` : 'nunca entrou'}</small>{' '}
               {u.funcoes_bloqueadas?.length > 0 && <span className="badge b-amarelo">{u.funcoes_bloqueadas.length} função(ões) desligada(s)</span>}

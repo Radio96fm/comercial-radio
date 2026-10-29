@@ -1224,7 +1224,7 @@ a.b-hero { color: var(--on-destaque, #fff); }
 .chip-mes small { font-size: .8rem; color: var(--muted); }
 .chip-mes.ativo { background: var(--destaque); border-color: var(--destaque); color: var(--on-destaque); }
 .chip-mes.ativo small { color: var(--on-destaque); opacity: .75; }
-.com-resumo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.com-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
 .com-resumo > div { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; display: grid; gap: 4px; }
 .com-resumo small { color: var(--muted); font-size: .82rem; }
 .com-resumo b { font-size: 1.15rem; }
