@@ -102,7 +102,8 @@ declare
   v_rep uuid;
   v_profile uuid;
 begin
-  if not public.is_dev() then raise exception 'Só o desenvolvedor pode mudar a comissão de um contrato.'; end if;
+  -- o financeiro também organiza as comissões contrato por contrato (2026-10-29)
+  if not (public.is_dev() or public.is_financeiro()) then raise exception 'Só o desenvolvedor ou o financeiro pode mudar a comissão de um contrato.'; end if;
   if jsonb_typeof(p_linhas) <> 'array' or jsonb_array_length(p_linhas) = 0 then raise exception 'Informe quem ganha a comissão.'; end if;
   -- quem saiu do contrato fica guardado como não vigente
   update public.contrato_comissoes set vigente = false, updated_at = now()
@@ -192,3 +193,8 @@ drop policy if exists faturamento_historico_ler on public.faturamento_historico;
 create policy faturamento_historico_ler on public.faturamento_historico for select to authenticated using (public.is_financeiro());
 grant select on public.faturamento_historico to authenticated;
 notify pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------- data da venda (2026-10-29)
+-- contratos.created_at dos importados = data de emissão do PDF (campo "Data:"
+-- do cabeçalho do beMidia), para "vendas no mês" contar a venda e não o início.
+-- Gravado direto no banco com update ... from (values (numero, data)).
