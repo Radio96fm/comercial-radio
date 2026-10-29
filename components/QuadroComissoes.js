@@ -39,6 +39,8 @@ export default function Quadro({ reps, contratos, linhas }) {
   const [alvo, setAlvo] = useState(null);
   const [modal, setModal] = useState(null);
   const [erro, setErro] = useState('');
+  // última gravação, para poder desfazer
+  const [desfazer, setDesfazer] = useState(null);
 
   const rep = useMemo(() => Object.fromEntries(reps.map((r) => [r.id, r])), [reps]);
   const diretor = reps.find((r) => r.diretor);
@@ -104,10 +106,24 @@ export default function Quadro({ reps, contratos, linhas }) {
   }
 
   function gravar(linhasFinal, regra) {
+    const c = modal.c;
+    const antes = (linhasDe[c.id] || []).map(({ representante_id, papel, percentual, base }) => ({ representante_id, papel, percentual, base }));
+    const regraAntes = (linhasDe[c.id] || []).find((l) => l.regra)?.regra || '';
     iniciar(async () => {
-      const r = await salvarComissaoContrato({ contratoId: modal.c.id, linhas: linhasFinal, regra });
+      const r = await salvarComissaoContrato({ contratoId: c.id, linhas: linhasFinal, regra });
       if (r?.erro) { setErro(r.erro); return; }
       setModal(null);
+      setDesfazer(antes.length ? { c, linhas: antes, regra: regraAntes } : null);
+      router.refresh();
+    });
+  }
+
+  function voltar() {
+    const d = desfazer;
+    iniciar(async () => {
+      const r = await salvarComissaoContrato({ contratoId: d.c.id, linhas: d.linhas, regra: d.regra });
+      if (r?.erro) { setErro(r.erro); return; }
+      setDesfazer(null);
       router.refresh();
     });
   }
@@ -119,6 +135,8 @@ export default function Quadro({ reps, contratos, linhas }) {
       ...(m.comDiretor && diretor ? [{ representante_id: diretor.id, papel: 'diretor', percentual: 2, base: 'total' }] : []),
     ];
     if (!linhasFinal.length) { setErro('Sem vendedor e sem diretor, ninguém ganha comissão. Marque os 2% do diretor ou escolha um vendedor.'); return; }
+    const tinhaVendedor = (linhasDe[m.c.id] || []).some((l) => l.papel === 'vendedor');
+    if (tinhaVendedor && !m.vend.length && !window.confirm('Você tirou todos os vendedores: o contrato vai para "Sem vendedor" e ninguém recebe a comissão de vendedor. Continuar?')) return;
     gravar(linhasFinal, m.regra);
   }
 
@@ -133,6 +151,12 @@ export default function Quadro({ reps, contratos, linhas }) {
     <>
       <style>{CSS}</style>
       {erro && !modal && <div className="alerta erro">{erro}</div>}
+      {desfazer && !modal && (
+        <div className="alerta info" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span>Comissão do contrato nº {desfazer.c.numero} ({desfazer.c.cliente_nome}) salva.</span>
+          <button className="btn peq sec" onClick={voltar} disabled={pend}>{pend ? 'Voltando...' : 'Desfazer'}</button>
+        </div>
+      )}
       <div className="quadro">
         {colunas.map((col) => (
           <div key={col.id} className={`q-col ${alvo === col.id ? 'alvo' : ''}`} style={{ '--h': col.h }}
@@ -206,7 +230,7 @@ export default function Quadro({ reps, contratos, linhas }) {
                       <option value="total">do valor cheio</option>
                       <option value="liquido">depois de tirar os 2%</option>
                     </select>
-                    <button type="button" className="btn peq cinza" onClick={() => setModal((m) => ({ ...m, vend: m.vend.filter((_, j) => j !== i) }))}>Tirar</button>
+                    <button type="button" className="btn peq cinza" onClick={() => setModal((m) => ({ ...m, vend: m.vend.filter((_, j) => j !== i) }))} title="Tirar este vendedor do contrato">Tirar</button>
                   </div>
                 ))}
                 <button type="button" className="btn peq sec" onClick={() => setModal((m) => ({ ...m, vend: [...m.vend, { representante_id: '', papel: 'vendedor', percentual: '', base: 'total' }] }))}>
@@ -222,6 +246,7 @@ export default function Quadro({ reps, contratos, linhas }) {
                   <label>Qual é a regra? *</label>
                   <textarea rows={3} value={modal.regra} onChange={(e) => setModal((m) => ({ ...m, regra: e.target.value }))}
                     placeholder="Ex.: contrato antigo da Michelly e do Percio, os 18% divididos meio a meio, sem os 2% do diretor." />
+                  <small className="muted">O texto fica como anotação. Quem calcula a comissão são o percentual e a base de cada vendedor acima.</small>
                 </div>
                 {modal.vend.length > 0 && modal.vend.every((l) => String(l.percentual).trim() !== '') && (
                   <p className="muted" style={{ fontSize: '.88rem' }}>
