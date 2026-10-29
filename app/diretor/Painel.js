@@ -193,12 +193,14 @@ function Detalhe({ id, dados }) {
   }
 
   if (id === 'vendedores') {
-    const vend = e.lista.filter((x) => x.papel === 'vendedor');
+    const vend = e.lista.filter((x) => x.vende);
     return (
       <>
         <Titulo Ico={Users} tom="azul" sub="Contratos ativos de cada vendedor">{e.comContrato} de {e.vendedores} vendedores com contrato</Titulo>
         {vend.map((x) => (
-          <Linha key={x.id} titulo={x.nome} sub={x.ativos ? `${real(x.mensal)} por mês` : 'Sem contrato ativo'} valor={x.ativos} valorSub={x.ativos === 1 ? 'contrato' : 'contratos'} tom={x.ativos ? 'azul' : 'cinza'} />
+          <Linha key={x.id} titulo={x.nome}
+            sub={[x.ativos ? `${real(x.mensal)} por mês` : (x.divididos ? null : 'Sem contrato ativo'), x.divididos ? `+ ${plural(x.divididos, 'contrato dividido', 'contratos divididos')} (${real(x.mensalDivididos)}/mês), regra a definir` : null].filter(Boolean).join(' · ')}
+            valor={x.ativos + x.divididos} valorSub={x.ativos + x.divididos === 1 ? 'contrato' : 'contratos'} tom={x.ativos + x.divididos ? 'azul' : 'cinza'} />
         ))}
       </>
     );

@@ -25,7 +25,7 @@ export default async function PainelDiretor({ searchParams }) {
   const inicioSerie = somarMeses(`${mesAtual}-01`, -5);
   const desde30 = `${somarDias(hoje, -30)}T00:00:00`;
 
-  const [{ data: radios }, { data: contratos }, { data: novosMes }, { data: parcelas }, { data: abertas }, { data: vendedores }, { data: visitas }, { data: programas }, { data: historico }] = await Promise.all([
+  const [{ data: radios }, { data: contratos }, { data: novosMes }, { data: parcelas }, { data: abertas }, { data: vendedores }, { data: visitas }, { data: programas }, { data: historico }, { data: linhas }] = await Promise.all([
     supabase.from('radios').select('id, nome, cor').order('ordem'),
     supabase.from('contratos')
       .select('id, status, valor_mensal, data_fim, cliente_nome, radio_id, vendedor_id, vendedor:profiles(nome), programa:programas(nome, radio_id), parcelas(valor, status)')
@@ -40,9 +40,10 @@ export default async function PainelDiretor({ searchParams }) {
     supabase.from('visitas').select('vendedor_id, status, iniciada_em').or(`iniciada_em.gte.${desde30},status.eq.em_andamento`),
     supabase.from('programas_ocupacao').select('radio_id, nome, cotas_total, cotas_ocupadas, cotas_livres').eq('ativo', true).order('horario_inicio', { nullsFirst: false }),
     supabase.from('faturamento_historico').select('radio_id, mes, valor').gte('mes', inicioSerie.slice(0, 7)),
+    supabase.from('contrato_comissoes').select('contrato_id, representante:representantes(profile_id)').eq('vigente', true).eq('papel', 'vendedor'),
   ]);
 
-  const args = { hoje, radios, contratos, novosMes, parcelas, abertas, vendedores, visitas, programas, historico };
+  const args = { hoje, radios, contratos, novosMes, parcelas, abertas, vendedores, visitas, programas, historico, linhas };
   const dados = montarPainel({ ...args, radioId });
   const resumos = (radios || []).map((r) => ({ ...r, dados: montarPainel({ ...args, radioId: r.id }) }));
   const dataLonga = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (l) => l.toUpperCase());

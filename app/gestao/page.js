@@ -14,7 +14,7 @@ export default async function Dashboard() {
   const em30 = somarDias(hoje, 30);
   const inicioSerie = `${somarDias(`${hoje.slice(0, 8)}01`, -150).slice(0, 8)}01`;
 
-  const [{ data: radios }, { data: programas }, { data: vencendo }, { data: visitas }, { data: pendentes }, { count: totalClientes }, { count: totalVendedores }, { data: atividades }, { data: visitasSerie }, { count: clientesNovos }] = await Promise.all([
+  const [{ data: radios }, { data: programas }, { data: vencendo }, { data: visitas }, { data: pendentes }, { count: totalClientes }, { data: equipe }, { data: atividades }, { data: visitasSerie }, { count: clientesNovos }] = await Promise.all([
     supabase.from('radios').select('id, nome, cor, slogan').order('ordem'),
     supabase.from('programas_ocupacao').select('*').eq('ativo', true).order('horario_inicio', { nullsFirst: false }),
     supabase.from('contratos').select('id, numero, data_fim, cliente:clientes(nome), programa:programas(nome), vendedor:profiles(nome)')
@@ -22,12 +22,14 @@ export default async function Dashboard() {
     supabase.from('visitas').select('id, iniciada_em, cliente:clientes(nome), vendedor:profiles(nome)').eq('status', 'em_andamento').order('iniciada_em', { ascending: false }),
     supabase.from('contratos').select('id').eq('status', 'pendente'),
     supabase.from('clientes').select('id', { count: 'exact', head: true }),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('papel', 'vendedor').eq('ativo', true),
+    // vendedor = papel vendedor ou quem tem contrato ativo (diretor comercial, desenvolvedor)
+    supabase.from('profiles').select('id, papel, contratos!contratos_vendedor_id_fkey(count)').in('papel', ['vendedor', 'comercial', 'gestor']).eq('ativo', true).eq('contratos.status', 'ativo'),
     supabase.from('atividades').select('id, descricao, created_at, usuario:profiles(nome)').order('created_at', { ascending: false }).limit(6),
     supabase.from('visitas').select('iniciada_em, vendedor_id, vendedor:profiles(nome)').gte('iniciada_em', inicioSerie),
     supabase.from('clientes').select('id', { count: 'exact', head: true }).gte('created_at', `${somarDias(hoje, -30)}T00:00:00`),
   ]);
 
+  const totalVendedores = (equipe || []).filter((v) => v.papel === 'vendedor' || v.contratos?.[0]?.count > 0).length;
   const dataLonga = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (l) => l.toUpperCase());
   const dados = { hoje, radios, programas, vencendo, visitas, pendentes, totalClientes, totalVendedores, atividades, visitasSerie, clientesNovos };
 
