@@ -44,7 +44,7 @@ export default function EnviarPdf({ tipo, id, tem, demo = false }) {
       {estado && <small className="muted">{estado}</small>}
       <input ref={input} type="file" accept="application/pdf,.pdf" hidden onChange={escolher} />
       <button type="button" className="btn peq" onClick={() => input.current?.click()} disabled={estado.endsWith('...')}>
-        <Upload className="ico" /> {tem ? 'Trocar PDF' : 'Colocar PDF'}
+        <Upload className="ico" /> {tem ? 'Substituir arquivo' : 'Colocar PDF'}
       </button>
       {tem && <button type="button" className="btn peq cinza" onClick={remover} aria-label="Tirar PDF"><Trash2 className="ico" /></button>}
     </div>

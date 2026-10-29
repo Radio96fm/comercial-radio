@@ -1,4 +1,5 @@
 import { dataHora } from '@/lib/format';
+import { FileText } from 'lucide-react';
 import EnviarPdf from './EnviarPdf';
 
 // PDFs das propostas comerciais que o vendedor envia pelo WhatsApp durante a visita.
@@ -13,7 +14,7 @@ export default function TelaPropostas({ radios, programas, links = {}, demo = fa
           {x.proposta_pdf ? <>PDF atualizado em {dataHora(x.proposta_atualizada_em)}</> : sub}
         </div>
       </div>
-      {x.proposta_pdf && links[x.proposta_pdf] && <a className="btn peq cinza" href={links[x.proposta_pdf]} target="_blank" rel="noopener noreferrer">Ver</a>}
+      {x.proposta_pdf && links[x.proposta_pdf] && <a className="btn peq cinza" href={links[x.proposta_pdf]} target="_blank" rel="noopener noreferrer"><FileText className="ico" /> Ver PDF</a>}
       <EnviarPdf tipo={tipo} id={x.id} tem={!!x.proposta_pdf} demo={demo} />
     </div>
   );
