@@ -7,7 +7,7 @@ import Quadro from '@/components/QuadroComissoes';
 // financeiro deixar a regra de cada contrato certa antes de pagar.
 export default async function ComissaoPorContrato() {
   const { supabase, baseFin } = await requireFinanceiro();
-  const { error, reps, contratos, linhas, historico } = await carregarQuadro(supabase);
+  const { error, reps, agencias, contratos, linhas, historico } = await carregarQuadro(supabase);
   const aDefinir = new Set(linhas.filter((l) => l.papel === 'vendedor' && l.percentual == null).map((l) => l.contrato_id)).size;
 
   return (
@@ -23,7 +23,7 @@ export default async function ComissaoPorContrato() {
         &quot;A definir&quot; até a divisão ser salva e depois passam para &quot;Dois vendedores&quot;. Ao salvar, a comissão é recalculada na hora em{' '}
         <Link href={`${baseFin}/comissoes`}>Comissões</Link> e no app do vendedor.
       </p>
-      <Quadro reps={reps} contratos={contratos} linhas={linhas} historico={historico} />
+      <Quadro reps={reps} agencias={agencias} contratos={contratos} linhas={linhas} historico={historico} />
     </>
   );
 }

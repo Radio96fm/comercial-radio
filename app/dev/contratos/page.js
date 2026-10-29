@@ -6,7 +6,7 @@ import Quadro from '@/components/QuadroComissoes';
 // contrato de uma coluna para outra troca o vendedor e a comissão.
 export default async function ContratosDev() {
   const { supabase } = await requireDev();
-  const { error, reps, contratos, linhas, historico } = await carregarQuadro(supabase);
+  const { error, reps, agencias, contratos, linhas, historico } = await carregarQuadro(supabase);
 
   return (
     <>
@@ -19,7 +19,7 @@ export default async function ContratosDev() {
         Arraste um contrato para outro vendedor. Quando a regra da comissão for conhecida, o sistema só pede confirmação.
         Toque em um contrato para arrumar a conta (dividir entre vendedores, % e desconto antes) com a prévia antes de salvar.
       </p>
-      <Quadro reps={reps} contratos={contratos} linhas={linhas} historico={historico} />
+      <Quadro reps={reps} agencias={agencias} contratos={contratos} linhas={linhas} historico={historico} />
     </>
   );
 }

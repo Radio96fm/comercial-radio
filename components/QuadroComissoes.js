@@ -58,7 +58,7 @@ const CSS = `
 .q-acoes { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
 `;
 
-export default function Quadro({ reps, contratos, linhas, historico = [] }) {
+export default function Quadro({ reps, agencias = [], contratos, linhas, historico = [] }) {
   const router = useRouter();
   const [pend, iniciar] = useTransition();
   const [alvo, setAlvo] = useState(null);
@@ -67,7 +67,8 @@ export default function Quadro({ reps, contratos, linhas, historico = [] }) {
   // última gravação, para poder desfazer
   const [desfazer, setDesfazer] = useState(null);
 
-  const rep = useMemo(() => Object.fromEntries(reps.map((r) => [r.id, r])), [reps]);
+  const rep = useMemo(() => Object.fromEntries([...reps, ...agencias].map((r) => [r.id, r])), [reps, agencias]);
+  const ehAgencia = (id) => rep[id]?.tipo === 'agencia';
   const diretor = reps.find((r) => r.diretor);
   const linhasDe = useMemo(() => {
     const m = {};
@@ -80,29 +81,34 @@ export default function Quadro({ reps, contratos, linhas, historico = [] }) {
     return m;
   }, [historico]);
 
-  // colunas: a definir, dois vendedores, um por vendedor, sem vendedor
+  // colunas: a definir, dois vendedores, um por vendedor, uma por agência, venda direta
   const colunas = useMemo(() => {
-    const porRep = Object.fromEntries(reps.map((r) => [r.id, []]));
+    const porRep = Object.fromEntries([...reps, ...agencias].map((r) => [r.id, []]));
     const divididos = Object.fromEntries(reps.map((r) => [r.id, 0]));
     const definir = [];
     const dois = [];
     const sem = [];
     for (const c of contratos) {
       const vend = (linhasDe[c.id] || []).filter((l) => l.papel === 'vendedor');
-      if (!vend.length) sem.push(c);
+      // sem comissão lançada: vai para a agência do contrato, se tiver
+      if (!vend.length) (porRep[c.representante_id] && rep[c.representante_id]?.tipo === 'agencia' ? porRep[c.representante_id] : sem).push(c);
       else if (vend.some((l) => l.percentual == null)) definir.push(c);
       else if (vend.length > 1) { dois.push(c); vend.forEach((l) => { if (l.representante_id in divididos) divididos[l.representante_id] += 1; }); }
       else porRep[vend[0].representante_id]?.push(c);
     }
     const cols = reps.map((r, i) => ({ id: r.id, titulo: primeiroNome(r.nome), rep: r, itens: porRep[r.id], divididos: divididos[r.id], h: (i * 47 + 20) % 360 }))
       .sort((a, b) => b.itens.length - a.itens.length);
+    const colsAg = agencias.filter((a) => porRep[a.id].length)
+      .map((a) => ({ id: a.id, titulo: primeiroNome(a.nome), rep: a, agencia: true, sub: `Agência · ${porRep[a.id].length === 1 ? '1 contrato' : `${porRep[a.id].length} contratos`}`, itens: porRep[a.id], h: 190 }))
+      .sort((a, b) => b.itens.length - a.itens.length);
     return [
       { id: DEFINIR, titulo: 'A definir', sub: 'Dois vendedores, falta dividir a comissão', itens: definir, h: 40 },
       { id: DOIS, titulo: 'Dois vendedores', sub: 'Comissão já dividida entre os dois', itens: dois, h: 280 },
       ...cols,
-      { id: SEM, titulo: 'Sem vendedor', sub: 'Venda direta e agências', itens: sem, h: 220 },
+      { id: SEM, titulo: 'Venda direta', sub: 'Feita pela própria emissora, sem vendedor nem agência', itens: sem, h: 220 },
+      ...colsAg,
     ];
-  }, [reps, contratos, linhasDe]);
+  }, [reps, agencias, rep, contratos, linhasDe]);
 
   const comissaoMes = (c, repId) => (linhasDe[c.id] || []).filter((l) => l.representante_id === repId)
     .reduce((s, l) => s + (Number(c.valor_mensal) * (pctEfetivo(l) || 0)) / 100, 0);
@@ -131,7 +137,8 @@ export default function Quadro({ reps, contratos, linhas, historico = [] }) {
     if (para === DEFINIR || para === DOIS) { editar(c, null, { aviso: 'Para dividir a comissão, adicione o outro vendedor e preencha o % de cada um.' }); return; }
     const atuais = linhasDe[c.id] || [];
     const vend = atuais.filter((l) => l.papel === 'vendedor');
-    if (para === SEM) { editar(c, [], { aviso: 'O contrato vai ficar sem vendedor.' }); return; }
+    if (para === SEM) { editar(c, [], { aviso: 'O contrato vai ficar como venda direta, sem comissão de vendedor.' }); return; }
+    if (ehAgencia(para)) { editar(c, [{ representante_id: para, percentual: '', desconto: 0 }], { aviso: 'Preencha a comissão da agência.' }); return; }
     // vendedor sozinho com regra conhecida: só confirma
     if (vend.length <= 1 && vend.every((l) => l.percentual != null)) {
       const dir = atuais.filter((l) => l.papel === 'diretor');
@@ -239,16 +246,18 @@ export default function Quadro({ reps, contratos, linhas, historico = [] }) {
               return (
                 <div key={c.id} className="q-card" draggable
                   onDragStart={(e) => e.dataTransfer.setData('text/plain', JSON.stringify({ id: c.id, de: col.id }))}
-                  onClick={() => editar(c)}>
+                  onClick={() => editar(c, col.agencia && !vend.length ? [{ representante_id: col.id, percentual: '', desconto: 0 }] : null)}>
                   <small>Nº {c.numero} · {c.radio}</small>
                   <b>{c.cliente_nome}</b>
                   <small>{moeda(c.valor_mensal)}/mês · até {c.data_fim.split('-').reverse().join('/')}</small>
-                  {col.rep && <div className="q-com">Comissão {moeda(comissaoMes(c, col.id))}/mês · {vend.map(rotuloRegra).join(' + ')}</div>}
+                  {col.rep && (vend.length
+                    ? <div className="q-com">Comissão {moeda(comissaoMes(c, col.id))}/mês · {vend.map(rotuloRegra).join(' + ')}</div>
+                    : <div className="q-def">Comissão da agência a definir · toque para lançar</div>)}
                   {col.id === DOIS && vend.map((l) => (
                     <div key={l.representante_id} className="q-com">{primeiroNome(rep[l.representante_id]?.nome || '?')}: {rotuloRegra(l)} · {moeda(comissaoMes(c, l.representante_id))}/mês</div>
                   ))}
                   {col.id === DEFINIR && <div className="q-def">{vend.map((l) => primeiroNome(rep[l.representante_id]?.nome || '?')).join(' + ')} · toque para dividir</div>}
-                  {col.id === SEM && <small>{c.agencia_nome ? `Agência: ${c.agencia_nome}` : 'Venda direta'}</small>}
+                  {col.id === SEM && c.agencia_nome && <small>Agência: {c.agencia_nome}</small>}
                 </div>
               );
             })}
@@ -292,8 +301,9 @@ export default function Quadro({ reps, contratos, linhas, historico = [] }) {
                     <div key={i} className="q-pessoa">
                       <div className="q-pessoa-topo">
                         <select value={l.representante_id} onChange={(e) => mudarVend(i, 'representante_id', e.target.value)} aria-label="Vendedor">
-                          <option value="">Escolha o vendedor...</option>
-                          {reps.map((r) => <option key={r.id} value={r.id}>{r.nome}</option>)}
+                          <option value="">Escolha o vendedor ou a agência...</option>
+                          <optgroup label="Vendedores">{reps.map((r) => <option key={r.id} value={r.id}>{r.nome}</option>)}</optgroup>
+                          {agencias.length > 0 && <optgroup label="Agências">{agencias.map((r) => <option key={r.id} value={r.id}>{r.nome}</option>)}</optgroup>}
                         </select>
                         <button type="button" className="btn peq cinza" title="Tirar este vendedor do contrato"
                           onClick={() => setModal((m) => ({ ...m, vend: m.vend.filter((_, j) => j !== i) }))}>Tirar</button>
