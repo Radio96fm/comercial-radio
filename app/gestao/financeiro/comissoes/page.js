@@ -28,6 +28,7 @@ export default async function Comissoes({ searchParams }) {
   const whats = (v) => (v.telefone ? linkWhatsApp(v.telefone, mensagemComissao(v, per, `${site}${pdf(v)}`)) : null);
   const total = lista.reduce((s, v) => s + v.comissao, 0);
   const recebido = lista.reduce((s, v) => s + v.recebido, 0);
+  const previsto = lista.reduce((s, v) => s + v.previsto, 0);
   const faltam = lista.filter((v) => v.etapa !== 'paga' && v.comissao > 0);
   const atalhos = fechamentos(5, 1);
   const um = vend ? lista[0] : null;
@@ -65,6 +66,7 @@ export default async function Comissoes({ searchParams }) {
         <div><small>{per.rotulo}</small><b>{per.faixa}</b></div>
         <div><small>Recebido dos clientes</small><b className="num">{moeda(recebido)}</b></div>
         <div className="destaque"><small>Total de comissões</small><b className="num">{moeda(total)}</b></div>
+        <div><small>Prevista (parcelas ainda não pagas)</small><b className="num">{moeda(previsto)}</b></div>
         <div><small>Falta pagar</small><b className="num">{faltam.length} vendedor{faltam.length === 1 ? '' : 'es'}</b></div>
       </div>
       {!per.mes && <div className="alerta info">Para registrar nota fiscal e pagamento, escolha um fechamento (dia 21 a dia {DIA_CORTE}) nos botões acima.</div>}
@@ -142,6 +144,21 @@ export default async function Comissoes({ searchParams }) {
                 </tbody>
               </table></div>
             )}
+
+            {um.aReceber.length > 0 && (
+              <>
+                <h3 style={{ marginTop: 18 }}>Previsto: parcelas que vencem no período e ainda não foram pagas</h3>
+                <div className="tabela"><table>
+                  <thead><tr><th>Cliente</th><th>Contrato</th><th>Parcela</th><th>Vence em</th><th>Valor</th><th>Comissão prevista</th></tr></thead>
+                  <tbody>
+                    {um.aReceber.map((p) => (
+                      <tr key={p.id}><td>{p.contrato.cliente_nome}</td><td>Nº {p.contrato.numero}</td><td>{p.numero}ª{p.contrato.meses ? ` de ${p.contrato.meses}` : ''}</td><td>{data(p.vencimento)}</td><td>{moeda(p.valor)}</td><td>{moeda(p.comissao)}</td></tr>
+                    ))}
+                    <tr className="linha-total"><td colSpan={4}>Total previsto</td><td>{moeda(um.aReceber.reduce((s, p) => s + Number(p.valor), 0))}</td><td>{moeda(um.previsto)}</td></tr>
+                  </tbody>
+                </table></div>
+              </>
+            )}
           </div>
         </>
       ) : !lista.length ? <div className="vazio">Nenhuma comissão neste período.</div> : (
@@ -153,6 +170,7 @@ export default async function Comissoes({ searchParams }) {
                 <ChevronRight className="ico" />
               </Link>
               <div className="com-card-valor num">{moeda(v.comissao)}</div>
+              {v.previsto > 0 && <small className="muted">+ {moeda(v.previsto)} previstos em {v.aReceber.length} parcela{v.aReceber.length === 1 ? '' : 's'} a receber</small>}
               <span className={`badge ${ETAPAS_COMISSAO[v.etapa][1]}`}>{ETAPAS_COMISSAO[v.etapa][0]}</span>
               <div className="com-card-acoes">
                 <Link href={`?${qp({ vendedor: v.id })}`} className="btn peq">Ver relatório</Link>
