@@ -11,7 +11,7 @@ export default async function ContratosDev() {
     supabase.from('contratos')
       .select('id, numero, cliente_nome, valor_mensal, data_inicio, data_fim, status, agencia_nome, importado, radio:radios(nome)')
       .in('status', ['ativo', 'pendente']).gte('data_fim', hojeISO()).order('numero'),
-    supabase.from('contrato_comissoes').select('contrato_id, representante_id, papel, percentual, base, regra'),
+    supabase.from('contrato_comissoes').select('contrato_id, representante_id, papel, percentual, base, regra').eq('vigente', true),
   ]);
 
   return (

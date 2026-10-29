@@ -27,6 +27,7 @@ create table if not exists public.contrato_comissoes (
   percentual        numeric(5,2) check (percentual is null or (percentual >= 0 and percentual <= 100)),
   base              text not null default 'total' check (base in ('total', 'liquido')),
   regra             text,
+  vigente           boolean not null default true,  -- false = saiu do contrato (fica o histórico)
   updated_at        timestamptz not null default now(),
   unique (contrato_id, representante_id, papel)
 );
@@ -40,7 +41,7 @@ create policy contrato_comissoes_ler on public.contrato_comissoes for select to 
 );
 drop policy if exists contrato_comissoes_dev on public.contrato_comissoes;
 create policy contrato_comissoes_dev on public.contrato_comissoes for all to authenticated using (public.is_dev()) with check (public.is_dev());
-grant select, insert, update, delete on public.contrato_comissoes to authenticated;
+grant select, insert, update on public.contrato_comissoes to authenticated;
 
 -- O vendedor enxerga o próprio vínculo (para achar as comissões dele)
 drop policy if exists representantes_proprio on public.representantes;
@@ -73,7 +74,7 @@ drop policy if exists contrato_programas_ler on public.contrato_programas;
 create policy contrato_programas_ler on public.contrato_programas for select to authenticated using (public.usuario_ativo());
 drop policy if exists contrato_programas_gestor on public.contrato_programas;
 create policy contrato_programas_gestor on public.contrato_programas for all to authenticated using (public.is_gestor()) with check (public.is_gestor());
-grant select, insert, update, delete on public.contrato_programas to authenticated;
+grant select, insert, update on public.contrato_programas to authenticated;
 
 create or replace view public.programas_ocupacao with (security_invoker = true) as
 select p.id, p.radio_id, p.nome, p.apresentador, p.dias, p.horario_inicio, p.horario_fim, p.descricao, p.cotas_total, p.valor_cota, p.descricao_cota, p.ativo, p.created_at,
@@ -103,11 +104,17 @@ declare
 begin
   if not public.is_dev() then raise exception 'Só o desenvolvedor pode mudar a comissão de um contrato.'; end if;
   if jsonb_typeof(p_linhas) <> 'array' or jsonb_array_length(p_linhas) = 0 then raise exception 'Informe quem ganha a comissão.'; end if;
-  delete from public.contrato_comissoes where contrato_id = p_contrato;
-  insert into public.contrato_comissoes (contrato_id, representante_id, papel, percentual, base, regra)
+  -- quem saiu do contrato fica guardado como não vigente
+  update public.contrato_comissoes set vigente = false, updated_at = now()
+   where contrato_id = p_contrato
+     and (representante_id, papel) not in (
+       select (l->>'representante_id')::uuid, coalesce(l->>'papel', 'vendedor') from jsonb_array_elements(p_linhas) l);
+  insert into public.contrato_comissoes (contrato_id, representante_id, papel, percentual, base, regra, vigente)
   select p_contrato, (l->>'representante_id')::uuid, coalesce(l->>'papel', 'vendedor'),
-         nullif(l->>'percentual', '')::numeric, coalesce(l->>'base', 'total'), nullif(trim(p_regra), '')
-    from jsonb_array_elements(p_linhas) l;
+         nullif(l->>'percentual', '')::numeric, coalesce(l->>'base', 'total'), nullif(trim(p_regra), ''), true
+    from jsonb_array_elements(p_linhas) l
+  on conflict (contrato_id, representante_id, papel) do update
+    set percentual = excluded.percentual, base = excluded.base, regra = excluded.regra, vigente = true, updated_at = now();
 
   select (l->>'representante_id')::uuid into v_rep
     from jsonb_array_elements(p_linhas) l where coalesce(l->>'papel', 'vendedor') = 'vendedor' limit 1;
