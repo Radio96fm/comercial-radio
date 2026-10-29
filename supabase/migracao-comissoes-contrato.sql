@@ -128,3 +128,42 @@ begin
 end $f$;
 revoke all on function public.definir_comissao_contrato(uuid, jsonb, text) from public, anon;
 grant execute on function public.definir_comissao_contrato(uuid, jsonb, text) to authenticated;
+
+-- ---------------------------------------------------------------- logins provisórios (2026-10-29)
+-- Cada vendedor dos PDFs ganhou um login provisório (profiles.provisorio,
+-- e-mail vendedor.<cpf>@sem-login.radio96fm.com, senha sorteada) para os
+-- contratos aparecerem nos painéis. Os contratos de venda direta e agência
+-- ficam no login provisório "Venda direta / agências" (papel financeiro, fora
+-- das listas de vendedores e de comissão). Quando o vendedor se cadastra pelo
+-- link com o CPF, os contratos passam para o login dele e o provisório é
+-- desativado.
+alter table public.profiles add column if not exists provisorio boolean not null default false;
+
+create or replace function public.concluir_cadastro(p_documento text) returns int
+language plpgsql security definer set search_path = public as $f$
+declare
+  v_uid uuid := auth.uid();
+  v_dig text := nullif(regexp_replace(coalesce(p_documento, ''), '\D', '', 'g'), '');
+  v_rep uuid;
+  v_antigo uuid;
+  n int;
+begin
+  if v_uid is null or not public.usuario_ativo() then raise exception 'Sem permissão'; end if;
+  update public.profiles set documento = left(trim(p_documento), 30) where id = v_uid;
+  if v_dig is null then return 0; end if;
+  select r.id, r.profile_id into v_rep, v_antigo from public.representantes r
+    left join public.profiles p on p.id = r.profile_id
+   where r.documento_digitos = v_dig and (r.profile_id is null or p.provisorio) and r.profile_id is distinct from v_uid;
+  if v_rep is null then return 0; end if;
+  n := privado.vincular_representante(v_rep, v_uid);
+  if v_antigo is not null then
+    perform set_config('app.vinculo_representante', '1', true);
+    update public.contratos set vendedor_id = v_uid where vendedor_id = v_antigo;
+    update public.clientes set vendedor_id = v_uid where vendedor_id = v_antigo;
+    perform set_config('app.vinculo_representante', '', true);
+    update public.profiles set ativo = false where id = v_antigo;
+  end if;
+  return n;
+end $f$;
+revoke all on function public.concluir_cadastro(text) from public, anon;
+grant execute on function public.concluir_cadastro(text) to authenticated;
