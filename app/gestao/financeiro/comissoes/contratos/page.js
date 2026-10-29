@@ -7,7 +7,7 @@ import Quadro from '@/components/QuadroComissoes';
 // financeiro deixar a regra de cada contrato certa antes de pagar.
 export default async function ComissaoPorContrato() {
   const { supabase, baseFin } = await requireFinanceiro();
-  const { error, reps, contratos, linhas } = await carregarQuadro(supabase);
+  const { error, reps, contratos, linhas, historico } = await carregarQuadro(supabase);
   const aDefinir = new Set(linhas.filter((l) => l.papel === 'vendedor' && l.percentual == null).map((l) => l.contrato_id)).size;
 
   return (
@@ -18,10 +18,12 @@ export default async function ComissaoPorContrato() {
       </div>
       {error && <div className="alerta erro">Não foi possível ler as comissões dos contratos.</div>}
       <p className="muted" style={{ marginTop: 0 }}>
-        Cada coluna é um vendedor. Toque em um contrato para ver e mudar a regra (percentual, se é do valor cheio ou depois dos 2%, e a regra escrita).
-        Arraste para outro vendedor para trocar quem vendeu. Ao salvar, a comissão é recalculada na hora em <Link href={`${baseFin}/comissoes`}>Comissões</Link> e no app do vendedor.
+        Cada coluna é um vendedor. Toque em um contrato para arrumar a comissão: o % de cada vendedor, quanto se tira do valor antes
+        (valor cheio, depois dos 2% ou outro) e a observação. A prévia mostra a conta antes de salvar. Contratos com dois vendedores ficam em
+        &quot;A definir&quot; até a divisão ser salva e depois passam para &quot;Dois vendedores&quot;. Ao salvar, a comissão é recalculada na hora em{' '}
+        <Link href={`${baseFin}/comissoes`}>Comissões</Link> e no app do vendedor.
       </p>
-      <Quadro reps={reps} contratos={contratos} linhas={linhas} />
+      <Quadro reps={reps} contratos={contratos} linhas={linhas} historico={historico} />
     </>
   );
 }

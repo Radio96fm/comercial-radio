@@ -6,7 +6,7 @@ import Quadro from '@/components/QuadroComissoes';
 // contrato de uma coluna para outra troca o vendedor e a comissão.
 export default async function ContratosDev() {
   const { supabase } = await requireDev();
-  const { error, reps, contratos, linhas } = await carregarQuadro(supabase);
+  const { error, reps, contratos, linhas, historico } = await carregarQuadro(supabase);
 
   return (
     <>
@@ -16,10 +16,10 @@ export default async function ContratosDev() {
       </div>
       {error && <div className="alerta erro">Falta criar a tabela de comissão por contrato no Supabase.</div>}
       <p className="muted" style={{ marginTop: 0 }}>
-        Arraste um contrato para outro vendedor (no celular, toque nele). Quando a regra da comissão for conhecida, o sistema só pede confirmação.
-        Quando não for (contrato dividido, regra a definir), ele trava e pede a regra antes de gravar.
+        Arraste um contrato para outro vendedor. Quando a regra da comissão for conhecida, o sistema só pede confirmação.
+        Toque em um contrato para arrumar a conta (dividir entre vendedores, % e desconto antes) com a prévia antes de salvar.
       </p>
-      <Quadro reps={reps} contratos={contratos} linhas={linhas} />
+      <Quadro reps={reps} contratos={contratos} linhas={linhas} historico={historico} />
     </>
   );
 }
