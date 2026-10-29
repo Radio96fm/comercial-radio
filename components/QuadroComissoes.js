@@ -3,7 +3,7 @@ import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { moeda } from '@/lib/format';
 import { pctEfetivo, rotuloRegra } from '@/lib/comissao';
-import { salvarComissaoContrato } from '../actions';
+import { salvarComissaoContrato } from '@/lib/acoesComissao';
 
 const DEFINIR = 'definir';
 const SEM = 'sem';

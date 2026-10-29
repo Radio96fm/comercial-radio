@@ -37,7 +37,10 @@ export default async function Comissoes({ searchParams }) {
     <>
       <div className="cabecalho">
         <h1>Comissões</h1>
-        <BotaoPlanilha href={`${baseFin}/exportar?${qp({ tipo: 'comissoes', ...(vend ? { vendedor: vend } : {}) })}`} />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Link href={`${baseFin}/comissoes/contratos`} className="btn peq sec">Regra contrato por contrato</Link>
+          <BotaoPlanilha href={`${baseFin}/exportar?${qp({ tipo: 'comissoes', ...(vend ? { vendedor: vend } : {}) })}`} />
+        </div>
       </div>
 
       <div className="card filtro-com">

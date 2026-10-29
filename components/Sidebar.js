@@ -22,7 +22,8 @@ const ITENS = [
 
 const FINANCEIRO = [
   ['/gestao/financeiro', LayoutDashboard, 'Resumo financeiro', true],
-  ['/gestao/financeiro/comissoes', BadgePercent, 'Comissões'],
+  ['/gestao/financeiro/comissoes', BadgePercent, 'Comissões', true],
+  ['/gestao/financeiro/comissoes/contratos', Columns3, 'Comissão por contrato'],
   ['/gestao/financeiro/parcelas', Wallet, 'Parcelas / boletos'],
   ['/gestao/financeiro/clientes', Building2, 'Clientes'],
   ['/gestao/financeiro/previsao', TrendingUp, 'Previsão'],

@@ -82,14 +82,3 @@ export async function salvarElevenLabs(_prev, fd) {
   revalidatePath('/dev/integracoes');
   return { ok: `ElevenLabs salva.${conta}` };
 }
-
-// Quadro de contratos: troca quem ganha comissão num contrato
-// linhas: [{ representante_id, papel, percentual, base }]
-export async function salvarComissaoContrato({ contratoId, linhas, regra }) {
-  const { supabase } = await requireDev();
-  if (!contratoId || !Array.isArray(linhas) || !linhas.length) return { erro: 'Informe quem ganha a comissão.' };
-  const { error } = await supabase.rpc('definir_comissao_contrato', { p_contrato: contratoId, p_linhas: linhas, p_regra: regra || '' });
-  if (error) return { erro: error.message };
-  revalidatePath('/dev/contratos');
-  return { ok: true };
-}
