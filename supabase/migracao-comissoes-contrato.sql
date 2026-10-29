@@ -121,8 +121,9 @@ begin
     from jsonb_array_elements(p_linhas) l where coalesce(l->>'papel', 'vendedor') = 'vendedor' limit 1;
   select profile_id into v_profile from public.representantes where id = v_rep;
   perform set_config('app.vinculo_representante', '1', true);
-  -- daqui em diante a comissão deste contrato segue só a tabela (importado = true)
-  update public.contratos set representante_id = v_rep, vendedor_id = coalesce(v_profile, vendedor_id), importado = true where id = p_contrato;
+  -- daqui em diante a comissão deste contrato segue só a tabela (importado = true);
+  -- sem vendedor na lista, o vendedor do contrato fica como estava
+  update public.contratos set representante_id = coalesce(v_rep, representante_id), vendedor_id = coalesce(v_profile, vendedor_id), importado = true where id = p_contrato;
   update public.clientes set vendedor_id = v_profile
    where v_profile is not null and id = (select cliente_id from public.contratos where id = p_contrato);
   perform set_config('app.vinculo_representante', '', true);
