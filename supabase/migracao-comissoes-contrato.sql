@@ -47,13 +47,14 @@ grant select, insert, update on public.contrato_comissoes to authenticated;
 drop policy if exists representantes_proprio on public.representantes;
 create policy representantes_proprio on public.representantes for select to authenticated using (profile_id = auth.uid());
 
--- Venda nova: o diretor comercial leva 2% sobre o valor cheio
+-- Venda nova: o diretor comercial leva 2% do que sobra depois dos 18% do vendedor (1,64% do valor),
+-- como no relatório da Assessoria Comercial. Contratos emitidos antes de jun/2026 não têm os 2%.
 create or replace function public.contrato_comissao_diretor() returns trigger
 language plpgsql security definer set search_path = public as $f$
 begin
   if not new.importado then
-    insert into public.contrato_comissoes (contrato_id, representante_id, papel, percentual, base)
-    select new.id, r.id, 'diretor', 2, 'total' from public.representantes r where r.diretor
+    insert into public.contrato_comissoes (contrato_id, representante_id, papel, percentual, desconto, base)
+    select new.id, r.id, 'diretor', 2, 18, 'liquido' from public.representantes r where r.diretor
     on conflict do nothing;
   end if;
   return new;
