@@ -3,6 +3,7 @@ import { requireFinanceiro } from '@/lib/auth';
 import { nomeMes } from '@/lib/ganhos';
 import { hojeISO, somarDias, somarMeses, moeda } from '@/lib/format';
 import Filtros from '../Filtros';
+import { comHistorico } from '@/lib/historico';
 
 const soma = (l) => l.reduce((s, p) => s + Number(p.valor), 0);
 const FAIXAS = [[1, 15, 'Até 15 dias'], [16, 30, '16 a 30 dias'], [31, 60, '31 a 60 dias'], [61, 99999, 'Mais de 60 dias']];
@@ -23,10 +24,12 @@ export default async function Previsao({ searchParams }) {
   if (vend) qp = qp.eq('contrato.vendedor_id', vend);
   let qc = supabase.from('contratos').select('valor_mensal, data_fim, cliente_nome').eq('status', 'ativo').gte('data_fim', mes0).lte('data_fim', fim);
   if (vend) qc = qc.eq('vendedor_id', vend);
-  const [{ data: parcelas }, { data: terminam }, { data: radios }, { data: vendedores }] = await Promise.all([
+  const [{ data: parcelas }, { data: terminam }, { data: radios }, { data: vendedores }, { data: historico }] = await Promise.all([
     qp, qc,
     supabase.from('radios').select('id, nome, cor').order('ordem'),
     supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
+    // mês corrente antes do sistema (não é separado por vendedor)
+    vend ? { data: [] } : supabase.from('faturamento_historico').select('radio_id, mes, valor').eq('mes', mes0.slice(0, 7)),
   ]);
   const lista = parcelas || [];
 
@@ -40,10 +43,12 @@ export default async function Previsao({ searchParams }) {
       recebido: soma(doMes.filter((p) => p.status === 'pago')),
       falta: soma(abertas),
       aEmitir: abertas.filter((p) => p.status === 'a_emitir').length,
-      porRadio: (radios || []).map((r) => soma(doMes.filter((p) => p.contrato.radio_id === r.id))),
+      porRadio: (radios || []).map((r) => soma(doMes.filter((p) => p.contrato.radio_id === r.id)) || (doMes.length ? 0 : soma((historico || []).filter((h) => h.mes === chave && h.radio_id === r.id)))),
       saem: (terminam || []).filter((c) => c.data_fim.slice(0, 7) === chave),
     };
   });
+  // mês sem parcela no sistema: usa o histórico dos contratos em PDF (já recebido)
+  comHistorico(meses, historico).forEach((h, i) => { if (h.historico) Object.assign(meses[i], { previsto: h.previsto, recebido: h.recebido, falta: 0 }); });
   const max = Math.max(1, ...meses.map((m) => m.previsto));
   const totalFalta = meses.reduce((s, m) => s + m.falta, 0);
 

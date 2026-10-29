@@ -7,6 +7,7 @@ import { lerPeriodo, comissoesDoMes, mensagemCobranca } from '@/lib/financeiro';
 import { mesDaComissao, nomeMes, DIA_CORTE } from '@/lib/ganhos';
 import { hojeISO, somarDias, somarMeses, moeda, data, linkWhatsApp } from '@/lib/format';
 import Tendencia from '@/components/Tendencia';
+import { comHistorico } from '@/lib/historico';
 import Filtros from './Filtros';
 
 const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -40,7 +41,7 @@ export default async function ResumoFinanceiro({ searchParams }) {
     .in('status', ['ativo', 'pendente']);
   if (vend) qContratos = qContratos.eq('vendedor_id', vend);
 
-  const [{ data: vendedores }, { data: radios }, { data: contratos }, { data: serieP }, { data: abertas }, { data: pagasPer }, comissoes] = await Promise.all([
+  const [{ data: vendedores }, { data: radios }, { data: contratos }, { data: serieP }, { data: abertas }, { data: pagasPer }, comissoes, { data: historico }] = await Promise.all([
     supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
     supabase.from('radios').select('id, nome, cor').order('ordem'),
     qContratos,
@@ -52,6 +53,8 @@ export default async function ResumoFinanceiro({ searchParams }) {
       .in('status', ['a_emitir', 'emitido']).lte('vencimento', somarDias(hoje, 30)).order('vencimento'),
     parcelas('valor, contrato:contratos!inner(status, vendedor_id)').eq('status', 'pago').gte('pago_em', per.de).lte('pago_em', per.ate),
     comissoesDoMes(supabase, mesCom, vend || null),
+    // meses antes do sistema (não é separado por vendedor)
+    vend ? { data: [] } : supabase.from('faturamento_historico').select('radio_id, mes, valor').gte('mes', inicioSerie.slice(0, 7)),
   ]);
 
   // contratos
@@ -63,12 +66,12 @@ export default async function ResumoFinanceiro({ searchParams }) {
   const terminando = ativos.filter((c) => c.data_fim >= hoje && c.data_fim <= somarDias(hoje, 30)).sort((a, b) => a.data_fim.localeCompare(b.data_fim));
 
   // recebido x previsto por mês
-  const serie = Array.from({ length: 6 }, (_, i) => {
+  const serie = comHistorico(Array.from({ length: 6 }, (_, i) => {
     const chave = somarMeses(`${mesAtual}-01`, i - 5).slice(0, 7);
     const recebido = soma((serieP || []).filter((p) => p.status === 'pago' && p.pago_em?.slice(0, 7) === chave));
     const previsto = soma((serieP || []).filter((p) => p.vencimento.slice(0, 7) === chave));
     return { chave, rotulo: MES[Number(chave.slice(5)) - 1], recebido, previsto };
-  });
+  }), historico);
   const maxSerie = Math.max(1, ...serie.map((s) => Math.max(s.recebido, s.previsto)));
   const atual = serie[5];
   const anterior = serie[4];
@@ -148,7 +151,7 @@ export default async function ResumoFinanceiro({ searchParams }) {
             <div>
               <div className="b-eyebrow">Recebido por mês</div>
               <div className="b-medio num">{moeda(serie.reduce((s, m) => s + m.recebido, 0))}</div>
-              <div className="b-sub">nos últimos 6 meses · a barra clara é o que estava previsto</div>
+              <div className="b-sub">nos últimos 6 meses · a barra clara é o que estava previsto{serie.some((m) => m.historico) ? ' · meses antes do sistema vêm dos contratos em PDF' : ''}</div>
             </div>
             {anterior.recebido > 0 && (
               <span className={`var-chip ${variacao >= 0 ? 'sobe' : 'desce'}`}><TrendingUp size={14} />{variacao >= 0 ? '+' : ''}{Math.round(variacao)}%</span>

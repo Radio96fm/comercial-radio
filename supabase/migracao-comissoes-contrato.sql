@@ -167,3 +167,28 @@ begin
 end $f$;
 revoke all on function public.concluir_cadastro(text) from public, anon;
 grant execute on function public.concluir_cadastro(text) to authenticated;
+
+-- ---------------------------------------------------------------- correção dos painéis (2026-10-29)
+-- Com duas ligações entre contratos e programas (programa_id e a tabela
+-- contrato_programas), o PostgREST não sabia qual usar em
+-- "programa:programas(...)" e devolvia 300: painel do gestor e do dono vazios.
+-- contrato_programas fica sem a chave estrangeira para programas.
+alter table public.contrato_programas drop constraint if exists contrato_programas_programa_id_fkey;
+
+-- ---------------------------------------------------------------- faturamento antes do sistema (2026-10-29)
+-- Faturamento por mês e rádio montado dos contratos em PDF (beMidia, 2025 em
+-- diante, por competência: valor do contrato dividido pelos meses de
+-- vigência). Os gráficos usam esta tabela só nos meses sem parcela no sistema.
+-- Os valores foram gravados direto no banco (jan/2025 a out/2026).
+create table if not exists public.faturamento_historico (
+  radio_id   uuid not null references public.radios(id) on delete cascade,
+  mes        text not null check (mes ~ '^\d{4}-\d{2}$'),
+  valor      numeric(12,2) not null,
+  contratos  int not null default 0,
+  primary key (radio_id, mes)
+);
+alter table public.faturamento_historico enable row level security;
+drop policy if exists faturamento_historico_ler on public.faturamento_historico;
+create policy faturamento_historico_ler on public.faturamento_historico for select to authenticated using (public.is_financeiro());
+grant select on public.faturamento_historico to authenticated;
+notify pgrst, 'reload schema';
