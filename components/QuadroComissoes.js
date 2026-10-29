@@ -10,6 +10,7 @@ const DOIS = 'dois';
 const SEM = 'sem';
 // padrão: 18% do valor cheio para quem vendeu; o Maycon tira os 2% antes e fica com 40%
 const PADRAO_VENDEDOR = 18;
+const DESC_DIRETOR = 18; // 2% do diretor depois dos 18% do vendedor = 1,64% do valor
 const ehMaycon = (r) => /^maycon douglas/i.test(r?.nome || '');
 const regraPadrao = (r) => (ehMaycon(r) ? { percentual: 40, desconto: 2 } : { percentual: PADRAO_VENDEDOR, desconto: 0 });
 const primeiroNome = (n) => n.split(' ').slice(0, 2).join(' ');
@@ -126,6 +127,8 @@ export default function Quadro({ reps, agencias = [], contratos, linhas, histori
       vend,
       comDiretor: !!dir,
       pctDiretor: dir?.percentual ?? 2,
+      // os 2% do diretor saem do que sobra depois dos 18% do vendedor
+      descDiretor: dir ? descontoDe(dir) : DESC_DIRETOR,
       regra: atuais.find((l) => l.regra)?.regra || '',
       ...extra,
     });
@@ -142,7 +145,7 @@ export default function Quadro({ reps, agencias = [], contratos, linhas, histori
     // vendedor sozinho com regra conhecida: só confirma
     if (vend.length <= 1 && vend.every((l) => l.percentual != null)) {
       const dir = atuais.filter((l) => l.papel === 'diretor');
-      const diretorLinhas = dir.length ? dir : diretor ? [{ representante_id: diretor.id, papel: 'diretor', percentual: 2, desconto: 0 }] : [];
+      const diretorLinhas = dir.length ? dir : diretor ? [{ representante_id: diretor.id, papel: 'diretor', percentual: 2, desconto: DESC_DIRETOR }] : [];
       setModal({
         modo: 'confirmar', c, para,
         linhas: [{ representante_id: para, papel: 'vendedor', ...regraPadrao(rep[para]) }, ...diretorLinhas.map(({ representante_id, papel, percentual, desconto, base }) => ({ representante_id, papel, percentual, desconto: descontoDe({ desconto, base }) }))],
@@ -187,7 +190,8 @@ export default function Quadro({ reps, agencias = [], contratos, linhas, histori
     });
     if (modal.comDiretor && diretor) {
       const p = valido(modal.pctDiretor) ? numero(modal.pctDiretor) : 0;
-      pessoas.push({ nome: `${diretor.nome} (diretor)`, regra: rotuloRegra({ percentual: p, desconto: 0 }), p, valor: (mensal * p) / 100 });
+      const pe = pctEfetivo({ percentual: p, desconto: numero(modal.descDiretor || 0) });
+      pessoas.push({ nome: `${diretor.nome} (diretor)`, regra: rotuloRegra({ percentual: p, desconto: numero(modal.descDiretor || 0) }), p: pe, valor: (mensal * pe) / 100 });
     }
     const somaVend = pessoas.slice(0, modal.vend.length).reduce((s, x) => s + (x.p || 0), 0);
     const total = pessoas.reduce((s, x) => s + x.valor, 0);
@@ -208,7 +212,7 @@ export default function Quadro({ reps, agencias = [], contratos, linhas, histori
     if (tinhaVendedor && !m.vend.length && !window.confirm('Você tirou todos os vendedores: o contrato vai para "Sem vendedor" e ninguém recebe a comissão de vendedor. Continuar?')) return;
     gravar(m.c, [
       ...m.vend.map((l) => ({ representante_id: l.representante_id, papel: 'vendedor', percentual: numero(l.percentual), desconto: numero(l.desconto || 0) })),
-      ...(m.comDiretor && diretor ? [{ representante_id: diretor.id, papel: 'diretor', percentual: numero(m.pctDiretor), desconto: 0 }] : []),
+      ...(m.comDiretor && diretor ? [{ representante_id: diretor.id, papel: 'diretor', percentual: numero(m.pctDiretor), desconto: numero(m.descDiretor || 0) }] : []),
     ], m.regra);
   }
 
@@ -344,7 +348,10 @@ export default function Quadro({ reps, agencias = [], contratos, linhas, histori
                       {diretor.nome} (diretor comercial) recebe
                       <input inputMode="decimal" style={{ width: 70 }} value={modal.pctDiretor} disabled={!modal.comDiretor}
                         onChange={(e) => setModal((m) => ({ ...m, pctDiretor: e.target.value }))} aria-label="% do diretor" />
-                      % do valor cheio
+                      % depois de tirar
+                      <input inputMode="decimal" style={{ width: 60 }} value={modal.descDiretor} disabled={!modal.comDiretor}
+                        onChange={(e) => setModal((m) => ({ ...m, descDiretor: e.target.value }))} aria-label="% tirado antes" />
+                      % (18 = depois da comissão do vendedor; 0 = valor cheio)
                     </label>
                   </div>
                 )}
