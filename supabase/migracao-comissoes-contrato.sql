@@ -199,3 +199,28 @@ notify pgrst, 'reload schema';
 -- contratos.created_at dos importados = data de emissão do PDF (campo "Data:"
 -- do cabeçalho do beMidia), para "vendas no mês" contar a venda e não o início.
 -- Gravado direto no banco com update ... from (values (numero, data)).
+
+-- ---------------------------------------------------------------- comissão flexível (2026-10-29)
+-- desconto: % tirado do valor do contrato antes do percentual (0 = valor
+-- cheio, 2 = depois dos 2%, ou outro). base continua gravada por
+-- compatibilidade ('liquido' quando há desconto). Toda mudança feita pelo
+-- quadro fica em contrato_comissoes_historico (antes, depois, quem, quando),
+-- e o quadro permite voltar para uma versão anterior.
+-- definir_comissao_contrato foi reescrita no banco para gravar desconto e
+-- histórico (ver a função atual no Supabase).
+alter table public.contrato_comissoes add column if not exists desconto numeric(5,2) check (desconto is null or (desconto >= 0 and desconto < 100));
+update public.contrato_comissoes set desconto = case when base = 'liquido' then 2 else 0 end where desconto is null;
+create table if not exists public.contrato_comissoes_historico (
+  id          uuid primary key default gen_random_uuid(),
+  contrato_id uuid not null references public.contratos(id) on delete cascade,
+  antes       jsonb not null default '[]',
+  depois      jsonb not null default '[]',
+  regra       text,
+  feito_por   uuid references public.profiles(id) on delete set null,
+  feito_em    timestamptz not null default now()
+);
+create index if not exists contrato_comissoes_historico_contrato on public.contrato_comissoes_historico (contrato_id, feito_em desc);
+alter table public.contrato_comissoes_historico enable row level security;
+drop policy if exists contrato_comissoes_historico_ler on public.contrato_comissoes_historico;
+create policy contrato_comissoes_historico_ler on public.contrato_comissoes_historico for select to authenticated using (public.is_dev() or public.is_financeiro());
+grant select on public.contrato_comissoes_historico to authenticated;
