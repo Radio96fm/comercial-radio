@@ -66,6 +66,10 @@ function atualizar() {
 }
 
 app.whenReady().then(() => {
+  // o nome do programa tem acento ("Rádio") e vai no User-Agent; o servidor de login
+  // recusa bytes fora do ASCII ali, então o programa se identifica só com ASCII
+  app.userAgentFallback = app.userAgentFallback
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, '');
   Menu.setApplicationMenu(Menu.buildFromTemplate([
     { label: 'Programa', submenu: [
       { label: 'Recarregar', accelerator: 'F5', click: () => janela?.webContents.reload() },
