@@ -1,4 +1,5 @@
 import { requireFinanceiro } from '@/lib/auth';
+import { radioAtual } from '@/lib/radio';
 import FormAcao from '@/components/FormAcao';
 import BotaoEnviar from '@/components/BotaoEnviar';
 import { BANCOS, SERVICOS, nomeBanco } from '@/lib/banco';
@@ -15,10 +16,12 @@ function Situacao({ ok, texto }) {
 // criptografados no servidor e nenhuma tela lê de volta: aqui só aparece "cadastrado".
 export default async function Banco() {
   const { supabase } = await requireFinanceiro();
+  const { radio } = await radioAtual(supabase);
   const [{ data: b, error }, { data: historico }] = await Promise.all([
-    supabase.rpc('banco_situacao'),
-    supabase.from('banco_historico').select('quando, acao, quem:profiles(nome)').order('quando', { ascending: false }).limit(15),
+    supabase.rpc('banco_situacao', { p_radio: radio?.id }),
+    supabase.from('banco_historico').select('quando, acao, quem:profiles(nome)').eq('radio_id', radio?.id).order('quando', { ascending: false }).limit(15),
   ]);
+  const R = <input type="hidden" name="radio_id" value={radio?.id || ''} />;
   if (error || !b) return <div className="alerta erro">Não consegui abrir a configuração do banco. {error?.message}</div>;
 
   const hoje = hojeISO();
@@ -29,9 +32,12 @@ export default async function Banco() {
   return (
     <>
       <div className="cabecalho">
-        <h1>Configurar banco</h1>
+        <h1>Banco da {radio?.nome}</h1>
         <Situacao ok={false} texto={completo ? 'Cadastro completo · integração ainda não ativada' : 'Integração ainda não ativada'} />
       </div>
+      <p className="muted">
+        <b>{radio?.razao_social || radio?.nome}{radio?.cnpj ? ` · CNPJ ${radio.cnpj}` : ''}</b>. Cada rádio tem a sua conta, as suas chaves e o seu certificado: para configurar a outra, troque a rádio no topo.
+      </p>
       <p className="muted">
         Aqui ficam os dados da API do banco para o sistema mostrar saldo, extrato, boletos e Pix.
         O Client Secret, o certificado e a senha ficam guardados criptografados no servidor, nunca no computador, e não aparecem de volta na tela.
@@ -40,6 +46,7 @@ export default async function Banco() {
       <div className="card">
         <h2>Conta e acesso à API</h2>
         <FormAcao action={salvarBanco}>
+          {R}
           <div className="form-grid">
             <div className="campo"><label>Banco</label>
               <select name="banco" defaultValue={b.banco || 'bradesco'}>
@@ -89,8 +96,9 @@ export default async function Banco() {
             {certAviso && <><br /><b style={{ color: 'var(--vermelho)' }}>O certificado vence em menos de 30 dias. Renove e envie o novo aqui.</b></>}
           </p>
         )}
-        <p className="muted">O e-CNPJ A1 da rádio (arquivo .pfx ou .p12) que o banco exige para a API. O sistema confere a senha e lê a validade na hora.</p>
+        <p className="muted">O e-CNPJ A1 da {radio?.nome} (arquivo .pfx ou .p12) que o banco exige para a API. Precisa ser do CNPJ desta rádio. O sistema confere a senha e lê a validade na hora.</p>
         <FormAcao action={salvarCertificado} limparAoSalvar>
+          {R}
           <div className="form-grid">
             <div className="campo"><label>Arquivo do certificado</label><input name="arquivo" type="file" accept=".pfx,.p12,application/x-pkcs12" /></div>
             <div className="campo"><label>Senha do certificado</label><input name="senha" type="password" autoComplete="new-password" placeholder="Senha do .pfx" /></div>
@@ -99,6 +107,7 @@ export default async function Banco() {
         </FormAcao>
         {b.certificado && (
           <FormAcao action={removerCertificado} style={{ marginTop: 10 }}>
+            {R}
             <BotaoEnviar className="btn peq cinza" texto="Remover certificado" enviando="Removendo..." />
           </FormAcao>
         )}
@@ -118,6 +127,7 @@ export default async function Banco() {
           ))}
         </div>
         <FormAcao action={testarConexao}>
+          {R}
           <BotaoEnviar className="btn" texto="Testar conexão" enviando="Testando..." />
         </FormAcao>
       </div>

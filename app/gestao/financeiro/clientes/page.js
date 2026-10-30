@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { requireFinanceiro } from '@/lib/auth';
+import { radioAtual } from '@/lib/radio';
 import { hojeISO, moeda } from '@/lib/format';
 
 const ABERTA = ['a_emitir', 'emitido'];
@@ -10,12 +11,14 @@ const soma = (l) => l.reduce((s, p) => s + Number(p.valor), 0);
 // Clientes com contrato: quanto pagam por mês, quanto devem e quanto está atrasado
 export default async function ClientesFin({ searchParams }) {
   const { supabase, baseFin } = await requireFinanceiro();
+  const { radio } = await radioAtual(supabase);
+  const R = radio?.id;
   const hoje = hojeISO();
   const busca = String(searchParams?.busca || '').trim();
   const filtro = searchParams?.ver || '';
   const { data: contratos } = await supabase.from('contratos')
     .select('id, status, valor_mensal, cliente:clientes(id, nome, razao_social, documento, cidade, telefone), vendedor:profiles(nome), parcelas(valor, status, vencimento)')
-    .neq('status', 'cancelado');
+    .neq('status', 'cancelado').eq('radio_id', R);
 
   const mapa = new Map();
   (contratos || []).forEach((c) => {

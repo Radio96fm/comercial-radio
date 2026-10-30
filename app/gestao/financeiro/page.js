@@ -9,6 +9,7 @@ import { hojeISO, somarDias, somarMeses, moeda, data, linkWhatsApp } from '@/lib
 import Tendencia from '@/components/Tendencia';
 import { comHistorico } from '@/lib/historico';
 import Filtros from './Filtros';
+import { radioAtual } from '@/lib/radio';
 
 const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 const soma = (l) => (l || []).reduce((s, p) => s + Number(p.valor), 0);
@@ -23,6 +24,8 @@ function saudacao() {
 
 export default async function ResumoFinanceiro({ searchParams }) {
   const { supabase, perfil, baseFin } = await requireFinanceiro();
+  const { radio } = await radioAtual(supabase);
+  const R = radio?.id;
   const per = lerPeriodo(searchParams);
   const vend = searchParams?.vendedor || '';
   const hoje = hojeISO();
@@ -32,18 +35,18 @@ export default async function ResumoFinanceiro({ searchParams }) {
   const mesCom = mesDaComissao(hoje);
 
   const parcelas = (campos) => {
-    let q = supabase.from('parcelas').select(campos).neq('status', 'cancelado').neq('contrato.status', 'cancelado');
+    let q = supabase.from('parcelas').select(campos).neq('status', 'cancelado').neq('contrato.status', 'cancelado').eq('contrato.radio_id', R);
     if (vend) q = q.eq('contrato.vendedor_id', vend);
     return q;
   };
   let qContratos = supabase.from('contratos')
     .select('id, numero, status, valor_mensal, data_fim, cliente_nome, radio_id, created_at, vendedor:profiles(nome), parcelas(valor, status)')
-    .in('status', ['ativo', 'pendente']);
+    .in('status', ['ativo', 'pendente']).eq('radio_id', R);
   if (vend) qContratos = qContratos.eq('vendedor_id', vend);
 
   const [{ data: vendedores }, { data: radios }, { data: contratos }, { data: serieP }, { data: abertas }, { data: pagasPer }, comissoes, { data: historico }] = await Promise.all([
     supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
-    supabase.from('radios').select('id, nome, cor').order('ordem'),
+    supabase.from('radios').select('id, nome, cor').eq('id', R),
     qContratos,
     // tudo que venceu ou foi pago nos últimos 6 meses (gráfico)
     parcelas('valor, status, vencimento, pago_em, contrato:contratos!inner(status, vendedor_id)')
@@ -52,9 +55,9 @@ export default async function ResumoFinanceiro({ searchParams }) {
     parcelas('id, numero, valor, status, vencimento, url_boleto, linha_digitavel, contrato:contratos!inner(id, numero, status, vendedor_id, cliente_nome, cliente:clientes(id, nome, contato_nome, telefone), radio:radios(nome))')
       .in('status', ['a_emitir', 'emitido']).lte('vencimento', somarDias(hoje, 30)).order('vencimento'),
     parcelas('valor, contrato:contratos!inner(status, vendedor_id)').eq('status', 'pago').gte('pago_em', per.de).lte('pago_em', per.ate),
-    comissoesDoMes(supabase, mesCom, vend || null),
+    comissoesDoMes(supabase, mesCom, vend || null, R),
     // meses antes do sistema (não é separado por vendedor)
-    vend ? { data: [] } : supabase.from('faturamento_historico').select('radio_id, mes, valor').gte('mes', inicioSerie.slice(0, 7)),
+    vend ? { data: [] } : supabase.from('faturamento_historico').select('radio_id, mes, valor').eq('radio_id', R).gte('mes', inicioSerie.slice(0, 7)),
   ]);
 
   // contratos

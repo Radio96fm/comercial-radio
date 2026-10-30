@@ -2,6 +2,7 @@ import { requireGestor } from '@/lib/auth';
 import { hojeISO, somarDias, somarMeses } from '@/lib/format';
 import { montarComercial } from '@/lib/comercial';
 import TelaCerta from '@/components/TelaCerta';
+import { radioAtual } from '@/lib/radio';
 import Painel from './Painel';
 import PedidosPrazo, { SELECT_PEDIDOS } from '@/components/PedidosPrazo';
 
@@ -21,8 +22,10 @@ function saudacao() {
 // Painel do diretor comercial: desempenho e liderança da equipe de vendas.
 // De propósito, nenhuma consulta daqui busca valores em R$ ou parcelas.
 export default async function PainelComercial({ searchParams }) {
-  const radioId = searchParams?.radio || null;
   const { supabase, perfil } = await requireGestor();
+  // cada rádio é uma coisa à parte: sem rádio no endereço, vale a escolhida por último
+  const { radio, radios: todas } = await radioAtual(supabase);
+  const radioId = todas.find((r) => r.id === searchParams?.radio)?.id || radio?.id || null;
   const hoje = hojeISO();
   const inicioAnt = somarMeses(`${hoje.slice(0, 7)}-01`, -1);
   const desde = [inicioAnt, somarDias(hoje, -30)].sort()[0];

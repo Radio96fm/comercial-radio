@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { requireFinanceiro } from '@/lib/auth';
+import { radioAtual } from '@/lib/radio';
 import { nomeMes } from '@/lib/ganhos';
 import { hojeISO, somarDias, somarMeses, moeda } from '@/lib/format';
 import Filtros from '../Filtros';
@@ -12,6 +13,8 @@ const dias = (a, b) => Math.round((new Date(`${b}T12:00:00Z`) - new Date(`${a}T1
 // Quanto deve entrar nos próximos meses, e há quanto tempo está o que já atrasou
 export default async function Previsao({ searchParams }) {
   const { supabase, baseFin } = await requireFinanceiro();
+  const { radio } = await radioAtual(supabase);
+  const R = radio?.id;
   const vend = searchParams?.vendedor || '';
   const hoje = hojeISO();
   const mes0 = `${hoje.slice(0, 7)}-01`;
@@ -19,17 +22,17 @@ export default async function Previsao({ searchParams }) {
 
   let qp = supabase.from('parcelas')
     .select('valor, status, vencimento, pago_em, contrato:contratos!inner(status, vendedor_id, radio_id)')
-    .neq('status', 'cancelado').neq('contrato.status', 'cancelado').lte('vencimento', fim)
+    .neq('status', 'cancelado').neq('contrato.status', 'cancelado').eq('contrato.radio_id', R).lte('vencimento', fim)
     .or(`vencimento.gte.${mes0},status.in.(a_emitir,emitido)`);
   if (vend) qp = qp.eq('contrato.vendedor_id', vend);
-  let qc = supabase.from('contratos').select('valor_mensal, data_fim, cliente_nome').eq('status', 'ativo').gte('data_fim', mes0).lte('data_fim', fim);
+  let qc = supabase.from('contratos').select('valor_mensal, data_fim, cliente_nome').eq('status', 'ativo').eq('radio_id', R).gte('data_fim', mes0).lte('data_fim', fim);
   if (vend) qc = qc.eq('vendedor_id', vend);
   const [{ data: parcelas }, { data: terminam }, { data: radios }, { data: vendedores }, { data: historico }] = await Promise.all([
     qp, qc,
-    supabase.from('radios').select('id, nome, cor').order('ordem'),
+    supabase.from('radios').select('id, nome, cor').eq('id', R),
     supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
     // mês corrente antes do sistema (não é separado por vendedor)
-    vend ? { data: [] } : supabase.from('faturamento_historico').select('radio_id, mes, valor').eq('mes', mes0.slice(0, 7)),
+    vend ? { data: [] } : supabase.from('faturamento_historico').select('radio_id, mes, valor').eq('radio_id', R).eq('mes', mes0.slice(0, 7)),
   ]);
   const lista = parcelas || [];
 

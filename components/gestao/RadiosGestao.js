@@ -27,6 +27,8 @@ export function CartoesRadio({ radios, href, numeros }) {
 
 // Abas com a logo de cada rádio (troca rápida dentro de uma tela)
 export function AbasRadio({ radios, atual, href }) {
+  // a rádio é escolhida no topo da tela: com uma só, as abas não aparecem
+  if ((radios || []).length < 2) return null;
   return (
     <div className="abas-radio">
       {radios.map((r) => {

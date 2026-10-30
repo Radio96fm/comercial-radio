@@ -10,21 +10,24 @@ import { hojeISO, moeda, data, linkWhatsApp } from '@/lib/format';
 import { pagarComissao, desfazerComissao, salvarNotaFiscal, desfazerNotaFiscal } from '../actions';
 import BotaoPlanilha from '../BotaoPlanilha';
 import EnviarRelatorio from './EnviarRelatorio';
+import { radioAtual } from '@/lib/radio';
 
 const pctTxt = (v) => `${String(v.pct).replace('.', ',')}%`;
 
 export default async function Comissoes({ searchParams }) {
   const { supabase, baseFin } = await requireFinanceiro();
+  const { radio } = await radioAtual(supabase);
+  const R = radio?.id;
   const per = periodoComissao(searchParams);
   const vend = searchParams?.vendedor || '';
   const [{ data: vendedores }, lista] = await Promise.all([
     supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
-    comissoesNoPeriodo(supabase, per.de, per.ate, vend || null, per.mes),
+    comissoesNoPeriodo(supabase, per.de, per.ate, vend || null, per.mes, R),
   ]);
   const h = headers();
   const site = `${h.get('x-forwarded-proto') || 'https'}://${h.get('host')}`;
   const qp = (extra) => new URLSearchParams({ de: per.de, ate: per.ate, ...extra }).toString();
-  const pdf = (v, baixar) => `/api/comissao?${qp({ vendedor: v.id, ...(baixar ? { baixar: '1' } : {}) })}`;
+  const pdf = (v, baixar) => `/api/comissao?${qp({ vendedor: v.id, radio: R, ...(baixar ? { baixar: '1' } : {}) })}`;
   const whats = (v) => (v.telefone ? linkWhatsApp(v.telefone, mensagemComissao(v, per, `${site}${pdf(v)}`)) : null);
   const total = lista.reduce((s, v) => s + v.comissao, 0);
   const recebido = lista.reduce((s, v) => s + v.recebido, 0);
@@ -90,7 +93,7 @@ export default async function Comissoes({ searchParams }) {
             <div className="rel-acoes">
               <a className="btn sec" href={pdf(um)} target="_blank" rel="noopener noreferrer"><FileDown className="ico" />Ver PDF</a>
               <a className="btn cinza" href={pdf(um, true)}><FileDown className="ico" />Baixar PDF</a>
-              <EnviarRelatorio url={whats(um)} vendedorId={um.id} mes={per.mes} />
+              <EnviarRelatorio url={whats(um)} vendedorId={um.id} mes={per.mes} radioId={R} />
             </div>
 
             {per.mes && um.comissao > 0 && (
@@ -105,11 +108,11 @@ export default async function Comissoes({ searchParams }) {
                     <b>Receber a nota fiscal</b>
                     {um.nf?.nf_em ? (
                       <small>Nota {um.nf.nf_numero ? `nº ${um.nf.nf_numero} ` : ''}recebida em {data(um.nf.nf_em)}
-                        {!um.pago && <form action={desfazerNotaFiscal} style={{ display: 'inline' }}><input type="hidden" name="vendedor_id" value={um.id} /><input type="hidden" name="mes" value={per.mes} /> · <button className="link-btn">desfazer</button></form>}
+                        {!um.pago && <form action={desfazerNotaFiscal} style={{ display: 'inline' }}><input type="hidden" name="vendedor_id" value={um.id} /><input type="hidden" name="radio_id" value={R} /><input type="hidden" name="mes" value={per.mes} /> · <button className="link-btn">desfazer</button></form>}
                       </small>
                     ) : (
                       <FormAcao action={salvarNotaFiscal} className="form-nf">
-                        <input type="hidden" name="vendedor_id" value={um.id} /><input type="hidden" name="mes" value={per.mes} />
+                        <input type="hidden" name="vendedor_id" value={um.id} /><input type="hidden" name="mes" value={per.mes} /><input type="hidden" name="radio_id" value={R} />
                         <input name="nf_numero" placeholder="Número da nota" />
                         <input type="date" name="nf_em" defaultValue={hojeISO()} aria-label="Data da nota" />
                         <BotaoEnviar className="btn peq" texto="Nota recebida" enviando="..." />
@@ -127,7 +130,7 @@ export default async function Comissoes({ searchParams }) {
                       </small>
                     ) : (
                       <form action={pagarComissao} style={{ marginTop: 6 }}>
-                        <input type="hidden" name="vendedor_id" value={um.id} /><input type="hidden" name="mes" value={per.mes} /><input type="hidden" name="valor" value={um.comissao.toFixed(2)} />
+                        <input type="hidden" name="vendedor_id" value={um.id} /><input type="hidden" name="mes" value={per.mes} /><input type="hidden" name="radio_id" value={R} /><input type="hidden" name="valor" value={um.comissao.toFixed(2)} />
                         <BotaoEnviar className="btn peq verde" texto={`Marcar ${moeda(um.comissao)} como pago`} enviando="..." confirmar={`Confirmar pagamento de ${moeda(um.comissao)} para ${um.nome}?`} />
                       </form>
                     )}
@@ -178,7 +181,7 @@ export default async function Comissoes({ searchParams }) {
               <div className="com-card-acoes">
                 <Link href={`?${qp({ vendedor: v.id })}`} className="btn peq">Ver relatório</Link>
                 <a className="btn peq cinza" href={pdf(v)} target="_blank" rel="noopener noreferrer"><FileDown className="ico" />PDF</a>
-                <EnviarRelatorio url={whats(v)} vendedorId={v.id} mes={per.mes} texto="WhatsApp" className="btn peq whats" />
+                <EnviarRelatorio url={whats(v)} vendedorId={v.id} mes={per.mes} radioId={R} texto="WhatsApp" className="btn peq whats" />
               </div>
             </div>
           ))}

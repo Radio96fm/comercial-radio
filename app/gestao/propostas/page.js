@@ -1,13 +1,16 @@
 import { requireGestor } from '@/lib/auth';
+import { radioAtual } from '@/lib/radio';
 import TelaPropostas from './Tela';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Propostas() {
   const { supabase } = await requireGestor();
+  const { radio } = await radioAtual(supabase);
+  const R = radio?.id;
   const [{ data: radios, error }, { data: programas }] = await Promise.all([
-    supabase.from('radios').select('id, nome, cor, proposta_pdf, proposta_atualizada_em').order('ordem'),
-    supabase.from('programas').select('id, nome, radio_id, ativo, proposta_pdf, proposta_atualizada_em').eq('ativo', true).order('horario_inicio', { nullsFirst: false }),
+    supabase.from('radios').select('id, nome, cor, proposta_pdf, proposta_atualizada_em').eq('id', R),
+    supabase.from('programas').select('id, nome, radio_id, ativo, proposta_pdf, proposta_atualizada_em').eq('ativo', true).eq('radio_id', R).order('horario_inicio', { nullsFirst: false }),
   ]);
 
   if (error) {

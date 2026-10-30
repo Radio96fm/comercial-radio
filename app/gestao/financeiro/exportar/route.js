@@ -1,6 +1,7 @@
 import { requireFinanceiro } from '@/lib/auth';
 import { lerPeriodo, periodoComissao, comissoesNoPeriodo } from '@/lib/financeiro';
 import { hojeISO, data, STATUS_PARCELA, STATUS_CONTRATO } from '@/lib/format';
+import { radioAtual } from '@/lib/radio';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,9 @@ const csv = (linhas) => `﻿${linhas.map((l) => l.map(cel).join(';')).join('\r\n
 
 export async function GET(req) {
   const { supabase } = await requireFinanceiro();
+  // cada rádio é uma empresa: a planilha é só da rádio escolhida no topo
+  const { radio } = await radioAtual(supabase);
+  const R = radio?.id;
   const sp = Object.fromEntries(new URL(req.url).searchParams);
   const vend = sp.vendedor || '';
   const hoje = hojeISO();
@@ -22,7 +26,7 @@ export async function GET(req) {
 
   if (sp.tipo === 'comissoes') {
     const per = periodoComissao(sp);
-    const lista = await comissoesNoPeriodo(supabase, per.de, per.ate, vend || null, per.mes);
+    const lista = await comissoesNoPeriodo(supabase, per.de, per.ate, vend || null, per.mes, R);
     linhas = [['Vendedor', 'Cliente', 'Contrato', 'Parcela', 'Pago em', 'Valor recebido', '%', 'Comissão', 'Comissão paga em']];
     lista.forEach((v) => v.itens.forEach((p) => linhas.push([
       v.nome, p.contrato.cliente_nome, p.contrato.numero, `${p.numero}ª`, data(p.pago_em), num(p.valor), String(v.pct).replace('.', ','), num(p.comissao), v.pago ? data(v.pago.pago_em) : v.nf?.nf_em ? `NF ${v.nf.nf_numero || ''} recebida` : 'A pagar',
@@ -33,7 +37,7 @@ export async function GET(req) {
     const per = lerPeriodo(sp);
     let q = supabase.from('contratos')
       .select('numero, cliente_nome, status, data_inicio, data_fim, valor_mensal, meses, created_at, cliente:clientes(documento), vendedor:profiles(nome), programa:programas(nome), radio:radios(nome), parcelas(status)')
-      .gte('created_at', `${per.de}T00:00:00`).lte('created_at', `${per.ate}T23:59:59`).order('numero');
+      .eq('radio_id', R).gte('created_at', `${per.de}T00:00:00`).lte('created_at', `${per.ate}T23:59:59`).order('numero');
     if (vend) q = q.eq('vendedor_id', vend);
     if (sp.status) q = q.eq('status', sp.status);
     const { data: lista } = await q;
@@ -48,7 +52,7 @@ export async function GET(req) {
     const sit = sp.situacao || '';
     let q = supabase.from('parcelas')
       .select('numero, vencimento, valor, status, pago_em, linha_digitavel, url_boleto, contrato:contratos!inner(numero, status, vendedor_id, cliente_nome, cliente:clientes(documento, telefone, email), vendedor:profiles(nome), radio:radios(nome))')
-      .neq('contrato.status', 'cancelado').order('vencimento');
+      .neq('contrato.status', 'cancelado').eq('contrato.radio_id', R).order('vencimento');
     if (vend) q = q.eq('contrato.vendedor_id', vend);
     if (sit === 'atrasadas') q = q.in('status', ['a_emitir', 'emitido']).lt('vencimento', hoje);
     else {
@@ -69,6 +73,8 @@ export async function GET(req) {
     nome = `parcelas-${sit || 'todas'}-${per.chave}`;
   }
 
+  linhas.unshift([`${radio?.razao_social || radio?.nome || ''}${radio?.cnpj ? ` · CNPJ ${radio.cnpj}` : ''}`], []);
+  nome = `${(radio?.nome || 'radio').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${nome}`;
   return new Response(csv(linhas), {
     headers: {
       'content-type': 'text/csv; charset=utf-8',

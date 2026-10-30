@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { requireFinanceiro } from '@/lib/auth';
+import { radioAtual } from '@/lib/radio';
 import { mensagemCobranca } from '@/lib/financeiro';
 import { data, moeda, STATUS_PARCELA, hojeISO, somarDias, linkWhatsApp } from '@/lib/format';
 import Filtros from '../Filtros';
@@ -7,12 +8,14 @@ import EnviarTodos from './EnviarTodos';
 
 export default async function Cobranca({ searchParams }) {
   const { supabase, baseFin } = await requireFinanceiro();
+  const { radio } = await radioAtual(supabase);
+  const R = radio?.id;
   const vend = searchParams?.vendedor || '';
   const hoje = hojeISO();
   let q = supabase.from('parcelas')
     .select('id, numero, vencimento, valor, status, url_boleto, linha_digitavel, contrato:contratos!inner(numero, status, vendedor_id, cliente:clientes(id, nome, contato_nome, telefone), vendedor:profiles(nome), radio:radios(nome))')
     .in('contrato.status', ['ativo', 'pendente']).in('status', ['a_emitir', 'emitido'])
-    .lte('vencimento', somarDias(hoje, 31)).order('vencimento');
+    .lte('vencimento', somarDias(hoje, 31)).eq('contrato.radio_id', R).order('vencimento');
   if (vend) q = q.eq('contrato.vendedor_id', vend);
   const [{ data: parcelas }, { data: vendedores }] = await Promise.all([
     q, supabase.from('profiles').select('id, nome').in('papel', ['vendedor', 'gestor', 'comercial']).order('nome'),
