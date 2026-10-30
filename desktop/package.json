@@ -1,0 +1,19 @@
+{
+  "name": "radio-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Programas para Windows do sistema da rádio (Comercial e Financeiro)",
+  "author": "Rádio 96 FM",
+  "main": "main.js",
+  "scripts": {
+    "comercial": "electron-builder --win --config builder-comercial.json",
+    "financeiro": "electron-builder --win --config builder-financeiro.json"
+  },
+  "dependencies": {
+    "electron-updater": "6.3.9"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  }
+}

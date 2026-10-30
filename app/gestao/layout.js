@@ -5,6 +5,9 @@ import BotaoTema from '@/components/BotaoTema';
 
 export const dynamic = 'force-dynamic';
 
+// instalável no computador como programa próprio (Edge/Chrome: "Instalar aplicativo")
+export const metadata = { manifest: '/gestao.webmanifest', appleWebApp: { capable: true, title: 'Rádio Comercial' } };
+
 export default async function GestaoLayout({ children }) {
   const { isMaster, isDev, perfil } = await requireGestor();
   return (

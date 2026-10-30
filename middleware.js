@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 
-const PUBLICAS = ['/login', '/celular', '/demo-diretor', '/demo-comercial', '/demo-gestao', '/fluxo', '/mapa', '/diretor.webmanifest', '/comercial.webmanifest', '/primeiro-acesso', '/cadastro', '/api/autentique'];
+const PUBLICAS = ['/login', '/celular', '/demo-diretor', '/demo-comercial', '/demo-gestao', '/fluxo', '/mapa', '/diretor.webmanifest', '/comercial.webmanifest', '/gestao.webmanifest', '/financeiro.webmanifest', '/primeiro-acesso', '/cadastro', '/api/autentique'];
 
 export async function middleware(request) {
   const path = request.nextUrl.pathname;
