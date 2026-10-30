@@ -1,0 +1,17 @@
+{
+  "appId": "com.radio96fm.comercial",
+  "productName": "Rádio Comercial",
+  "directories": { "output": "dist" },
+  "files": ["main.js", "sem-internet.html", "icone.png", { "from": "apps/comercial", "to": ".", "filter": ["app.json"] }],
+  "win": { "target": "nsis", "icon": "icone.png", "artifactName": "comercial-setup-${version}.${ext}" },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": false,
+    "perMachine": false,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Rádio Comercial",
+    "artifactName": "comercial-setup-${version}.${ext}"
+  },
+  "publish": [{ "provider": "github", "owner": "Radio96fm", "repo": "comercial-radio", "channel": "comercial", "releaseType": "release" }]
+}

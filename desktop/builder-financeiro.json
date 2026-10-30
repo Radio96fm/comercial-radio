@@ -1,0 +1,17 @@
+{
+  "appId": "com.radio96fm.financeiro",
+  "productName": "Rádio Financeiro",
+  "directories": { "output": "dist" },
+  "files": ["main.js", "sem-internet.html", "icone.png", { "from": "apps/financeiro", "to": ".", "filter": ["app.json"] }],
+  "win": { "target": "nsis", "icon": "icone.png", "artifactName": "financeiro-setup-${version}.${ext}" },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": false,
+    "perMachine": false,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Rádio Financeiro",
+    "artifactName": "financeiro-setup-${version}.${ext}"
+  },
+  "publish": [{ "provider": "github", "owner": "Radio96fm", "repo": "comercial-radio", "channel": "financeiro", "releaseType": "release" }]
+}

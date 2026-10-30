@@ -1,0 +1,32 @@
+# Gera os instaladores do Windows (Rádio Comercial e Rádio Financeiro) e publica na aba Releases.
+# Os programas instalados procuram a versão nova ali e se atualizam sozinhos.
+# Para lançar uma versão nova do programa: aumentar "version" em desktop/package.json.
+name: Programas Windows
+
+on:
+  push:
+    branches: [main]
+    paths: ['desktop/**', '.github/workflows/programas-windows.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  instaladores:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run comercial -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm run financeiro -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

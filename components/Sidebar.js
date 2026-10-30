@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { bloqueado } from '@/lib/funcoes';
 import {
-  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, Timer, BadgePercent, Send, Building2, TrendingUp, Crown, Target, FileUp, Workflow, Code2, KeyRound, Handshake, Activity, Plug, AppWindow, Columns3,
+  LayoutDashboard, Radio, Receipt, FileText, Wallet, Users, FileSignature, Tags, History, Smartphone, LogOut, Sparkles, Timer, BadgePercent, Send, Building2, TrendingUp, Crown, Target, FileUp, Workflow, Code2, KeyRound, Handshake, Activity, Plug, AppWindow, Columns3, Landmark, Settings,
 } from 'lucide-react';
 
 // m = só para o gestor master
@@ -29,6 +29,8 @@ const FINANCEIRO = [
   ['/gestao/financeiro/previsao', TrendingUp, 'Previsão'],
   ['/gestao/financeiro/cobranca', Send, 'Cobrança do mês'],
   ['/gestao/financeiro/contratos', FileText, 'Contratos fechados'],
+  ['/gestao/financeiro/extrato', Landmark, 'Saldo e extrato'],
+  ['/gestao/financeiro/banco', Settings, 'Configurar banco'],
 ];
 
 const link = (path) => ([href, Ico, txt, exato]) => (
