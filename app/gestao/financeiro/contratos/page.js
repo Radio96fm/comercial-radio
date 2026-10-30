@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CheckCircle2, Clock3, MinusCircle } from 'lucide-react';
 import { requireFinanceiro } from '@/lib/auth';
+import { radioAtual } from '@/lib/radio';
 import { lerPeriodo } from '@/lib/financeiro';
 import { configAutentique, situacaoDocumento, marcarAssinado } from '@/lib/autentique';
 import { data, moeda, STATUS_CONTRATO } from '@/lib/format';
@@ -12,13 +13,15 @@ const ASSIN = [['', 'Todas'], ['assinados', 'Assinados'], ['aguardando', 'Aguard
 
 export default async function ContratosFin({ searchParams }) {
   const { supabase, baseFin } = await requireFinanceiro();
+  const { radio } = await radioAtual(supabase);
+  const R = radio?.id;
   const vend = searchParams?.vendedor || '';
   const st = searchParams?.status || '';
   const assin = searchParams?.assinatura || '';
   const per = lerPeriodo(searchParams);
   let q = supabase.from('contratos')
     .select('id, numero, cliente_id, cliente_nome, status, data_inicio, data_fim, valor_mensal, meses, created_at, assinado_em, assinatura_enviada_em, autentique_id, autentique_assinatura, vendedor:profiles(nome), programa:programas(nome), radio:radios(nome), parcelas(status, vencimento)')
-    .gte('created_at', `${per.de}T00:00:00`).lte('created_at', `${per.ate}T23:59:59`)
+    .eq('radio_id', R).gte('created_at', `${per.de}T00:00:00`).lte('created_at', `${per.ate}T23:59:59`)
     .order('created_at', { ascending: false }).limit(300);
   if (vend) q = q.eq('vendedor_id', vend);
   if (st) q = q.eq('status', st);

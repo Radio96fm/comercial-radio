@@ -1403,3 +1403,10 @@ details.recolhido[open] summary { margin-bottom: 10px; }
 .funcoes-grid legend { font-weight: 600; padding: 0 6px; }
 .funcoes-grid label { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-weight: 400; }
 .agora-lista { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Escolha da rádio no topo da gestão e do financeiro (cada rádio é uma empresa à parte) */
+.seletor-radio { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--card-2, var(--line)); margin-right: auto; }
+.seletor-radio button { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: var(--muted); padding: 7px 14px; border-radius: 999px; font: inherit; font-weight: 600; cursor: pointer; }
+.seletor-radio button img { height: 20px; width: auto; }
+.seletor-radio button.ativo { background: var(--card, #fff); color: var(--text); box-shadow: 0 0 0 2px var(--cor-radio, var(--accent)) inset; }
+.empresa-radio { font-size: .85rem; color: var(--muted); margin: -6px 0 14px; }

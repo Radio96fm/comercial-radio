@@ -85,11 +85,10 @@ export default function Painel({ dados, ola, dataLonga, base, demo = false, avis
           </div>
   
           <nav className="dir-radios" aria-label="Escolher rádio">
-            {[{ id: null, nome: 'As duas rádios' }, ...radio.opcoes].map((r) => (
-              <Link key={r.id || 'todas'} href={r.id ? `${base}?radio=${r.id}` : base} className={(r.id || null) === radio.atual ? 'ativa' : ''}>{r.nome}</Link>
+            {radio.opcoes.map((r) => (
+              <Link key={r.id} href={`${base}?radio=${r.id}`} className={r.id === radio.atual ? 'ativa' : ''}>{r.nome}</Link>
             ))}
           </nav>
-          {radio.atual && <p className="dir-radios-nota">Visitas e negociações não têm rádio cadastrada, então aparecem nas duas.</p>}
 
           {avisos}
           <div className="dir-so-celular">{demo && <PropostaForm dados={dados} />}</div>

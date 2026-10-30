@@ -2,12 +2,14 @@ import Link from 'next/link';
 import { requireFinanceiro } from '@/lib/auth';
 import { carregarQuadro } from '@/lib/quadroContratos';
 import Quadro from '@/components/QuadroComissoes';
+import { radioAtual } from '@/lib/radio';
 
 // Comissão contrato por contrato: o mesmo quadro do desenvolvedor, para o
 // financeiro deixar a regra de cada contrato certa antes de pagar.
 export default async function ComissaoPorContrato() {
   const { supabase, baseFin } = await requireFinanceiro();
-  const { error, reps, agencias, contratos, linhas, historico } = await carregarQuadro(supabase);
+  const { radio } = await radioAtual(supabase);
+  const { error, reps, agencias, contratos, linhas, historico } = await carregarQuadro(supabase, radio?.id);
   const aDefinir = new Set(linhas.filter((l) => l.papel === 'vendedor' && l.percentual == null).map((l) => l.contrato_id)).size;
 
   return (

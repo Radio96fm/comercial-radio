@@ -1,17 +1,21 @@
 import Link from 'next/link';
 import { requireGestor } from '@/lib/auth';
+import { radioAtual } from '@/lib/radio';
 import { data, moeda, STATUS_CONTRATO } from '@/lib/format';
 
 const COR = { pendente: 'b-amarelo', ativo: 'b-verde', encerrado: 'b-cinza', cancelado: 'b-vermelho' };
 
 export default async function ContratosGestao({ searchParams }) {
   const { supabase } = await requireGestor();
+  const { radio } = await radioAtual(supabase);
+  const R = radio?.id;
   const status = searchParams?.status || '';
   const vendedor = searchParams?.vendedor || '';
 
   let q = supabase
     .from('contratos')
     .select('id, numero, status, data_inicio, data_fim, valor_mensal, meses, cliente:clientes(nome), segmento:segmentos(nome), programa:programas(nome), radio:radios(nome), vendedor:profiles(nome)')
+    .eq('radio_id', R)
     .order('numero', { ascending: false })
     .limit(300);
   if (status) q = q.eq('status', status);

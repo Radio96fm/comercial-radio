@@ -5,12 +5,16 @@ import { liberarVisita } from '../actions';
 import { STATUS_VISITA, dataHora } from '@/lib/format';
 import { PRAZO_DIAS, prazoVisita, textoRestam } from '@/lib/prazo';
 import PedidosPrazo, { SELECT_PEDIDOS } from '@/components/PedidosPrazo';
+import { radioAtual } from '@/lib/radio';
 
 export default async function Negociacoes() {
   const { supabase } = await requireGestor();
+  const { radio } = await radioAtual(supabase);
   const [{ data: visitas }, { data: liberadas }, { data: pedidos }] = await Promise.all([
     supabase.from('visitas').select('id, status, iniciada_em, prazo_extra_dias, cliente:clientes(id, nome, cidade), vendedor:profiles(nome)')
       .in('status', ['em_andamento', 'proposta', 'fechado'])
+      // visita sem rádio definida ainda aparece nas duas
+      .or(`radio_id.eq.${radio?.id},radio_id.is.null`)
       .gt('iniciada_em', new Date(Date.now() - (PRAZO_DIAS + 30) * 86400000).toISOString())
       .order('iniciada_em'),
     supabase.from('visitas_liberadas').select('visita_id'),

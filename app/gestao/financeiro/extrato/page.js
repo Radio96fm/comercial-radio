@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { requireFinanceiro } from '@/lib/auth';
+import { radioAtual } from '@/lib/radio';
 import { nomeBanco } from '@/lib/banco';
 
 export const dynamic = 'force-dynamic';
@@ -7,13 +8,14 @@ export const dynamic = 'force-dynamic';
 // Saldo e extrato da conta da rádio. Até a integração com o banco ser ativada, só orienta.
 export default async function Extrato() {
   const { supabase, baseFin } = await requireFinanceiro();
-  const { data: b } = await supabase.rpc('banco_situacao');
+  const { radio } = await radioAtual(supabase);
+  const { data: b } = await supabase.rpc('banco_situacao', { p_radio: radio?.id });
   const cadastrado = b?.agencia && b?.conta && b?.client_id && b?.secret && b?.certificado;
 
   return (
     <>
       <div className="cabecalho">
-        <h1>Saldo e extrato</h1>
+        <h1>Saldo e extrato · {radio?.nome}</h1>
         {b?.conta && <span className="muted">{nomeBanco(b.banco)} · Ag. {b.agencia} · Conta {b.conta}{b.digito ? `-${b.digito}` : ''}</span>}
       </div>
       <div className="grid-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>

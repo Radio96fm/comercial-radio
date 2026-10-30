@@ -1,4 +1,5 @@
 import { requireFinanceiro } from '@/lib/auth';
+import { radioAtual } from '@/lib/radio';
 import { lerPeriodo } from '@/lib/financeiro';
 import { moeda, hojeISO } from '@/lib/format';
 import Filtros from '../Filtros';
@@ -9,6 +10,8 @@ const SITUACOES = [['', 'Todas'], ['abertas', 'Em aberto'], ['atrasadas', 'Em at
 
 export default async function ParcelasFin({ searchParams }) {
   const { supabase, baseFin } = await requireFinanceiro();
+  const { radio } = await radioAtual(supabase);
+  const R = radio?.id;
   const vend = searchParams?.vendedor || '';
   const sit = searchParams?.situacao || '';
   const hoje = hojeISO();
@@ -16,7 +19,7 @@ export default async function ParcelasFin({ searchParams }) {
   const per = lerPeriodo(searchParams);
   let q = supabase.from('parcelas')
     .select('id, numero, vencimento, valor, status, pago_em, url_boleto, linha_digitavel, contrato:contratos!inner(id, numero, status, vendedor_id, cliente:clientes(id, nome, contato_nome, telefone, email), vendedor:profiles(nome), radio:radios(nome))')
-    .neq('contrato.status', 'cancelado').order('vencimento').limit(400);
+    .neq('contrato.status', 'cancelado').eq('contrato.radio_id', R).order('vencimento').limit(400);
   if (vend) q = q.eq('contrato.vendedor_id', vend);
   if (sit === 'atrasadas') q = q.in('status', ['a_emitir', 'emitido']).lt('vencimento', hoje);
   else {

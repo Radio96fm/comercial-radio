@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Phone, Mail, MapPin, ArrowLeft, Send } from 'lucide-react';
 import { requireFinanceiro } from '@/lib/auth';
+import { radioAtual } from '@/lib/radio';
 import { data, moeda, hojeISO, linkWhatsApp, STATUS_CONTRATO } from '@/lib/format';
 import ParcelaItem from '../../ParcelaItem';
 
@@ -11,12 +12,13 @@ const soma = (l) => l.reduce((s, p) => s + Number(p.valor), 0);
 // Ficha financeira do cliente: contatos, contratos e todas as parcelas
 export default async function ExtratoCliente({ params }) {
   const { supabase, baseFin } = await requireFinanceiro();
+  const { radio } = await radioAtual(supabase);
   const hoje = hojeISO();
   const [{ data: cli }, { data: contratos }] = await Promise.all([
     supabase.from('clientes').select('id, nome, razao_social, documento, contato_nome, telefone, email, endereco, cidade, observacoes, vendedor:profiles!clientes_vendedor_id_fkey(nome)').eq('id', params.id).maybeSingle(),
     supabase.from('contratos')
       .select('id, numero, status, data_inicio, data_fim, valor_mensal, meses, dia_vencimento, vendedor:profiles(nome), programa:programas(nome), radio:radios(nome), parcelas(id, numero, vencimento, valor, status, pago_em, url_boleto, linha_digitavel)')
-      .eq('cliente_id', params.id).order('created_at', { ascending: false }),
+      .eq('cliente_id', params.id).eq('radio_id', radio?.id).order('created_at', { ascending: false }),
   ]);
   if (!cli) notFound();
 

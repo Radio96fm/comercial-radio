@@ -75,7 +75,7 @@ export default function TelaProgramas({ radios, programas, planos, condicoes, se
   const condAtiva = (c) => c.ativo && (!c.expira_em || new Date(c.expira_em) > agora);
   const condicoesDe = (id) => (condicoes || []).filter((c) => c.programa_id === id);
   const editando = (programas || []).find((p) => p.id === searchParams?.editar);
-  const radio = (radios || []).find((r) => r.id === (editando?.radio_id || searchParams?.radio));
+  const radio = (radios || []).find((r) => r.id === (editando?.radio_id || searchParams?.radio)) || (radios?.length === 1 ? radios[0] : null);
   const planosDe = (id) => (planos || []).filter((x) => x.programa_id === id);
   const progsDe = (id) => (programas || []).filter((p) => p.radio_id === id);
 
