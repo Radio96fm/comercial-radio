@@ -65,12 +65,17 @@ function LoginForm() {
   );
 }
 
+function Titulo() {
+  const ir = useSearchParams().get('ir') || '';
+  return <h1 style={{ marginBottom: 20 }}>{ir.startsWith('/financeiro') ? 'Financeiro' : 'Comercial'}</h1>;
+}
+
 export default function LoginPage() {
   return (
     <div className="login-wrap">
       <div className="login-card">
         <div className="emissoras"><img src="/logos/96fm.png" alt="96 FM" /><img src="/logos/agro.png" alt="Rádio do Agro" /></div>
-        <h1 style={{ marginBottom: 20 }}>Comercial</h1>
+        <Suspense fallback={<h1 style={{ marginBottom: 20 }}>&nbsp;</h1>}><Titulo /></Suspense>
         <Suspense fallback={null}><LoginForm /></Suspense>
         <img src="/logos/jc-branco.png" alt="Organização Júlio Capparelli" className="login-jc" />
       </div>

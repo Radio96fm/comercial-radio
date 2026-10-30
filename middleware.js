@@ -40,7 +40,8 @@ export async function middleware(request) {
   if (!user && !publica) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    url.search = path === '/mapa' ? '?ir=/mapa' : '';
+    // depois do login volta para onde a pessoa queria ir (ex.: /financeiro no programa Rádio Financeiro)
+    url.search = path !== '/' ? `?ir=${encodeURIComponent(path)}` : '';
     return NextResponse.redirect(url);
   }
   return response;

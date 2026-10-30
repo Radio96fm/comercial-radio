@@ -10,7 +10,7 @@ export const metadata = { manifest: '/financeiro.webmanifest', appleWebApp: { ca
 
 export default async function FinanceiroLayout({ children }) {
   const { perfil, isMaster } = await getSessao();
-  if (perfil.papel !== 'financeiro') redirect(isMaster ? '/gestao/financeiro' : '/');
+  if (perfil.papel !== 'financeiro' && !isMaster) redirect('/');
   return (
     <div className="gestao">
       <SidebarFinanceiro />
